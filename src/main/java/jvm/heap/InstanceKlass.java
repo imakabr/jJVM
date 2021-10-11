@@ -9,7 +9,6 @@ import java.util.*;
 public class InstanceKlass {
     private final int objectReference;
     //fields
-    private final JVMValue[] fieldValues;
     private final Map<String, Integer> indexByFieldName;
     //virtual method table
     private int[] virtualMethodTable;
@@ -20,12 +19,10 @@ public class InstanceKlass {
 
     public InstanceKlass(List<String> fields, int objectReference, Klass cpKlass) {
         this.objectReference = objectReference;
-        this.fieldValues = new JVMValue[fields.size()];
         this.cpKlass = cpKlass;
         this.indexByVirtualMethodName = new HashMap<>();
         this.indexByFieldName = new HashMap<>();
         for (int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-            fieldValues[fieldIndex] = new JVMValue(JVMType.I, 0);
             indexByFieldName.put(fields.get(fieldIndex), fieldIndex);
         }
     }
@@ -46,24 +43,12 @@ public class InstanceKlass {
         return cpKlass;
     }
 
-    public void setValue(int index, JVMValue value) {
-        fieldValues[index] = value;
-    }
-
-    public JVMValue getValue(int fieldValIndex) {
-        return fieldValues[fieldValIndex];
-    }
-
     public void setIndexByFieldName(String name, int index) {
         indexByFieldName.put(name, index);
     }
 
     public void setIndexByVirtualMethodName(String name, int index) {
         indexByVirtualMethodName.put(name, index);
-    }
-
-    public JVMValue[] getFieldValues() {
-        return fieldValues;
     }
 
     public int getIndexByFieldName(String name) {
