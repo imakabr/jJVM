@@ -21,6 +21,15 @@ public class Heap {
         return refTable.getObjectReference(setInstanceObject(object));
     }
 
+    public int changeObject(int objectRef, InstanceObject object) {
+        if (objectRef != -1) {
+            instanceObjects[refTable.getInstanceObjectIndex(objectRef)] = object;
+            return objectRef;
+        } else {
+            return setInstanceObject(object);
+        }
+    }
+
     public InstanceObject getInstanceObject(int objectRef) {
         return instanceObjects[refTable.getInstanceObjectIndex(objectRef)];
     }

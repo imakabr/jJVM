@@ -13,13 +13,13 @@ public class InstanceObject {
     private final Map<String, Integer> indexByFieldName;
     private int klassIndex;
 
-    public InstanceObject(List<Field> fields, int klassIndex) {
+    public InstanceObject(List<String> fields, int klassIndex) {
         this.fieldValues = new JVMValue[fields.size()];
         this.indexByFieldName = new HashMap<>();
         this.klassIndex = klassIndex;
         for (int fieldIndex = 0; fieldIndex<fieldValues.length; fieldIndex++) {
             fieldValues[fieldIndex] = new JVMValue(JVMType.I, 0);
-            indexByFieldName.put(fields.get(fieldIndex).getName(), fieldIndex);
+            indexByFieldName.put(fields.get(fieldIndex), fieldIndex);
         }
     }
 

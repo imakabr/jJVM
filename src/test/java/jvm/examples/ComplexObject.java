@@ -54,7 +54,8 @@ class Print {
 }
 
 class Near {
-    static int a = 0;
+    static int a = Far.e;
+    static int aa = 6;
     Print b = new Print("non static Near");
     static Print c = new Print("static Near");
     int it;
@@ -73,7 +74,7 @@ class Near {
 }
 class Far extends Near {
     Print d = new Print("non static Far");
-    static int e = 1;
+    static int e = 5;
     static Print f = new Print("static Far");
     int getItFar() {
         return super.getItNear();
@@ -88,10 +89,7 @@ class Far extends Near {
     }
 
     public static void main(String[] args) {
-        int i = nearMethod();
-        System.out.println(i);
-        Print f = new Far().b;
-        System.out.println("done");
+        System.out.println(Far.a);
     }
 }
 

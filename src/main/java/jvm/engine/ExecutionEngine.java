@@ -443,7 +443,7 @@ public final class ExecutionEngine {
 
     private int getInstanceKlassIndex(String klassFieldName) {
         String klassName = klassFieldName.substring(0, klassFieldName.indexOf("."));
-        return heap.getKlassLoader().getInstanceKlassIndexByName(klassName);
+        return heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
     }
 
     private String getKlassFieldName(String sourceKlassName, int cpLookup) {
@@ -480,8 +480,8 @@ public final class ExecutionEngine {
         Klass sourceKlass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
         String destKlassName = sourceKlass.getKlassNameByCPIndex((short) cpIndex);
         Klass destKlass = heap.getKlassLoader().getLoadedKlassByName(destKlassName);
-        return heap.getObjectRef(new InstanceObject(destKlass.getObjectFields(),
-                heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName)));
+        return heap.getObjectRef(new InstanceObject(destKlass.getObjectFieldNames(),
+                heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, true)));
     }
 
 }

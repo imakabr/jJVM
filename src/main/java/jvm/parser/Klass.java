@@ -1,6 +1,7 @@
 package jvm.parser;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static jvm.parser.ParserConstants.ACC_STATIC;
 
@@ -59,6 +60,10 @@ public final class Klass {
         return staticFields;
     }
 
+    public List<String> getStaticFieldNames() {
+        return staticFields.stream().map(Field::getName).collect(Collectors.toList());
+    }
+
     public String getMethodNameByCPIndex(short cpIndex) {
         return methodNamesByIndex.get(cpIndex);
     }
@@ -85,6 +90,10 @@ public final class Klass {
 
     public List<Field> getObjectFields() {
         return objectFields;
+    }
+
+    public List<String> getObjectFieldNames() {
+        return objectFields.stream().map(Field::getName).collect(Collectors.toList());
     }
 
 }

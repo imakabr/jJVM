@@ -1,13 +1,13 @@
 package jvm.heap;
 
+import jvm.JVMType;
 import jvm.JVMValue;
 import jvm.parser.Klass;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class InstanceKlass {
-    private final int reference;
+    private final int objectReference;
     //fields
     private final JVMValue[] fieldValues;
     private final Map<String, Integer> indexByFieldName;
@@ -18,12 +18,16 @@ public class InstanceKlass {
     private int parentIndex;
     private final Klass cpKlass;
 
-    public InstanceKlass(int valuesSize, int reference, Klass cpKlass) {
-        this.reference = reference;
-        this.fieldValues = new JVMValue[valuesSize];
+    public InstanceKlass(List<String> fields, int objectReference, Klass cpKlass) {
+        this.objectReference = objectReference;
+        this.fieldValues = new JVMValue[fields.size()];
         this.cpKlass = cpKlass;
         this.indexByVirtualMethodName = new HashMap<>();
         this.indexByFieldName = new HashMap<>();
+        for (int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
+            fieldValues[fieldIndex] = new JVMValue(JVMType.I, 0);
+            indexByFieldName.put(fields.get(fieldIndex), fieldIndex);
+        }
     }
 
     public void setParentIndex(int parentIndex) {
@@ -34,8 +38,8 @@ public class InstanceKlass {
         return parentIndex;
     }
 
-    public int getReference() {
-        return reference;
+    public int getObjectRef() {
+        return objectReference;
     }
 
     public Klass getCpKlass() {
@@ -64,6 +68,14 @@ public class InstanceKlass {
 
     public int getIndexByFieldName(String name) {
         return indexByFieldName.get(name);
+    }
+
+    public List<String> getOrderedFieldNames() {
+        String[] result = new String[indexByFieldName.size()];
+        for (Map.Entry<String, Integer> entry : indexByFieldName.entrySet()) {
+            result[entry.getValue()] = entry.getKey();
+        }
+        return Arrays.asList(result);
     }
 
     public final void setVirtualMethodTable(int[] virtualMethodTable) {
