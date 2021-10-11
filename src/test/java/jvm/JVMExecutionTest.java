@@ -25,35 +25,37 @@ public class JVMExecutionTest {
     public void simpleStaticFieldsInstanceKlassTest() throws NoSuchFieldException, IllegalAccessException {
         String fName = "jvm/examples/SimpleStatic";
 
-        Heap heap= HeapHolder.getHeap();
+        Heap heap = HeapHolder.getHeap();
         heap.getKlassLoader().loadKlass(fName);
 
-        InstanceKlass simpleStaticFieldsInstanceKlass = heap.getInstanceKlass(0);
+        InstanceKlass simpleStaticFieldsInstanceKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName(fName, false));
+        InstanceObject object = heap.getInstanceObject(simpleStaticFieldsInstanceKlass.getObjectRef());
         int fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("b:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(555, simpleStaticFieldsInstanceKlass.getValue(fieldValueIndex).value);
+        assertEquals(555, object.getValue(fieldValueIndex).value);
 
         fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("c:I");
         assertEquals(1, fieldValueIndex);
-        assertEquals(127, simpleStaticFieldsInstanceKlass.getValue(fieldValueIndex).value);
+        assertEquals(127, object.getValue(fieldValueIndex).value);
 
         fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("d:I");
         assertEquals(2, fieldValueIndex);
-        assertEquals(333, simpleStaticFieldsInstanceKlass.getValue(fieldValueIndex).value);
+        assertEquals(333, object.getValue(fieldValueIndex).value);
 
     }
 
     @Test
-    public void complexStaticFieldsInstanceKlassTest()  {
+    public void complexStaticFieldsInstanceKlassTest() {
         String fName = "jvm/examples/ComplexStatic";
-        Heap heap= HeapHolder.getHeap();
+        Heap heap = HeapHolder.getHeap();
         heap.getKlassLoader().loadKlass(fName);
 
         int complexStaticFieldsInstanceKlassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(fName, false);
         InstanceKlass complexStaticFieldsInstanceKlass = heap.getInstanceKlass(complexStaticFieldsInstanceKlassIndex);
+        InstanceObject object = heap.getInstanceObject(complexStaticFieldsInstanceKlass.getObjectRef());
         int fieldValueIndex = complexStaticFieldsInstanceKlass.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(888, complexStaticFieldsInstanceKlass.getValue(fieldValueIndex).value);
+        assertEquals(888, object.getValue(fieldValueIndex).value);
     }
 
     @Test
@@ -83,14 +85,14 @@ public class JVMExecutionTest {
         // check NEW, INVOKESPECIAL, PUTFIELD
         String fName = "jvm/examples/SimpleObject";
 
-        Heap heap= HeapHolder.getHeap();
+        Heap heap = HeapHolder.getHeap();
         heap.getKlassLoader().loadKlass(fName);
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m:()V");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         JVMValue result = new ExecutionEngine(heap).invoke(method);
 
-        InstanceObject simpleClassObject = heap.getInstanceObject(0);
+        InstanceObject simpleClassObject = heap.getInstanceObject(1);
 
         int fieldValueIndex = simpleClassObject.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
@@ -110,7 +112,7 @@ public class JVMExecutionTest {
         // check NEW, INVOKESPECIAL, PUTFIELD, GETFIELD
         String fName = "jvm/examples/SimpleObject";
 
-        Heap heap= HeapHolder.getHeap();
+        Heap heap = HeapHolder.getHeap();
         heap.getKlassLoader().loadKlass(fName);
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m2:()I");
@@ -124,7 +126,7 @@ public class JVMExecutionTest {
         // check NEW, INVOKESPECIAL, PUTFIELD, GETFIELD, INVOKEVIRTUAL
         String fName = "jvm/examples/SimpleObject";
 
-        Heap heap= HeapHolder.getHeap();
+        Heap heap = HeapHolder.getHeap();
         heap.getKlassLoader().loadKlass(fName);
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m3:()I");
@@ -138,7 +140,7 @@ public class JVMExecutionTest {
         // check NEW, INVOKESPECIAL, PUTFIELD, GETFIELD, INVOKEVIRTUAL
         String fName = "jvm/examples/ComplexObject";
 
-        Heap heap= HeapHolder.getHeap();
+        Heap heap = HeapHolder.getHeap();
         heap.getKlassLoader().loadKlass(fName);
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ComplexObject.m:()I");
@@ -151,7 +153,7 @@ public class JVMExecutionTest {
     public void complexStaticInheritanceTest() {
         String fName = "jvm/examples/ChildChildStatic";
 
-        Heap heap= HeapHolder.getHeap();
+        Heap heap = HeapHolder.getHeap();
         heap.getKlassLoader().loadKlass(fName);
 
         InstanceKlass parentStaticKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName("jvm/examples/ParentStatic", false));

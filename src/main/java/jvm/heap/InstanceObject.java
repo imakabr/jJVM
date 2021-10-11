@@ -2,7 +2,6 @@ package jvm.heap;
 
 import jvm.JVMType;
 import jvm.JVMValue;
-import jvm.parser.Field;
 
 import java.util.HashMap;
 import java.util.List;

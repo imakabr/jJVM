@@ -3,17 +3,19 @@ package jvm.heap;
 import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 import jvm.engine.ExecutionEngine;
-import jvm.JVMValue;
 import jvm.Utils;
 import jvm.parser.Method;
-import jvm.parser.Field;
 import jvm.parser.Klass;
 import jvm.parser.KlassParser;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class KlassLoader {
+
+    public static final String JAVA_LANG_OBJECT = "java/lang/Object";
+    public static final String CLASS_INIT = "<clinit>:()V";
+    public static final String OBJECT_INIT = "<init>";
+
 
     Map<String, Integer> indexByName; // index to Heap.instanceKlasses
     Map<String, Klass> loadedKlasses;
@@ -65,7 +67,7 @@ public class KlassLoader {
         byte[] klassData = Utils.getClassFileData(name);
         Klass constantPoolKlass = new KlassParser(klassData, name).getKlass();
         setConstantPoolKlassByName(constantPoolKlass.getKlassName(), constantPoolKlass);
-        if (!"java/lang/Object".equals(constantPoolKlass.getParent())) {
+        if (!JAVA_LANG_OBJECT.equals(constantPoolKlass.getParent())) {
             loadCurrentKlass(constantPoolKlass.getParent());
         }
     }
@@ -73,14 +75,14 @@ public class KlassLoader {
     private List<Method> prepareKlass(Klass constantPoolKlass) {
         List<Klass> klasses = new ArrayList<>();
         Klass current = constantPoolKlass;
-        while (!"java/lang/Object".equals(current.getParent())) {
+        while (!JAVA_LANG_OBJECT.equals(current.getParent())) {
             klasses.add(getLoadedKlassByName(current.getKlassName()));
             current = getLoadedKlassByName(current.getParent());
         }
         klasses.add(getLoadedKlassByName(current.getKlassName()));
         List<Method> clinitMethods = new ArrayList<>();
         for (int i = klasses.size() - 1; i >= 0; i--) {
-            Method method = prepareChildKlass(klasses.get(i));
+            Method method = prepareSubKlass(klasses.get(i));
             if (method != null) {
                 clinitMethods.add(method);
             }
@@ -88,7 +90,7 @@ public class KlassLoader {
         return clinitMethods;
     }
 
-    private Method prepareChildKlass(Klass constantPoolKlass) {
+    private Method prepareSubKlass(Klass constantPoolKlass) {
         Integer parentKlassIndex = getInstanceKlassIndexByName(constantPoolKlass.getParent(), false);
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
         List<String> allFields = new ArrayList<>();
@@ -106,12 +108,12 @@ public class KlassLoader {
         Collection<Method> methodsList = constantPoolKlass.getMethods();
         Method clInit = null;
         for (Method method : methodsList) {
-            if ("<clinit>:()V".equals(method.getNameAndType())) {
+            if (CLASS_INIT.equals(method.getNameAndType())) {
                 clInit = method;
                 continue;
             }
             int index = heap.getMethodRepo().setMethod(method);
-            if (!(method.getNameAndType().startsWith("<init>")) && !(method.isStatic()) && !(method.isPrivate())) {
+            if (!(method.getNameAndType().startsWith(OBJECT_INIT)) && !(method.isStatic()) && !(method.isPrivate())) {
                 virtualMethods.put(method.getNameAndType(), index);
             }
         }

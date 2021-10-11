@@ -48,7 +48,7 @@ public final class ExecutionEngine {
             int first;
             int second;
             int cpLookup;
-            int instanceKlassIndex;
+            int objectRef;
             int fieldValueIndex;
             int methodIndex;
             switch (op) {
@@ -120,11 +120,13 @@ public final class ExecutionEngine {
                 case GETSTATIC:
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
                     //---------------------------------------------------------------------------------
-                    // to do restore indexes for resolving
-                    instanceKlassIndex = getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup));
+
+                    // todo restore indexes for resolving
+                    objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup))).getObjectRef();
                     fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, cpLookup));
+
                     //---------------------------------------------------------------------------------
-                    stack.push(heap.getInstanceKlass(instanceKlassIndex).getValue(fieldValueIndex).value); // to do deal with type to JVMValue
+                    stack.push(heap.getInstanceObject(objectRef).getValue(fieldValueIndex).value); // to do deal with type to JVMValue
                     break;
                 //----------------------------------------------------------------------------------------------------------------------
                 case GOTO:
@@ -372,10 +374,10 @@ public final class ExecutionEngine {
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
                     //---------------------------------------------------------------------------------
                     // todo restore indexes for resolving
-                    instanceKlassIndex = getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup));
+                    objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup))).getObjectRef();
                     fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, cpLookup));
                     //----------------------------------------------------------------------------------
-                    heap.getInstanceKlass(instanceKlassIndex)
+                    heap.getInstanceObject(objectRef)
                             .setValue(fieldValueIndex, new JVMValue(JVMType.I, stack.pop())); // to do create type to JVMValue
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------------
