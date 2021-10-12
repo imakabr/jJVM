@@ -103,20 +103,28 @@ public class KlassLoader {
         setIndexByName(constantPoolKlass.getKlassName(), klassIndex);
         object.setKlassIndex(klassIndex);
 
+        Map<String, Integer> allStaticMethods = new HashMap<>(
+                parentKlass != null ? parentKlass.getAllIndexesByMethodName() : Collections.emptyMap());
+
         //find clinit and virtual methods
         Map<String, Integer> virtualMethods = new TreeMap<>();
-        Collection<Method> methodsList = constantPoolKlass.getMethods();
+        Collection<Method> methods = constantPoolKlass.getMethods();
         Method clInit = null;
-        for (Method method : methodsList) {
+        for (Method method : methods) {
             if (CLASS_INIT.equals(method.getNameAndType())) {
                 clInit = method;
                 continue;
             }
             int index = heap.getMethodRepo().setMethod(method);
+            if (method.isStatic()) {
+                allStaticMethods.put(method.getNameAndType(), index);
+            }
             if (!(method.getNameAndType().startsWith(OBJECT_INIT)) && !(method.isStatic()) && !(method.isPrivate())) {
                 virtualMethods.put(method.getNameAndType(), index);
             }
         }
+
+        instanceKlass.setAllIndexesByMethodName(allStaticMethods);
 
         //create and set virtualMethodTable
         List<String> methodNames = new ArrayList<>(virtualMethods.keySet());

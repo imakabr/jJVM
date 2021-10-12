@@ -150,7 +150,7 @@ public class JVMExecutionTest {
     }
 
     @Test
-    public void complexStaticInheritanceTest() {
+    public void complexStaticFieldInheritanceTest() {
         String fName = "jvm/examples/ChildChildStatic";
 
         Heap heap = HeapHolder.getHeap();
@@ -170,7 +170,17 @@ public class JVMExecutionTest {
         assertEquals(1, childChildStaticKlass.getIndexByFieldName("b:I"));
         assertEquals(2, childChildStaticKlass.getIndexByFieldName("c:I"));
         assertThrows(NullPointerException.class, () -> childChildStaticKlass.getIndexByFieldName("d:I"));
+    }
 
+    @Test
+    public void complexStaticMethodInheritanceTest() {
+        String fName = "jvm/examples/ChildChildStatic";
+        Heap heap = HeapHolder.getHeap();
+        heap.getKlassLoader().loadKlass(fName);
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ChildChildStatic.childChildMethod:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        JVMValue result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(45, result.value);
     }
 
 

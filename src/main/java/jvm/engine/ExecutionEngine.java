@@ -274,7 +274,7 @@ public final class ExecutionEngine {
                     break;
                 case INVOKESTATIC:
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
-                    methodIndex = getMethodIndex(klassName, cpLookup); // todo restore to resolution
+                    methodIndex = getStaticMethodIndex(klassName, cpLookup); // todo restore to resolution
                     method = heap.getMethodRepo().getMethod(methodIndex);
                     byteCode = method.getBytecode();
                     klassName = method.getClassName();
@@ -438,14 +438,17 @@ public final class ExecutionEngine {
         return getName(klassMethodName);
     }
 
+    private String getKlassName(String fullName) {
+        return fullName.substring(0, fullName.indexOf("."));
+    }
+
     private int getStaticFieldIndex(String klassFieldName) {
         return heap.getInstanceKlass(getInstanceKlassIndex(klassFieldName))
                 .getIndexByFieldName(getFieldName(klassFieldName));
     }
 
-    private int getInstanceKlassIndex(String klassFieldName) {
-        String klassName = klassFieldName.substring(0, klassFieldName.indexOf("."));
-        return heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
+    private int getInstanceKlassIndex(String fullName) {
+        return heap.getKlassLoader().getInstanceKlassIndexByName(getKlassName(fullName), true);
     }
 
     private String getKlassFieldName(String sourceKlassName, int cpLookup) {
@@ -462,11 +465,18 @@ public final class ExecutionEngine {
         return heap.getMethodRepo().getIndexByName(methodName);
     }
 
+    private int getStaticMethodIndex(String sourceKlassName, int cpIndex) {
+        Klass klass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
+        String klassMethodName = klass.getMethodNameByCPIndex((short) cpIndex);
+        InstanceKlass instanceKlass = heap.getInstanceKlass(getInstanceKlassIndex(klassMethodName));
+        return instanceKlass.getIndexByMethodName(getMethodName(klassMethodName));
+    }
+
     private int getVirtualMethodIndex(String sourceKlassName, int cpIndex, int klassIndex) {
         Klass klass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
         String fullName = klass.getMethodNameByCPIndex((short) cpIndex);
         InstanceKlass instanceKlass = heap.getInstanceKlass(klassIndex);
-        return instanceKlass.getIndexByMethodName(getMethodName(fullName));
+        return instanceKlass.getIndexByVirtualMethodName(getMethodName(fullName));
     }
 
     private int getArgSize(String sourceKlassName, int cpIndex) {

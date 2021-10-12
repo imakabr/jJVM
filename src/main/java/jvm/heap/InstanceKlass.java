@@ -1,7 +1,5 @@
 package jvm.heap;
 
-import jvm.JVMType;
-import jvm.JVMValue;
 import jvm.parser.Klass;
 
 import java.util.*;
@@ -10,6 +8,8 @@ public class InstanceKlass {
     private final int objectReference;
     //fields
     private final Map<String, Integer> indexByFieldName;
+    //methods
+    private Map<String, Integer> indexByMethodName;
     //virtual method table
     private int[] virtualMethodTable;
     private final Map<String, Integer> indexByVirtualMethodName;
@@ -25,6 +25,18 @@ public class InstanceKlass {
         for (int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
             indexByFieldName.put(fields.get(fieldIndex), fieldIndex);
         }
+    }
+
+    public int getIndexByMethodName(String methodName) {
+        return indexByMethodName.get(methodName);
+    }
+
+    public Map<String, Integer> getAllIndexesByMethodName() {
+        return indexByMethodName;
+    }
+
+    public void setAllIndexesByMethodName(Map<String, Integer> indexByFieldName) {
+        this.indexByMethodName = indexByFieldName;
     }
 
     public void setParentIndex(int parentIndex) {
@@ -71,7 +83,7 @@ public class InstanceKlass {
         return virtualMethodTable[virtualMethodIndex];
     }
 
-    public int getIndexByMethodName(String methodName) {
+    public int getIndexByVirtualMethodName(String methodName) {
         return indexByVirtualMethodName.get(methodName);
     }
 }
