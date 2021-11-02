@@ -35,66 +35,10 @@ public class ComplexObject {
         System.out.println(m());
     }
 
-    public static void m2() {
-        ChildComplexObject childComplexObject = new ChildComplexObject(5);
-    }
+
 }
 
-class ChildComplexObject extends ComplexObject {
-
-    public ChildComplexObject(int a) {
-        super(a);
-    }
-}
-
-class Print {
-    public Print(String str) {
-        System.out.println(str);
-    }
-}
-
-class Near {
-    static int a = Far.e;
-    static int aa = 6;
-    Print b = new Print("non static Near");
-    static Print c = new Print("static Near");
-    int it;
-
-    public static int nearMethod() {
-        return a;
-    }
 
 
-    public int getItNear() {
-        return getIt();
-    }
-    private int getIt() {
-        return it;
-    }
-}
-class Far extends Near {
-    Print d = new Print("non static Far");
-    static int e = 5;
-    static Print f = new Print("static Far");
-    int getItFar() {
-        return super.getItNear();
-    }
 
-    public static int farMethod() {
-        return e;
-    }
-
-    public static void m() {
-        Print f = new Far().b;
-    }
-
-    public static void main(String[] args) {
-        System.out.println(Far.a);
-    }
-}
-
-class Ex {
-    public static void main(String[] args) {
-    }
-}
 

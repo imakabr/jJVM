@@ -7,7 +7,11 @@ import jvm.heap.*;
 import jvm.parser.Method;
 import jvm.parser.Klass;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static jvm.engine.Opcode.*;
+import static jvm.heap.KlassLoader.JAVA_LANG_OBJECT;
 
 public final class ExecutionEngine {
 
@@ -492,8 +496,20 @@ public final class ExecutionEngine {
         Klass sourceKlass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
         String destKlassName = sourceKlass.getKlassNameByCPIndex((short) cpIndex);
         Klass destKlass = heap.getKlassLoader().getLoadedKlassByName(destKlassName);
-        return heap.getObjectRef(new InstanceObject(destKlass.getObjectFieldNames(),
-                heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, true)));
+        List<Klass> klasses = new ArrayList<>();
+        Klass current = destKlass;
+        while(!JAVA_LANG_OBJECT.equals(current.getParent())) {
+            klasses.add(heap.getKlassLoader().getLoadedKlassByName(current.getKlassName()));
+            current = heap.getKlassLoader().getLoadedKlassByName(current.getParent());
+        }
+        klasses.add(heap.getKlassLoader().getLoadedKlassByName(current.getKlassName()));
+        List<String> fields = new ArrayList<>();
+        for (int i = klasses.size() - 1; i >= 0; i--) {
+            fields.addAll(klasses.get(i).getObjectFieldNames());
+        }
+
+        return heap.getObjectRef(new InstanceObject(fields,
+                heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, false)));
     }
 
 }

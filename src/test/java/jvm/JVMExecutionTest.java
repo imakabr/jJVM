@@ -173,6 +173,25 @@ public class JVMExecutionTest {
     }
 
     @Test
+    public void complexObjectFieldInheritanceTest() {
+        String fName = "jvm/examples/ChildChildObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ChildChildObject.m:()V");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        JVMValue result = new ExecutionEngine(heap).invoke(method);
+
+        InstanceObject object = heap.getInstanceObject(1);
+
+        int fieldValueIndex = object.getIndexByFieldName("a:I");
+        assertEquals(0, fieldValueIndex);
+        assertEquals(11, object.getValue(fieldValueIndex).value);
+
+    }
+
+    @Test
     public void complexStaticMethodInheritanceTest() {
         String fName = "jvm/examples/ChildChildStatic";
         Heap heap = HeapHolder.getHeap();
