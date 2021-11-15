@@ -14,22 +14,23 @@ public class JVMExecutionTest {
     public void simpleStaticFieldsInstanceKlassTest() throws NoSuchFieldException, IllegalAccessException {
         String fName = "jvm/examples/SimpleStatic";
 
-        Heap heap = new Heap(500, 50);;
+        Heap heap = new Heap(500, 50);
+        ;
         heap.getKlassLoader().loadKlass(fName);
 
         InstanceKlass simpleStaticFieldsInstanceKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName(fName, false));
         InstanceObject object = heap.getInstanceObject(simpleStaticFieldsInstanceKlass.getObjectRef());
         int fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("b:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(555, object.getValue(fieldValueIndex).value);
+        assertEquals(555, getIntValue(object.getValue(fieldValueIndex)));
 
         fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("c:I");
         assertEquals(1, fieldValueIndex);
-        assertEquals(127, object.getValue(fieldValueIndex).value);
+        assertEquals(127, getIntValue(object.getValue(fieldValueIndex)));
 
         fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("d:I");
         assertEquals(2, fieldValueIndex);
-        assertEquals(333, object.getValue(fieldValueIndex).value);
+        assertEquals(333, getIntValue(object.getValue(fieldValueIndex)));
 
     }
 
@@ -44,7 +45,7 @@ public class JVMExecutionTest {
         InstanceObject object = heap.getInstanceObject(complexStaticFieldsInstanceKlass.getObjectRef());
         int fieldValueIndex = complexStaticFieldsInstanceKlass.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(888, object.getValue(fieldValueIndex).value);
+        assertEquals(888, getIntValue(object.getValue(fieldValueIndex)));
     }
 
     @Test
@@ -54,8 +55,8 @@ public class JVMExecutionTest {
         heap.getKlassLoader().loadKlass(fName);
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleStatic.m0:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        JVMValue result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(1015, result.value);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1015, result);
     }
 
     @Test
@@ -65,8 +66,8 @@ public class JVMExecutionTest {
         heap.getKlassLoader().loadKlass(fName);
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ComplexStatic.m:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        JVMValue result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(2569, result.value);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(2569, result);
     }
 
     @Test
@@ -79,21 +80,21 @@ public class JVMExecutionTest {
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m:()V");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        JVMValue result = new ExecutionEngine(heap).invoke(method);
+        long result = new ExecutionEngine(heap).invoke(method);
 
         InstanceObject simpleClassObject = heap.getInstanceObject(1);
 
         int fieldValueIndex = simpleClassObject.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(1, simpleClassObject.getValue(fieldValueIndex).value);
+        assertEquals(1, getIntValue(simpleClassObject.getValue(fieldValueIndex)));
 
         fieldValueIndex = simpleClassObject.getIndexByFieldName("b:I");
         assertEquals(1, fieldValueIndex);
-        assertEquals(2, simpleClassObject.getValue(fieldValueIndex).value);
+        assertEquals(2, getIntValue(simpleClassObject.getValue(fieldValueIndex)));
 
         fieldValueIndex = simpleClassObject.getIndexByFieldName("c:I");
         assertEquals(2, fieldValueIndex);
-        assertEquals(3, simpleClassObject.getValue(fieldValueIndex).value);
+        assertEquals(3, getIntValue(simpleClassObject.getValue(fieldValueIndex)));
     }
 
     @Test
@@ -106,8 +107,8 @@ public class JVMExecutionTest {
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m2:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        JVMValue result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(140, result.value);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(140, result);
     }
 
     @Test
@@ -120,8 +121,8 @@ public class JVMExecutionTest {
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m3:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        JVMValue result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(148, result.value);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(148, result);
     }
 
     @Test
@@ -134,8 +135,8 @@ public class JVMExecutionTest {
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ComplexObject.m:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        JVMValue result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(86, result.value);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(86, result);
     }
 
     @Test
@@ -170,13 +171,13 @@ public class JVMExecutionTest {
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ChildChildObject.m:()V");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        JVMValue result = new ExecutionEngine(heap).invoke(method);
+        long result = new ExecutionEngine(heap).invoke(method);
 
         InstanceObject object = heap.getInstanceObject(1);
 
         int fieldValueIndex = object.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(11, object.getValue(fieldValueIndex).value);
+        assertEquals(11, getIntValue(object.getValue(fieldValueIndex)));
 
     }
 
@@ -187,9 +188,16 @@ public class JVMExecutionTest {
         heap.getKlassLoader().loadKlass(fName);
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ChildChildStatic.childChildMethod:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        JVMValue result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(45, result.value);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(45, result);
     }
 
+    private int getIntValue(long value) {
+        int type = (int) (value >> 32);
+        if (type != JVMType.I.ordinal()) {
+            throw new ClassCastException();
+        }
+        return (int) value;
+    }
 
 }

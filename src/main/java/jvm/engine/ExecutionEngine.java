@@ -1,8 +1,6 @@
 package jvm.engine;
 
-
 import jvm.JVMType;
-import jvm.JVMValue;
 import jvm.heap.*;
 import jvm.parser.Method;
 import jvm.parser.Klass;
@@ -25,7 +23,7 @@ public final class ExecutionEngine {
         }
     }
 
-    public JVMValue invoke(Method firstMethod) {
+    public long invoke(Method firstMethod) {
 
         int programCounter = 0;
         Method[] stackMethod = new Method[100];
@@ -105,7 +103,7 @@ public final class ExecutionEngine {
                     break;
                 case BIPUSH:
                     //The immediate byte is sign-extended to an int value. That value is pushed onto the operand stack.
-                    stack.push((int) byteCode[programCounter++]);
+                    stack.push(setIntTypeValue(byteCode[programCounter++]));
                     break;
                 case DUP:
                     //Duplicate the top operand stack value
@@ -119,7 +117,7 @@ public final class ExecutionEngine {
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
                     object = heap.getInstanceObject((int) stack.pop());
                     fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup))); //todo restore index for resolving
-                    stack.push(object.getValue(fieldValueIndex).value);
+                    stack.push(object.getValue(fieldValueIndex));
                     break;
                 case GETSTATIC:
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
@@ -130,41 +128,38 @@ public final class ExecutionEngine {
                     fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, cpLookup));
 
                     //---------------------------------------------------------------------------------
-                    stack.push(heap.getInstanceObject(objectRef).getValue(fieldValueIndex).value); // to do deal with type to JVMValue
+                    stack.push(heap.getInstanceObject(objectRef).getValue(fieldValueIndex)); // to do deal with type to JVMValue
                     break;
                 //----------------------------------------------------------------------------------------------------------------------
                 case GOTO:
                     programCounter = ((int) byteCode[programCounter] << 8) + (int) byteCode[programCounter + 1];
                     break;
-                case I2D:
-                    throw new IllegalArgumentException("convert int to double");
-//                    break;
                 case IADD:
-                    stack.push(stack.pop() + stack.pop());
+                    stack.push(setIntTypeValue(getPureValue(stack.pop()) + getPureValue(stack.pop())));
                     break;
                 case IAND:
                     stack.push(stack.pop() & stack.pop());
                     break;
                 case ICONST_0:
-                    stack.push(0);
+                    stack.push(setIntTypeValue(0));
                     break;
                 case ICONST_1:
-                    stack.push(1);
+                    stack.push(setIntTypeValue(1));
                     break;
                 case ICONST_2:
-                    stack.push(2);
+                    stack.push(setIntTypeValue(2));
                     break;
                 case ICONST_3:
-                    stack.push(3);
+                    stack.push(setIntTypeValue(3));
                     break;
                 case ICONST_4:
-                    stack.push(4);
+                    stack.push(setIntTypeValue(4));
                     break;
                 case ICONST_5:
-                    stack.push(5);
+                    stack.push(setIntTypeValue(5));
                     break;
                 case ICONST_M1:
-                    stack.push(-1);
+                    stack.push(setIntTypeValue(-1));
                     break;
                 case IDIV:
                     first = (int) stack.pop();
@@ -315,8 +310,7 @@ public final class ExecutionEngine {
 //                    ----------------------------------------------------------------------------------------------------------------------------------
                 case IRETURN:
                     if (stack.invokeCount == 0) {
-                        int returnValue = (int) stack.pop();
-                        return JVMValue.entry(returnValue);
+                        return getPureValue(stack.pop());
                     }
                     method = stackMethod[--stackMethodPointer];
                     stackMethod[stackMethodPointer + 1] = null;
@@ -342,9 +336,9 @@ public final class ExecutionEngine {
                     stack.setLocalVar(3, stack.pop());
                     break;
                 case ISUB:
-                    first = (int) stack.pop();
-                    second = (int) stack.pop();
-                    stack.push(first - second);
+                    first = getPureValue(stack.pop());
+                    second = getPureValue(stack.pop());
+                    stack.push(setIntTypeValue(first - second));
                     break;
 
                 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -354,7 +348,7 @@ public final class ExecutionEngine {
                 //--------------------------------------------------------------------------------------------------------------------------------------
                 case NEW:
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
-                    stack.push(allocateInstanceObjectAndGetReference(klassName, cpLookup));
+                    stack.push(setRefTypeValue(allocateInstanceObjectAndGetReference(klassName, cpLookup)));
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------------
                 case NOP:
@@ -372,7 +366,7 @@ public final class ExecutionEngine {
                     value = stack.pop();
                     object = heap.getInstanceObject((int) stack.pop());
                     fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup))); //todo restore index for resolving
-                    object.setValue(fieldValueIndex, new JVMValue(JVMType.I, value));
+                    object.setValue(fieldValueIndex, value);
                     break;
                 case PUTSTATIC:
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
@@ -382,14 +376,14 @@ public final class ExecutionEngine {
                     fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, cpLookup));
                     //----------------------------------------------------------------------------------
                     heap.getInstanceObject(objectRef)
-                            .setValue(fieldValueIndex, new JVMValue(JVMType.I, stack.pop())); // to do create type to JVMValue
+                            .setValue(fieldValueIndex, stack.pop()); // to do create type to JVMValue
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------------
                 case RET:
                     throw new IllegalArgumentException("Illegal opcode byte: " + (b & 0xff) + " encountered at position " + (programCounter - 1) + ". Stopping.");
                 case RETURN:
                     if (stackMethodPointer == 0) {
-                        return null;
+                        return 0;
                     }
                     method = stackMethod[--stackMethodPointer];
                     stackMethod[stackMethodPointer + 1] = null;
@@ -400,7 +394,7 @@ public final class ExecutionEngine {
                     break;
                 //-----------------------------------------------------------------------------------------------------------------------------------------------
                 case SIPUSH:
-                    stack.push(((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++]);
+                    stack.push(setIntTypeValue(((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++]));
                     break;
                 case SWAP:
                     first = (int) stack.pop();
@@ -428,6 +422,22 @@ public final class ExecutionEngine {
                     System.exit(1);
             }
         }
+    }
+
+    private long setIntTypeValue(long value) {
+        return setTypeValue(JVMType.I.ordinal()) + value;
+    }
+
+    private long setRefTypeValue(long value) {
+        return setTypeValue(JVMType.A.ordinal()) + value;
+    }
+
+    private long setTypeValue(int type) {
+        return ((long) type << 32);
+    }
+
+    private int getPureValue(long value) {
+        return (int) value;
     }
 
     private String getName(String fullName) {
@@ -498,7 +508,7 @@ public final class ExecutionEngine {
         Klass destKlass = heap.getKlassLoader().getLoadedKlassByName(destKlassName);
         List<Klass> klasses = new ArrayList<>();
         Klass current = destKlass;
-        while(!JAVA_LANG_OBJECT.equals(current.getParent())) {
+        while (!JAVA_LANG_OBJECT.equals(current.getParent())) {
             klasses.add(heap.getKlassLoader().getLoadedKlassByName(current.getKlassName()));
             current = heap.getKlassLoader().getLoadedKlassByName(current.getParent());
         }
