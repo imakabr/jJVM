@@ -35,6 +35,29 @@ public class SimpleObject {
         return a + b + c + i + j;
     }
 
+    public int m4() {
+        int[] array = new int[13];
+        return array.length;
+    }
+
+    public int m5() {
+        SimpleObject[] simpleObject = new SimpleObject[36];
+        return simpleObject.length;
+    }
+
+    public int m6() {
+        int[] array = new int[3];
+        array[1] = 122;
+        return array[1];
+    }
+
+    public int m7() {
+        SimpleObject[] array = new SimpleObject[36];
+        array[7] = new SimpleObject(1,2,3);
+        SimpleObject simpleObject = array[7];
+        return simpleObject.b;
+    }
+
     public static void main(String[] args) {
         System.out.println(m3());
     }

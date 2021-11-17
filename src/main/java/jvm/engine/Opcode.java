@@ -8,7 +8,6 @@ public enum Opcode {
     ALOAD_2(0x2c),
     ALOAD_3(0x2d),
     ARETURN(0xb0),
-    AASTORE(0x53, 1),
     ASTORE_0(0x4b),
     ASTORE_1(0x4c),
     ASTORE_2(0x4d),
@@ -79,6 +78,21 @@ public enum Opcode {
     MONITORENTER(0xc2),
     MONITOREXIT(0xc3),
     NEW(0xbb, 2),
+    NEWARRAY(0xbc, 2),
+    ANEWARRAY(0xbd, 2),
+    ARRAYLENGTH(0xbe, 2),
+    AALOAD(0x32, 2), //ref array
+    BALOAD(0x33, 2), // byte or boolean array
+    CALOAD(0x34, 2), // char array
+    SALOAD(0x35, 2), // short array
+    IALOAD(0x2e, 2), // int array
+    LALOAD(0x2f, 2), // long array
+    LASTORE(0x50, 1), //long or boolean array
+    AASTORE(0x53, 1), //ref array
+    BASTORE(0x54, 1), //byte or boolean array
+    CASTORE(0x55, 1), //char or boolean array
+    SASTORE(0x56, 1), //short or boolean array
+    IASTORE(0x4f, 1), //int or boolean array
     JSR(0xa8, 2),
     JSR_W(0xc9, 2),
     LDC(0x12, 1),

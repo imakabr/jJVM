@@ -10,11 +10,13 @@ public class InstanceObject {
     private final long[] fieldValues;
     private final Map<String, Integer> indexByFieldName;
     private int klassIndex;
+    private final boolean array;
 
     public InstanceObject(List<String> fields, int klassIndex) {
         this.fieldValues = new long[fields.size()];
         this.indexByFieldName = new HashMap<>();
         this.klassIndex = klassIndex;
+        this.array = false;
         for (int fieldIndex = 0; fieldIndex < fieldValues.length; fieldIndex++) {
             String field = fields.get(fieldIndex);
             setDefaultValue(fieldIndex, field);
@@ -22,23 +24,40 @@ public class InstanceObject {
         }
     }
 
+    public InstanceObject(String type, int size) {
+        this.fieldValues = new long[size];
+        this.indexByFieldName = new HashMap<>();
+        this.array = true;
+        for (int index = 0; index < size; index++) {
+            setDefaultValue(index, type);
+        }
+    }
+
+    public boolean isArray() {
+        return array;
+    }
+
+    public int size() {
+        return fieldValues.length;
+    }
+
     private void setDefaultValue(int index, String field) {
         String t = field.substring(field.indexOf(':') + 1);
         int type = t.startsWith("L") ? JVMType.valueOf("A").ordinal() : JVMType.valueOf(t).ordinal();
-        fieldValues[index] = setTypeValue(type);
+        fieldValues[index] = setValueType(type);
     }
 
-    private long setTypeValue(int type) {
+    private long setValueType(int type) {
         return ((long) type << 32);
     }
 
-    private int getTypeValue(long value) {
+    private int getValueType(long value) {
         return (int) (value >> 32);
     }
 
     private void checkType(long firstValue, long secondValue) {
-        if (getTypeValue(firstValue) != getTypeValue(secondValue)) {
-            throw new RuntimeException("Wrong types: " + JVMType.values()[getTypeValue(firstValue)] + " is not equal " + JVMType.values()[getTypeValue(secondValue)]);
+        if (getValueType(firstValue) != getValueType(secondValue)) {
+            throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(firstValue)] + " is not equal " + JVMType.values()[getValueType(secondValue)]);
         }
     }
 

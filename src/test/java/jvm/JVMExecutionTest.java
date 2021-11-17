@@ -192,6 +192,62 @@ public class JVMExecutionTest {
         assertEquals(45, result);
     }
 
+    @Test
+    public void simpleIntArray() {
+        // check NEWARRAY, ARRAYLENGTH
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m4:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(13, result);
+    }
+
+    @Test
+    public void simpleObjectArray() {
+        // check ANEWARRAY, ARRAYLENGTH
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m5:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(36, result);
+    }
+
+    @Test
+    public void simpleIntArrayPutGet() {
+        // check ANEWARRAY, ARRAYLENGTH, IALOAD, IASTORE
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m6:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(122, result);
+    }
+
+    @Test
+    public void simpleObjectArrayPutGet() {
+        // check ANEWARRAY, ARRAYLENGTH, AALOAD, AASTORE
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m7:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(2, result);
+    }
+
     private int getIntValue(long value) {
         int type = (int) (value >> 32);
         if (type != JVMType.I.ordinal()) {
