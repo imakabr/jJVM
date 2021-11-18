@@ -248,6 +248,36 @@ public class JVMExecutionTest {
         assertEquals(2, result);
     }
 
+    @Test
+    public void simpleMultiArray() {
+        // check MULTIANEWARRAY, ARRAYLENGTH
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m8:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(3, result);
+    }
+
+    @Test
+    public void simpleMultiArrayPutGetInt() {
+        // check MULTIANEWARRAY, AALOAD, AASTORE
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m9:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(9, result);
+    }
+
+
+
     private int getIntValue(long value) {
         int type = (int) (value >> 32);
         if (type != JVMType.I.ordinal()) {

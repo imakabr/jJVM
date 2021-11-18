@@ -80,6 +80,7 @@ public enum Opcode {
     NEW(0xbb, 2),
     NEWARRAY(0xbc, 2),
     ANEWARRAY(0xbd, 2),
+    MULTIANEWARRAY(0xc5, 2),
     ARRAYLENGTH(0xbe, 2),
     AALOAD(0x32, 2), //ref array
     BALOAD(0x33, 2), // byte or boolean array

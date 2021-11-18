@@ -24,9 +24,10 @@ public class InstanceObject {
         }
     }
 
-    public InstanceObject(String type, int size) {
+    public InstanceObject(String type, int size, int klassIndex) {
         this.fieldValues = new long[size];
         this.indexByFieldName = new HashMap<>();
+        this.klassIndex = klassIndex;
         this.array = true;
         for (int index = 0; index < size; index++) {
             setDefaultValue(index, type);

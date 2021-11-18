@@ -58,6 +58,19 @@ public class SimpleObject {
         return simpleObject.b;
     }
 
+    public int m8() {
+        int[][][] array = new int[1][2][3];
+        return array[0][1].length;
+    }
+
+    public int m9() {
+        int[][][][] array = new int[1][2][3][4];
+        array[0][1][2][3] = 9;
+        return array[0][1][2][3];
+    }
+
+
+
     public static void main(String[] args) {
         System.out.println(m3());
     }

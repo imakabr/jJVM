@@ -283,10 +283,10 @@ public final class ExecutionEngine {
                 case INVOKEVIRTUAL:
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
                     int klassIndex = heap.getInstanceObject(
-                            getPureValue(
-                                    checkValueType(
-                                            JVMType.A,
-                                            stack.getObjectRefBeforeInvoke(getArgSize(klassName, cpLookup)))))
+                                    getPureValue(
+                                            checkValueType(
+                                                    JVMType.A,
+                                                    stack.getObjectRefBeforeInvoke(getArgSize(klassName, cpLookup)))))
                             .getKlassIndex();
                     int virtualMethodIndex = getVirtualMethodIndex(klassName, cpLookup, klassIndex); // todo restore to resolution
                     methodIndex = heap.getInstanceKlass(klassIndex).getMethodIndex(virtualMethodIndex);
@@ -365,16 +365,26 @@ public final class ExecutionEngine {
                         T_INT	    10
                         T_LONG	    11
                         */
-                    stack.push(setRefValueType(allocateArrayInstanceObjectAndGetReference(
+                    stack.push(setRefValueType(allocateArray(
                             JVMType.values()[atype - 3].name(),
                             getPureValue(stack.pop()))));
                     break;
                 case ANEWARRAY:
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
-                    stack.push(setRefValueType(allocateArrayInstanceObjectAndGetReference(
+                    stack.push(setRefValueType(allocateArrayOfRef(
                             klassName,
                             cpLookup,
                             getPureValue(stack.pop()))));
+                    break;
+                case MULTIANEWARRAY:
+                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    int[] dimensions = new int[byteCode[programCounter++]];
+                    for (int i = dimensions.length - 1; i >= 0; i--) {
+                        dimensions[i] = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    }
+                    object = allocateArrayOfRef(dimensions[0], -1);
+                    stack.push(setRefValueType(heap.getObjectRef(object)));
+                    createMultiArray(1, dimensions, object, getValueType(klassName, cpLookup));
                     break;
                 case ARRAYLENGTH:
                     object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
@@ -485,6 +495,18 @@ public final class ExecutionEngine {
         }
     }
 
+    private void createMultiArray(int indexDim, int[] dimensions, InstanceObject object, String type) {
+        for (int i = 0; i < object.size(); i++) {
+            if (indexDim == dimensions.length - 1) {
+                object.setValue(i, setRefValueType(allocateArray(type, dimensions[indexDim])));
+            } else {
+                InstanceObject newObject = allocateArrayOfRef(dimensions[indexDim], -1);
+                object.setValue(i, setRefValueType(heap.getObjectRef(newObject)));
+                createMultiArray(indexDim + 1, dimensions, newObject, type);
+            }
+        }
+    }
+
     private long checkValueType(JVMType type, long value) {
         if (getValueType(value) != type.ordinal()) {
             throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(value)] + " is not equal " + type.name());
@@ -500,6 +522,12 @@ public final class ExecutionEngine {
 
     private int getValueType(long value) {
         return (int) (value >> 32);
+    }
+
+    private String getValueType(String klassName, int cpLookup) {
+        Klass sourceKlass = heap.getKlassLoader().getLoadedKlassByName(klassName);
+        String des = sourceKlass.getKlassNameByCPIndex((short) cpLookup);
+        return des.substring(des.lastIndexOf('[') + 1);
     }
 
     private long setIntValueType(long value) {
@@ -601,19 +629,30 @@ public final class ExecutionEngine {
     }
 
 
-    private long allocateArrayInstanceObjectAndGetReference(String type, int count) {
-        return heap.getObjectRef(new InstanceObject(type, count));
+    private long allocateArray(String type, int count) {
+        int klassIndex = -1;
+        if (type.startsWith("L")) {
+            String klassName = type.substring(1, type.length() - 1);
+            klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(klassName, false);
+        }
+        return heap.getObjectRef(new InstanceObject(type, count, klassIndex));
     }
 
-    private long allocateArrayInstanceObjectAndGetReference(String sourceKlassName, int cpIndex, int count) {
+    private long allocateArrayOfRef(String sourceKlassName, int cpIndex, int count) {
         Klass sourceKlass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
         String destKlassName = sourceKlass.getKlassNameByCPIndex((short) cpIndex);
         Klass destKlass = heap.getKlassLoader().getLoadedKlassByName(destKlassName);
         if (destKlass == null) {
             throw new RuntimeException("Class is not found");
         }
-        return heap.getObjectRef(new InstanceObject(JVMType.A.name(), count));
+        int klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, false);
+        return heap.getObjectRef(allocateArrayOfRef(count, klassIndex));
     }
+
+    private InstanceObject allocateArrayOfRef(int count, int klassIndex) {
+        return new InstanceObject(JVMType.A.name(), count, klassIndex);
+    }
+
 
 }
 
