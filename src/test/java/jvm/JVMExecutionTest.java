@@ -276,7 +276,19 @@ public class JVMExecutionTest {
         assertEquals(9, result);
     }
 
+    @Test
+    public void simpleMultiArrayPutGetNull() {
+        // check MULTIANEWARRAY, AALOAD, AASTORE, ACONST_NULL, ARETURN
+        String fName = "jvm/examples/SimpleObject";
 
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m10:()Ljvm/examples/SimpleObject;");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(0, result);
+    }
 
     private int getIntValue(long value) {
         int type = (int) (value >> 32);

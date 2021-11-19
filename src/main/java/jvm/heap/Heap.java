@@ -7,7 +7,7 @@ public class Heap {
     private final MethodRepo methodRepo;
     private final KlassLoader klassLoader;
     private int klassIndex;
-    private int objectIndex;
+    private int objectIndex = 1; // 0 is null, so object indices begin with 1
 
     public Heap(int instancesSize, int klassesSize) {
         this.refTable = new ReferenceTable(instancesSize);

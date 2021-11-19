@@ -13,6 +13,8 @@ import static jvm.heap.KlassLoader.JAVA_LANG_OBJECT;
 
 public final class ExecutionEngine {
 
+    private final static int NULL = 0;
+
     private final Opcode[] table = new Opcode[256];
     private final Heap heap;
 
@@ -56,7 +58,7 @@ public final class ExecutionEngine {
             switch (op) {
                 case ACONST_NULL:
                     // push the null object reference onto the operand stack
-                    stack.push(0);
+                    stack.push(setRefValueType(NULL));
                     break;
                 case ALOAD:
                     // The objectref in the local variable at index is pushed onto the operand stack
@@ -80,6 +82,9 @@ public final class ExecutionEngine {
                     stack.push(reference);
                     break;
                 case ARETURN:
+                    if (stack.invokeCount == 0) {
+                        return getPureValue(checkValueType(JVMType.A, stack.pop()));
+                    }
                     method = stackMethod[--stackMethodPointer];
                     stackMethod[stackMethodPointer + 1] = null;
                     byteCode = method.getBytecode();

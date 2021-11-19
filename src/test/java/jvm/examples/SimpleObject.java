@@ -69,7 +69,11 @@ public class SimpleObject {
         return array[0][1][2][3];
     }
 
-
+    public SimpleObject m10() {
+        SimpleObject[][][][] array = new SimpleObject[1][2][3][4];
+        array[0][1][2][3] = null;
+        return array[0][1][2][3];
+    }
 
     public static void main(String[] args) {
         System.out.println(m3());
