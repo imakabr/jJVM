@@ -10,14 +10,21 @@ public final class Klass {
     private String name;
     private String superClass;
 
-    private final Map<Short, String> klassNamesByIndex = new HashMap<>();
-    private final Map<String, Method> methodsByName = new HashMap<>();
-    private final Map<Short, String> methodNamesByIndex = new HashMap<>();
+    private final Map<Short, String> klassNameByCPIndex = new HashMap<>();
+    private final Map<Short, String> methodNameByCPIndex = new HashMap<>();
+    private final Map<Short, String> fieldNameByCPIndex = new HashMap<>();
+
     private final List<Field> objectFields = new ArrayList<>();
     private final List<Field> staticFields = new ArrayList<>();
-    private final Map<Short, String> fieldNamesByCPIndex = new HashMap<>();
+
+    private final Map<String, Method> methodByName = new LinkedHashMap<>();
 
     public Klass() {
+    }
+
+    public Klass(String name, String superClassName) {
+        setKlassName(name);
+        setSuperClassName(superClassName);
     }
 
     public void setKlassName(String name) {
@@ -36,24 +43,30 @@ public final class Klass {
         return superClass;
     }
 
-    public void addDefinedMethod(Method m) {
-        methodsByName.put(m.getNameAndType(), m);
+    public void addMethod(Method m) {
+        methodByName.put(m.getNameAndType(), m);
+    }
+
+    public void addMethods(Method[] m) {
+        for (Method method : m) {
+            methodByName.put(method.getNameAndType(), method);
+        }
     }
 
     public void addCPMethodRef(short index, String methodName) {
-        methodNamesByIndex.put(index, methodName);
+        methodNameByCPIndex.put(index, methodName);
     }
 
     public void addCPKlassRef(short index, String methodName) {
-        klassNamesByIndex.put(index, methodName);
+        klassNameByCPIndex.put(index, methodName);
     }
 
     public Method getMethodByName(String nameAndType) {
-        return methodsByName.get(nameAndType);
+        return methodByName.get(nameAndType);
     }
 
     public Collection<Method> getMethods() {
-        return methodsByName.values();
+        return methodByName.values();
     }
 
     public List<Field> getStaticFields() {
@@ -65,11 +78,11 @@ public final class Klass {
     }
 
     public String getMethodNameByCPIndex(short cpIndex) {
-        return methodNamesByIndex.get(cpIndex);
+        return methodNameByCPIndex.get(cpIndex);
     }
 
     public String getKlassNameByCPIndex(short cpIndex) {
-        return klassNamesByIndex.get(cpIndex);
+        return klassNameByCPIndex.get(cpIndex);
     }
 
     public void addField(Field field) {
@@ -81,11 +94,11 @@ public final class Klass {
     }
 
     public void addCPFieldRef(short index, String name) {
-        fieldNamesByCPIndex.put(index, name);
+        fieldNameByCPIndex.put(index, name);
     }
 
     public String getFieldByCPIndex(short cpIndex) {
-        return fieldNamesByCPIndex.get(cpIndex);
+        return fieldNameByCPIndex.get(cpIndex);
     }
 
     public List<Field> getObjectFields() {

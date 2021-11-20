@@ -1,7 +1,5 @@
 package jvm.parser;
 
-import static jvm.engine.Opcode.*;
-
 
 public class Method {
 
@@ -21,10 +19,6 @@ public class Method {
     public int getVarSize() {
         return maxLocal;
     }
-
-    private static final byte[] JUST_RETURN = {RETURN.B()};
-
-    public static final Method OBJ_INIT = new Method("java/lang/Object", "()V", "<init>:()V", ParserConstants.ACC_PUBLIC, JUST_RETURN, 0, 0);
 
     public Method(String klassName, String signature, String nameType, int fls) {
         this(klassName, signature, nameType, fls, null, -1, -1);

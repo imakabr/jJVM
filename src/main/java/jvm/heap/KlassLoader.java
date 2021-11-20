@@ -4,6 +4,7 @@ import com.sun.istack.internal.NotNull;
 import com.sun.istack.internal.Nullable;
 import jvm.engine.ExecutionEngine;
 import jvm.Utils;
+import jvm.lang.Object;
 import jvm.parser.Method;
 import jvm.parser.Klass;
 import jvm.parser.KlassParser;
@@ -25,6 +26,7 @@ public class KlassLoader {
         this.indexByName = new HashMap<>();
         this.loadedKlasses = new HashMap<>();
         this.heap = heap;
+        prepareKlass(Object.getObjectKlass());
     }
 
     public void setIndexByName(String name, int index) {
@@ -54,7 +56,7 @@ public class KlassLoader {
 
     public void loadKlass(String name) {
         loadCurrentKlass(name);
-        List<Method> clInitMethods = prepareKlass(getLoadedKlassByName(name));
+        List<Method> clInitMethods = prepareCurrentAndInheritedKlasses(getLoadedKlassByName(name));
 
         //init Klass from top to bottom
         ExecutionEngine engine = new ExecutionEngine(heap);
@@ -72,7 +74,7 @@ public class KlassLoader {
         }
     }
 
-    private List<Method> prepareKlass(Klass constantPoolKlass) {
+    private List<Method> prepareCurrentAndInheritedKlasses(Klass constantPoolKlass) {
         List<Klass> klasses = new ArrayList<>();
         Klass current = constantPoolKlass;
         while (!JAVA_LANG_OBJECT.equals(current.getParent())) {
@@ -82,7 +84,7 @@ public class KlassLoader {
         klasses.add(getLoadedKlassByName(current.getKlassName()));
         List<Method> clinitMethods = new ArrayList<>();
         for (int i = klasses.size() - 1; i >= 0; i--) {
-            Method method = prepareSubKlass(klasses.get(i));
+            Method method = prepareKlass(klasses.get(i));
             if (method != null) {
                 clinitMethods.add(method);
             }
@@ -90,14 +92,16 @@ public class KlassLoader {
         return clinitMethods;
     }
 
-    private Method prepareSubKlass(Klass constantPoolKlass) {
+    private Method prepareKlass(Klass constantPoolKlass) {
         Integer parentKlassIndex = getInstanceKlassIndexByName(constantPoolKlass.getParent(), false);
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
         List<String> allFields = new ArrayList<>();
         allFields.addAll(parentKlass != null ? parentKlass.getOrderedFieldNames() : Collections.emptyList());
         allFields.addAll(constantPoolKlass.getStaticFieldNames());
         InstanceObject object = new InstanceObject(allFields, -1);
-        int objectRef = heap.changeObject(parentKlass != null ? parentKlass.getObjectRef() : -1, object);
+        int objectRef = heap.changeObject(parentKlass != null
+                && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
+                ? parentKlass.getObjectRef() : -1, object);
         InstanceKlass instanceKlass = new InstanceKlass(allFields, objectRef, constantPoolKlass);
         int klassIndex = heap.setInstanceKlass(instanceKlass);
         setIndexByName(constantPoolKlass.getKlassName(), klassIndex);

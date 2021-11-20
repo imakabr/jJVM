@@ -82,7 +82,7 @@ public class JVMExecutionTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
 
-        InstanceObject simpleClassObject = heap.getInstanceObject(1);
+        InstanceObject simpleClassObject = heap.getInstanceObject(2);
 
         int fieldValueIndex = simpleClassObject.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
@@ -173,7 +173,7 @@ public class JVMExecutionTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
 
-        InstanceObject object = heap.getInstanceObject(1);
+        InstanceObject object = heap.getInstanceObject(2);
 
         int fieldValueIndex = object.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
@@ -193,28 +193,28 @@ public class JVMExecutionTest {
     }
 
     @Test
-    public void simpleIntArray() {
+    public void createIntArrayAndGetLength() {
         // check NEWARRAY, ARRAYLENGTH
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(fName);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m4:()I");
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createIntArrayAndGetLength:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(13, result);
     }
 
     @Test
-    public void simpleObjectArray() {
+    public void createSimpleObjectArrayAndGetLength() {
         // check ANEWARRAY, ARRAYLENGTH
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(fName);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m5:()I");
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createSimpleObjectArrayAndGetLength:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(36, result);
@@ -228,63 +228,63 @@ public class JVMExecutionTest {
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(fName);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m6:()I");
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createIntArrayAndGetValueFromIt:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(122, result);
     }
 
     @Test
-    public void simpleObjectArrayPutGet() {
+    public void createSimpleObjectArrayAndGetValueFromIt() {
         // check ANEWARRAY, ARRAYLENGTH, AALOAD, AASTORE
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(fName);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m7:()I");
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createSimpleObjectArrayAndGetValueFromIt:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(2, result);
     }
 
     @Test
-    public void simpleMultiArray() {
+    public void createMultiIntArrayAndGetLength() {
         // check MULTIANEWARRAY, ARRAYLENGTH
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(fName);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m8:()I");
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createMultiIntArrayAndGetLength:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(3, result);
     }
 
     @Test
-    public void simpleMultiArrayPutGetInt() {
+    public void createMultiIntArrayAndGetValueFromIt() {
         // check MULTIANEWARRAY, AALOAD, AASTORE
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(fName);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m9:()I");
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createMultiIntArrayAndGetValueFromIt:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(9, result);
     }
 
     @Test
-    public void simpleMultiArrayPutGetNull() {
+    public void createMultiSimpleObjectArrayAndGetNullFromIt() {
         // check MULTIANEWARRAY, AALOAD, AASTORE, ACONST_NULL, ARETURN
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(fName);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m10:()Ljvm/examples/SimpleObject;");
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createMultiSimpleObjectArrayAndGetNullFromIt:()Ljvm/examples/SimpleObject;");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(0, result);

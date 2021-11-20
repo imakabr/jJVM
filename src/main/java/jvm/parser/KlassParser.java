@@ -204,7 +204,7 @@ public final class KlassParser {
                 parseMethodAttributes(method);
             }
 
-            klass.addDefinedMethod(method);
+            klass.addMethod(method);
 
         }
     }

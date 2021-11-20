@@ -44,6 +44,8 @@ public enum Opcode {
     ICONST_4(0x07),
     ICONST_5(0x08),
     IDIV(0x6c),
+    IF_ACMPEQ(0xa5),
+    IF_ACMPNE(0xa6),
     IF_ICMPEQ(0x9f, 2),
     IFEQ(0x99, 2),
     IFGE(0x9c, 2),
@@ -117,7 +119,7 @@ public enum Opcode {
         return opcode;
     }
 
-    public byte B() {
+    public byte b() {
         return (byte) opcode;
     }
 
