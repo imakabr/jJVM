@@ -70,6 +70,10 @@ public class Method {
         return (flags & ParserConstants.ACC_PRIVATE) > 0;
     }
 
+    public boolean isNative() {
+        return (flags & ParserConstants.ACC_NATIVE) > 0;
+    }
+
     public int getArgSize() {
         if (argSize > -1)
             return argSize;

@@ -7,9 +7,10 @@ import jvm.parser.Klass;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static jvm.engine.Opcode.*;
-import static jvm.heap.KlassLoader.JAVA_LANG_OBJECT;
+import static jvm.heap.KlassLoader.*;
 
 public final class ExecutionEngine {
 
@@ -262,10 +263,6 @@ public final class ExecutionEngine {
                 case INVOKESPECIAL:
                     cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
                     methodIndex = getMethodIndex(klassName, cpLookup); // todo restore to resolution
-                    if (methodIndex == -1) {
-                        stack.pop();
-                        break; // todo implement Object class
-                    }
                     method = heap.getMethodRepo().getMethod(methodIndex);
                     byteCode = method.getBytecode();
                     klassName = method.getClassName();
@@ -297,12 +294,16 @@ public final class ExecutionEngine {
                     methodIndex = heap.getInstanceKlass(klassIndex).getMethodIndex(virtualMethodIndex);
 
                     method = heap.getMethodRepo().getMethod(methodIndex);
-                    byteCode = method.getBytecode();
-                    klassName = method.getClassName();
-                    stackMethod[++stackMethodPointer] = method;
-                    stack.programCounter = programCounter;
-                    programCounter = 0;
-                    stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
+                    if (!method.isNative()) {
+                        byteCode = method.getBytecode();
+                        klassName = method.getClassName();
+                        stackMethod[++stackMethodPointer] = method;
+                        stack.programCounter = programCounter;
+                        programCounter = 0;
+                        stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
+                    } else {
+                        invokeNativeMethod(stack, method);
+                    }
                     break;
                 //------------------------------------------------------------------------------------------------------------------------------------------
                 case IOR:
@@ -500,6 +501,13 @@ public final class ExecutionEngine {
         }
     }
 
+    private void invokeNativeMethod(StackFrame stack, Method method) {
+        if ("hashCode:()I".equals(method.getNameAndType())) {
+            InstanceObject object1 = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
+            stack.push(setIntValueType(Objects.hashCode(object1)));
+        }
+    }
+
     private void createMultiArray(int indexDim, int[] dimensions, InstanceObject object, String type) {
         for (int i = 0; i < object.size(); i++) {
             if (indexDim == dimensions.length - 1) {
@@ -584,9 +592,6 @@ public final class ExecutionEngine {
     private int getMethodIndex(String sourceKlassName, int cpIndex) {
         Klass klass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
         String methodName = klass.getMethodNameByCPIndex((short) cpIndex);
-        if ("java/lang/Object.<init>:()V".equals(methodName)) {
-            return -1;
-        }
         return heap.getMethodRepo().getIndexByName(methodName);
     }
 
@@ -619,11 +624,11 @@ public final class ExecutionEngine {
         Klass destKlass = heap.getKlassLoader().getLoadedKlassByName(destKlassName);
         List<Klass> klasses = new ArrayList<>();
         Klass current = destKlass;
-        while (!JAVA_LANG_OBJECT.equals(current.getParent())) {
-            klasses.add(heap.getKlassLoader().getLoadedKlassByName(current.getKlassName()));
+        klasses.add(current);
+        while (!ABSENCE.equals(current.getParent())) {
             current = heap.getKlassLoader().getLoadedKlassByName(current.getParent());
+            klasses.add(current);
         }
-        klasses.add(heap.getKlassLoader().getLoadedKlassByName(current.getKlassName()));
         List<String> fields = new ArrayList<>();
         for (int i = klasses.size() - 1; i >= 0; i--) {
             fields.addAll(klasses.get(i).getObjectFieldNames());

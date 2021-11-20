@@ -75,6 +75,11 @@ public class SimpleObject {
         return array[0][1][2][3];
     }
 
+    public int createObjectGetHashCode() {
+        Object object = new Object();
+        return object.hashCode();
+    }
+
     public static void main(String[] args) {
         System.out.println(m3());
     }

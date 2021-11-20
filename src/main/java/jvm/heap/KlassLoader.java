@@ -14,6 +14,7 @@ import java.util.*;
 public class KlassLoader {
 
     public static final String JAVA_LANG_OBJECT = "java/lang/Object";
+    public static final String ABSENCE = "absence";
     public static final String CLASS_INIT = "<clinit>:()V";
     public static final String OBJECT_INIT = "<init>";
 
@@ -26,7 +27,13 @@ public class KlassLoader {
         this.indexByName = new HashMap<>();
         this.loadedKlasses = new HashMap<>();
         this.heap = heap;
-        prepareKlass(Object.getObjectKlass());
+        initObjectKlass();
+    }
+
+    private void initObjectKlass() {
+        Klass object = Object.getObjectKlass();
+        prepareKlass(object);
+        setConstantPoolKlassByName(object.getKlassName(), object);
     }
 
     public void setIndexByName(String name, int index) {

@@ -5,6 +5,8 @@ import jvm.heap.*;
 import jvm.parser.Method;
 import org.junit.Test;
 
+import java.util.Objects;
+
 import static org.junit.Assert.*;
 
 
@@ -289,6 +291,23 @@ public class JVMExecutionTest {
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(0, result);
     }
+
+    @Test
+    public void createObjectGetHashCode() {
+        // check MULTIANEWARRAY, AALOAD, AASTORE, ACONST_NULL, ARETURN
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createObjectGetHashCode:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        InstanceObject object = heap.getInstanceObject(2);
+        assertEquals(Objects.hashCode(object), result);
+    }
+
+
 
     private int getIntValue(long value) {
         int type = (int) (value >> 32);
