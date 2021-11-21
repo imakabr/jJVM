@@ -2,7 +2,7 @@ package jvm.examples;
 
 public class SimpleStatic {
     static int b = 555;
-    static int c = 129;
+    static int c = -129;
     static int d = 333;
 
     public static int m1(int number) {
