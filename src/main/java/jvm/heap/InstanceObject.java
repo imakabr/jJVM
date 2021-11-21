@@ -53,7 +53,8 @@ public class InstanceObject {
     }
 
     private int getValueType(long value) {
-        return (int) (value >> 32);
+        int type = (int) (value >> 32);
+        return Integer.signum(type) == -1 ? ~type : type;
     }
 
     private void checkType(long firstValue, long secondValue) {

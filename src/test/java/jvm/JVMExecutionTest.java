@@ -28,7 +28,7 @@ public class JVMExecutionTest {
 
         fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("c:I");
         assertEquals(1, fieldValueIndex);
-        assertEquals(127, getIntValue(object.getValue(fieldValueIndex)));
+        assertEquals(129, getIntValue(object.getValue(fieldValueIndex)));
 
         fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("d:I");
         assertEquals(2, fieldValueIndex);
@@ -58,7 +58,7 @@ public class JVMExecutionTest {
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleStatic.m0:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(1015, result);
+        assertEquals(1017, result);
     }
 
     @Test

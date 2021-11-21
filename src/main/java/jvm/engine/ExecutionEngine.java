@@ -372,7 +372,7 @@ public final class ExecutionEngine {
                         T_LONG	    11
                         */
                     stack.push(setRefValueType(allocateArray(
-                            JVMType.values()[atype - 3].name(),
+                            JVMType.values()[atype - 4].name(),
                             getPureValue(stack.pop()))));
                     break;
                 case ANEWARRAY:
@@ -534,7 +534,8 @@ public final class ExecutionEngine {
     }
 
     private int getValueType(long value) {
-        return (int) (value >> 32);
+        int type = (int) (value >> 32);
+        return Integer.signum(type) == -1 ? ~type : type;
     }
 
     private String getValueType(String klassName, int cpLookup) {
@@ -544,11 +545,11 @@ public final class ExecutionEngine {
     }
 
     private long setIntValueType(long value) {
-        return setValueType(JVMType.I.ordinal()) + value;
+        return setValueType(JVMType.I.ordinal()) ^ value;
     }
 
     private long setRefValueType(long value) {
-        return setValueType(JVMType.A.ordinal()) + value;
+        return setValueType(JVMType.A.ordinal()) ^ value;
     }
 
     private long setValueType(int type) {
