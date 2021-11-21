@@ -294,7 +294,6 @@ public class JVMExecutionTest {
 
     @Test
     public void createObjectGetHashCode() {
-        // check MULTIANEWARRAY, AALOAD, AASTORE, ACONST_NULL, ARETURN
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
@@ -306,6 +305,21 @@ public class JVMExecutionTest {
         InstanceObject object = heap.getInstanceObject(2);
         assertEquals(Objects.hashCode(object), result);
     }
+
+    @Test
+    public void createObjectGetOverriddenHashCode() {
+        // check LDC
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createObjectGetOverriddenHashCode:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(-1555573285, result);
+    }
+
 
 
 

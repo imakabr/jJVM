@@ -80,6 +80,16 @@ public class SimpleObject {
         return object.hashCode();
     }
 
+    public int createObjectGetOverriddenHashCode() {
+        SimpleObject object = new SimpleObject();
+        return object.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        return -1555573285;
+    }
+
     public static void main(String[] args) {
         System.out.println(m3());
     }

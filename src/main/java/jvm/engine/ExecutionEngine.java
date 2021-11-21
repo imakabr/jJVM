@@ -4,6 +4,7 @@ import jvm.JVMType;
 import jvm.heap.*;
 import jvm.parser.Method;
 import jvm.parser.Klass;
+import jvm.parser.ConstantPoolEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -471,7 +472,7 @@ public final class ExecutionEngine {
                     break;
                 //-----------------------------------------------------------------------------------------------------------------------------------------------
                 case SIPUSH:
-                    stack.push(setIntValueType(((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++]));
+                    stack.push(setIntValueType(((int) (byteCode[programCounter++]) << 8) + (byteCode[programCounter++] & 0xff)));
                     break;
                 case SWAP:
                     first = (int) stack.pop();
@@ -481,12 +482,16 @@ public final class ExecutionEngine {
                     break;
                 //-------------------------------------------------------------------------------------------------------------------------------------
                 case LDC:
-                    System.out.print("Executing " + op + " with param bytes: ");
-                    for (int i = programCounter; i < programCounter + num; i++) {
-                        System.out.print(byteCode[i] + " ");
+                    cpLookup = byteCode[programCounter++];
+                    ConstantPoolEntry entry = heap.getKlassLoader().getLoadedKlassByName(klassName).getCPItem(cpLookup - 1);
+                    switch (entry.getType()) {
+                        case INTEGER:
+                            stack.push(setIntValueType((Integer) entry.getNum()));
+                            break;
+                        case STRING:
+                            // todo implement String object
+                            break;
                     }
-                    programCounter += num;
-                    System.out.println();
                     break;
                 //-------------------------------------------------------------------------------------------------------------------------------------
                 case BREAKPOINT:

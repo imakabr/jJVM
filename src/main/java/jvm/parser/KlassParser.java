@@ -34,6 +34,7 @@ public final class KlassParser {
             table[cp.getValue()] = cp;
         }
         parse();
+        klass.setCPItems(items);
         for (ConstantPoolEntry cpe : items) {
             int classIndex, nameTypeIndex;
             String className, nameAndType;
@@ -181,11 +182,14 @@ public final class KlassParser {
     }
 
     private int read2Bytes() {
-        return ((int) clzBytes[current++] << 8) + (int) clzBytes[current++];
+        return (clzBytes[current++] << 8) + (clzBytes[current++] & 0xff);
     }
 
     private int read4Bytes() {
-        return read2Bytes() + read2Bytes();
+//        int result = ByteBuffer.wrap(clzBytes, current, 4).getInt();
+//        current += 4;
+//        return result;
+        return (clzBytes[current++] << 24) + ((clzBytes[current++] & 0xff) << 16) + ((clzBytes[current++] & 0xff) << 8) + (clzBytes[current++] & 0xff);
     }
 
     void parseMethods() {
@@ -211,7 +215,7 @@ public final class KlassParser {
 
     void parseFieldAttributes(Field field) {
         int nameCPIdx = read2Bytes();
-        int attrLen = read2Bytes() + read2Bytes();
+        int attrLen = read4Bytes();
         int endIndex = current + attrLen;
 
         String attributeType = getConstantPoolEntry(nameCPIdx).getStr();
@@ -220,7 +224,7 @@ public final class KlassParser {
 
     void parseMethodAttributes(Method method) {
         int nameCPIdx = read2Bytes();
-        int attrLen = read2Bytes() + read2Bytes();
+        int attrLen = read4Bytes();
         int endIndex = current + attrLen;
         String s = getConstantPoolEntry(nameCPIdx).getStr();
         if (!"Code".equals(s)) {

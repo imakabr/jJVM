@@ -10,6 +10,8 @@ public final class Klass {
     private String name;
     private String superClass;
 
+    private ConstantPoolEntry[] items;
+
     private final Map<Short, String> klassNameByCPIndex = new HashMap<>();
     private final Map<Short, String> methodNameByCPIndex = new HashMap<>();
     private final Map<Short, String> fieldNameByCPIndex = new HashMap<>();
@@ -25,6 +27,14 @@ public final class Klass {
     public Klass(String name, String superClassName) {
         setKlassName(name);
         setSuperClassName(superClassName);
+    }
+
+    public void setCPItems(ConstantPoolEntry[] items) {
+        this.items = items;
+    }
+
+    public ConstantPoolEntry getCPItem(int index) {
+        return items[index];
     }
 
     public void setKlassName(String name) {
