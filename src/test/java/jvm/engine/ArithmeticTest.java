@@ -92,11 +92,11 @@ public class ArithmeticTest {
 
     @Test
     public void IfEqual() {
-        byte[] byteCode = {ICONST_1.b(), ICONST_1.b(), IADD.b(), ICONST_2.b(), IF_ICMPEQ.b(), (byte) 0, (byte) 11, ICONST_4.b(), GOTO.b(), (byte) 0, (byte) 12, ICONST_3.b(), IRETURN.b()};
+        byte[] byteCode = {ICONST_1.b(), ICONST_1.b(), IADD.b(), ICONST_2.b(), IF_ICMPEQ.b(), (byte) 0, (byte) 7, ICONST_4.b(), GOTO.b(), (byte) 0, (byte) 4, ICONST_3.b(), IRETURN.b()};
         long res = engine.invoke(new Method("", "", "", 0, byteCode, 2, 0));
         assertEquals(3, (res));
 
-        byte[] byteCode2 = {ICONST_1.b(), ICONST_1.b(), IADD.b(), ICONST_3.b(), IF_ICMPEQ.b(), (byte) 0, (byte) 11, ICONST_4.b(), GOTO.b(), (byte) 0, (byte) 12, ICONST_3.b(), IRETURN.b()};
+        byte[] byteCode2 = {ICONST_1.b(), ICONST_1.b(), IADD.b(), ICONST_3.b(), IF_ICMPEQ.b(), (byte) 0, (byte) 7, ICONST_4.b(), GOTO.b(), (byte) 0, (byte) 4, ICONST_3.b(), IRETURN.b()};
         res = engine.invoke(new Method("", "", "", 0, byteCode2, 2, 0));
         assertEquals(4, (res));
     }

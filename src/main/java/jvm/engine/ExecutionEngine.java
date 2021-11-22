@@ -137,7 +137,7 @@ public final class ExecutionEngine {
                     break;
                 //----------------------------------------------------------------------------------------------------------------------
                 case GOTO:
-                    programCounter = ((int) byteCode[programCounter] << 8) + (int) byteCode[programCounter + 1];
+                    programCounter += (((int) byteCode[programCounter] << 8) + (int) byteCode[programCounter + 1]) - 1;
                     break;
                 case IADD:
                     stack.push(setIntValueType(getPureValue(stack.pop()) + getPureValue(stack.pop())));
@@ -172,12 +172,24 @@ public final class ExecutionEngine {
                     if (second == 0) throw new ArithmeticException("cannot divide 0");
                     stack.push(second / first);
                     break;
-                case IF_ICMPEQ:
-                    first = (int) stack.pop();
-                    second = (int) stack.pop();
+                case IF_ACMPNE:
                     jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
-                    if (first == second) {
-                        programCounter = jumpTo; // The -1 is necessary as we've already inc'd programCounter
+                    if (getPureValue(checkValueType(JVMType.A, stack.pop()))
+                            != getPureValue(checkValueType(JVMType.A, stack.pop()))) {
+                        programCounter += jumpTo - 3;
+                    }
+                    break;
+                case IF_ACMPEQ:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    if (getPureValue(checkValueType(JVMType.A, stack.pop()))
+                            == getPureValue(checkValueType(JVMType.A, stack.pop()))) {
+                        programCounter += jumpTo - 3;
+                    }
+                    break;
+                case IF_ICMPEQ:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    if (checkValueType(JVMType.I, stack.pop()) == checkValueType(JVMType.I, stack.pop())) {
+                        programCounter += jumpTo - 3;
                     }
                     break;
                 case IFEQ:

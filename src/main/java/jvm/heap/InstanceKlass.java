@@ -29,6 +29,14 @@ public class InstanceKlass {
         }
     }
 
+    public Map<String, Integer> getVirtualMethods() {
+        Map<String, Integer> result = new HashMap<>();
+        for (Map.Entry<String, Integer> entry : indexByVirtualMethodName.entrySet()) {
+            result.put(entry.getKey(), virtualMethodTable[entry.getValue()]);
+        }
+        return result;
+    }
+
     public String getName() {
         return name;
     }

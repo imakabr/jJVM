@@ -320,6 +320,90 @@ public class JVMExecutionTest {
         assertEquals(-1555573285, result);
     }
 
+    @Test
+    public void checkDifferentSimpleObjectWithEqualsMethod() {
+        // check IF_ACMPNE
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkDifferentSimpleObjectWithEqualsMethod:()Z");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(0, result);
+    }
+
+    @Test
+    public void checkSameSimpleObjectWithEqualsMethod() {
+        // check IF_ACMPNE
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkSameSimpleObjectWithEqualsMethod:()Z");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkDifferentObjectsAreNotEqual() {
+        // check IF_ACMPEQ
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkDifferentObjectsAreNotEqual:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(0, result);
+    }
+
+    @Test
+    public void checkSameObjectsAreEqual() {
+        // check IF_ACMPEQ
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkSameObjectsAreEqual:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkSameIntAreEqual() {
+        // check IF_ICMPEQ
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkSameIntAreEqual:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkSameIntAreNotEqual() {
+        // check IF_ICMPEQ
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIntAreNotEqual:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
 
 
 

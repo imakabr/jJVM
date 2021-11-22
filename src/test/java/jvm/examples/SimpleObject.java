@@ -85,6 +85,67 @@ public class SimpleObject {
         return object.hashCode();
     }
 
+    public boolean checkDifferentSimpleObjectWithEqualsMethod() {
+        SimpleObject object = new SimpleObject();
+        SimpleObject object2 = new SimpleObject();
+        return object.equals(object2);
+    }
+
+    public boolean checkSameSimpleObjectWithEqualsMethod() {
+        SimpleObject object = new SimpleObject();
+        SimpleObject object2 = object;
+        return object.equals(object2);
+    }
+
+    public int checkDifferentObjectsAreNotEqual() {
+        SimpleObject object = new SimpleObject();
+        SimpleObject object2 = new SimpleObject();
+        int result = -1;
+        if (object != object2) {
+            result = 0;
+        } else {
+            result = 1;
+        }
+        return result;
+    }
+
+    public int checkSameObjectsAreEqual() {
+        SimpleObject object = new SimpleObject();
+        SimpleObject object2 = object;
+        int result = -1;
+        if (object != object2) {
+            result = 0;
+        } else {
+            result = 1;
+        }
+        return result;
+    }
+
+    public int checkSameIntAreEqual() {
+        int a = 5;
+        int b = 5;
+        int i = -1;
+        if (a != b) {
+            int c = 2;
+            i = c + 243555;
+        } else {
+            i = 1;
+        }
+        return i;
+    }
+
+    public int checkIntAreNotEqual() {
+        int a = 6;
+        int b = 5;
+        int i = -1;
+        if (a != b) {
+            i = 1;
+        } else {
+            i = 0;
+        }
+        return i;
+    }
+
     @Override
     public int hashCode() {
         return -1555573285;
