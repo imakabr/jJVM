@@ -409,7 +409,7 @@ public class JVMExecutionTest {
 
     private int getIntValue(long value) {
         int type = (int) (value >> 32);
-        type = Integer.signum(type) == -1 ? ~type : type;
+        type = type >>> 31 == 1 ? ~type : type; // if 'type >>> 31 == 1' (negative sign) type was inverted
         if (type != JVMType.I.ordinal()) {
             throw new RuntimeException("Value type is not int");
         }

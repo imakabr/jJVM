@@ -54,7 +54,7 @@ public class InstanceObject {
 
     private int getValueType(long value) {
         int type = (int) (value >> 32);
-        return Integer.signum(type) == -1 ? ~type : type;
+        return type >>> 31 == 1 ? ~type : type; // if 'type >>> 31 == 1' (negative sign) type was inverted
     }
 
     private void checkType(long firstValue, long secondValue) {
