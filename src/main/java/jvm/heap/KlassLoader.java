@@ -1,7 +1,5 @@
 package jvm.heap;
 
-import com.sun.istack.internal.NotNull;
-import com.sun.istack.internal.Nullable;
 import jvm.engine.ExecutionEngine;
 import jvm.Utils;
 import jvm.lang.Object;
@@ -9,6 +7,8 @@ import jvm.parser.Method;
 import jvm.parser.Klass;
 import jvm.parser.KlassParser;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class KlassLoader {
@@ -72,7 +72,7 @@ public class KlassLoader {
         }
     }
 
-    private void loadCurrentKlass(@NotNull String name) {
+    private void loadCurrentKlass(@Nonnull String name) {
         byte[] klassData = Utils.getClassFileData(name);
         Klass constantPoolKlass = new KlassParser(klassData, name).getKlass();
         setConstantPoolKlassByName(constantPoolKlass.getKlassName(), constantPoolKlass);
