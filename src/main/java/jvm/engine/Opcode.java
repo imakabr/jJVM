@@ -53,6 +53,7 @@ public enum Opcode {
     IFLE(0x9e, 2),
     IFLT(0x9b, 2),
     IFNE(0x9a, 2),
+    CHECKCAST(0xc0, 2),
     IFNONNULL(0xc7, 2),
     IFNULL(0xc6, 2),
     IINC(0x84, 2),

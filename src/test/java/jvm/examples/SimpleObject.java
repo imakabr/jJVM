@@ -85,16 +85,84 @@ public class SimpleObject {
         return object.hashCode();
     }
 
-    public boolean checkDifferentSimpleObjectWithEqualsMethod() {
-        SimpleObject object = new SimpleObject();
-        SimpleObject object2 = new SimpleObject();
+    public boolean checkDifferentObjectWithEqualsMethod() {
+        Object object = new Object();
+        Object object2 = new Object();
+        return object.equals(object2);
+    }
+
+    public boolean checkSameObjectWithEqualsMethod() {
+        Object object = new Object();
+        Object object2 = object;
         return object.equals(object2);
     }
 
     public boolean checkSameSimpleObjectWithEqualsMethod() {
-        SimpleObject object = new SimpleObject();
-        SimpleObject object2 = object;
+        Object object = new SimpleObject(1,2,3);
+        Object object2 = new SimpleObject(1,2,3);
         return object.equals(object2);
+    }
+
+    public int checkSimpleCastMethod() {
+        Object object = new SimpleObject(1,2,3);
+        SimpleObject simpleObject = (SimpleObject) object;
+        return simpleObject.a;
+    }
+
+    public int checkComplexCastMethod() {
+        ChildChildObject object = new ChildChildObject();
+        ParentObject simpleObject = (ParentObject) object;
+        return simpleObject.a;
+    }
+
+    public int checkComplexCastMethod2() {
+        Object object = new ParentObject();
+        SimpleObject simpleObject = (SimpleObject) object;
+        return 1;
+    }
+
+    public int checkIfObjectNullMethod() {
+        Object object = new SimpleObject(1,2,3);
+        if (object == null) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public int checkIfObjectNullMethod2() {
+        Object object = null;
+        if (object == null) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public int checkIfObjectNonNullMethod() {
+        Object object = new SimpleObject(1,2,3);
+        if (object != null) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public int checkIfObjectNonNullMethod2() {
+        Object object = null;
+        if (object != null) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+        SimpleObject that = (SimpleObject) o;
+        return a == that.a && b == that.b && c == that.c;
     }
 
     public int checkDifferentObjectsAreNotEqual() {

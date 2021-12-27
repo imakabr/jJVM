@@ -2,10 +2,13 @@ package jvm.engine;
 
 import jvm.JVMType;
 import jvm.heap.*;
+import jvm.lang.KlassCastException;
 import jvm.parser.Method;
 import jvm.parser.Klass;
 import jvm.parser.ConstantPoolEntry;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -42,7 +45,14 @@ public final class ExecutionEngine {
             byte b = byteCode[programCounter++];
             Opcode op = table[b & 0xff];
             if (op == null) {
-                throw new RuntimeException("Unrecognised opcode byte: " + (b & 0xff) + " encountered at position " + (programCounter - 1) + ". Stopping.");
+                throw new RuntimeException("Unrecognised opcode byte: "
+                        + (b & 0xff)
+                        + " encountered at position "
+                        + (programCounter - 1)
+                        + ". Stopping."
+                        + "\n"
+                        + "\n"
+                        + getStackTrace(stackMethod, stackMethodPointer, null,true));
             }
             int jumpTo;
 
@@ -135,6 +145,23 @@ public final class ExecutionEngine {
                     stack.push(heap.getInstanceObject(objectRef).getValue(fieldValueIndex)); // to do deal with type to JVMValue
                     break;
                 //----------------------------------------------------------------------------------------------------------------------
+                case CHECKCAST:
+                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    objectRef = getPureValue(checkValueType(JVMType.A, stack.pop()));
+                    object = heap.getInstanceObject(objectRef);
+                    String castKlassName = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
+                    Klass klass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
+                    if (!checkCast(klass, castKlassName)) {
+                        throw new KlassCastException("\n"
+                                + klass.getKlassName().replace("/", ".")
+                                + " can not cast to "
+                                + castKlassName.replace("/", ".")
+                                + "\n"
+                                + "\n"
+                                + getStackTrace(stackMethod, stackMethodPointer, null, false));
+                    }
+                    stack.push(setRefValueType(objectRef));
+                    break;
                 case GOTO:
                     programCounter += (((int) byteCode[programCounter] << 8) + (int) byteCode[programCounter + 1]) - 1;
                     break;
@@ -236,8 +263,16 @@ public final class ExecutionEngine {
 
                 //---------------------------------------------------------------------------------------------------------------------------
                 case IFNONNULL:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    if (getPureValue(checkValueType(JVMType.A, stack.pop())) != 0) {
+                        programCounter += jumpTo - 3;
+                    }
                     break;
                 case IFNULL:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    if (getPureValue(checkValueType(JVMType.A, stack.pop())) == 0) {
+                        programCounter += jumpTo - 3;
+                    }
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------
                 case IINC:
@@ -512,10 +547,35 @@ public final class ExecutionEngine {
                 case JSR_W:
                 default:
                     System.err.println("Saw " + op + " - that can't happen. Stopping.");
-                    System.err.println(stackMethod[stackMethodPointer]);
+                    System.err.println(getStackTrace(stackMethod, stackMethodPointer, op, true));
                     System.exit(1);
             }
         }
+    }
+
+    @Nonnull
+    private String getStackTrace(@Nonnull Method[] stackMethod, int pointer, @Nullable Opcode opcode, boolean showMnemonics) {
+        StringBuilder stackTrace = new StringBuilder();
+        for (int i = pointer; i >= 0; i--) {
+            Method method = stackMethod[i];
+            stackTrace.append("at ")
+                    .append(method.getClassName())
+                    .append(".")
+                    .append(method.getNameAndType())
+                    .append(i == pointer && opcode != null ? " " + opcode : "")
+                    .append("\n")
+                    .append(showMnemonics ? method.getMnemonics() + "\n" : "");
+        }
+        return stackTrace.toString().replace("/", ".");
+    }
+
+    private boolean checkCast(@Nonnull Klass klass, @Nonnull String castKlassName) {
+        String klassName = klass.getKlassName();
+        if (JAVA_LANG_OBJECT.equals(klassName)) {
+            return castKlassName.equals(klassName);
+        }
+        Klass parentKlass = heap.getKlassLoader().getLoadedKlassByName(klass.getParent());
+        return castKlassName.equals(klassName) || checkCast(parentKlass, castKlassName);
     }
 
     private void invokeNativeMethod(StackFrame stack, Method method) {

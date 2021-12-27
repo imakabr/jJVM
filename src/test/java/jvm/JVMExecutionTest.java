@@ -2,6 +2,7 @@ package jvm;
 
 import jvm.engine.ExecutionEngine;
 import jvm.heap.*;
+import jvm.lang.KlassCastException;
 import jvm.parser.Method;
 import org.junit.Test;
 
@@ -321,17 +322,31 @@ public class JVMExecutionTest {
     }
 
     @Test
-    public void checkDifferentSimpleObjectWithEqualsMethod() {
+    public void checkDifferentObjectWithEqualsMethod() {
         // check IF_ACMPNE
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(fName);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkDifferentSimpleObjectWithEqualsMethod:()Z");
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkDifferentObjectWithEqualsMethod:()Z");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(0, result);
+    }
+
+    @Test
+    public void checkSameObjectWithEqualsMethod() {
+        // check IF_ACMPNE
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkSameObjectWithEqualsMethod:()Z");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
     }
 
     @Test
@@ -402,6 +417,103 @@ public class JVMExecutionTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(1, result);
+    }
+
+    @Test
+    public void checkNonNullMethod() {
+        // check IFNONNULL
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIfObjectNullMethod:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(0, result);
+    }
+
+    @Test
+    public void checkNonNullMethodReverse() {
+        // check IFNONNULL
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIfObjectNullMethod2:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkNullMethod() {
+        // check IFNULL
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIfObjectNonNullMethod:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkNullMethodReverse() {
+        // check IFNULL
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIfObjectNonNullMethod2:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(0, result);
+    }
+
+    @Test
+    public void checkCastMethod() {
+        // check CHECKCAST
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkSimpleCastMethod:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkComplexCastMethod() {
+        // check CHECKCAST
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkComplexCastMethod:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(11, result);
+    }
+
+    @Test
+    public void checkComplexCastMethod2() {
+        // check CHECKCAST
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkComplexCastMethod2:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        assertThrows("Should throw KlassCastException", KlassCastException.class, () -> new ExecutionEngine(heap).invoke(method));
     }
 
 

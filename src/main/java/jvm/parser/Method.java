@@ -153,6 +153,10 @@ public class Method {
         return bytecode;
     }
 
+    public String getMnemonics() {
+        return mnemonics;
+    }
+
     @Override
     public String toString() {
         return "Method{" + "className=" + className + ", nameAndType=" + nameAndType + ", bytecode=" + mnemonics + ", signature=" + signature + ", flags=" + flags + ", numParams=" + argSize + '}';
