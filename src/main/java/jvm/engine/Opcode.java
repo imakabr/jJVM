@@ -44,8 +44,8 @@ public enum Opcode {
     ICONST_4(0x07),
     ICONST_5(0x08),
     IDIV(0x6c),
-    IF_ACMPEQ(0xa5),
-    IF_ACMPNE(0xa6),
+    IF_ACMPEQ(0xa5, 2),
+    IF_ACMPNE(0xa6, 2),
     IF_ICMPEQ(0x9f, 2),
     IFEQ(0x99, 2),
     IFGE(0x9c, 2),
@@ -84,18 +84,18 @@ public enum Opcode {
     ANEWARRAY(0xbd, 2),
     MULTIANEWARRAY(0xc5, 2),
     ARRAYLENGTH(0xbe, 2),
-    AALOAD(0x32, 2), //ref array
-    BALOAD(0x33, 2), // byte or boolean array
-    CALOAD(0x34, 2), // char array
-    SALOAD(0x35, 2), // short array
-    IALOAD(0x2e, 2), // int array
-    LALOAD(0x2f, 2), // long array
-    LASTORE(0x50, 1), //long or boolean array
-    AASTORE(0x53, 1), //ref array
-    BASTORE(0x54, 1), //byte or boolean array
-    CASTORE(0x55, 1), //char or boolean array
-    SASTORE(0x56, 1), //short or boolean array
-    IASTORE(0x4f, 1), //int or boolean array
+    AALOAD(0x32, 0), //ref array
+    BALOAD(0x33, 0), // byte or boolean array
+    CALOAD(0x34, 0), // char array
+    SALOAD(0x35, 0), // short array
+    IALOAD(0x2e, 0), // int array
+    LALOAD(0x2f, 0), // long array
+    LASTORE(0x50, 0), //long or boolean array
+    AASTORE(0x53, 0), //ref array
+    BASTORE(0x54, 0), //byte or boolean array
+    CASTORE(0x55, 0), //char or boolean array
+    SASTORE(0x56, 0), //short or boolean array
+    IASTORE(0x4f, 0), //int or boolean array
     JSR(0xa8, 2),
     JSR_W(0xc9, 2),
     LDC(0x12, 1),
@@ -109,7 +109,7 @@ public enum Opcode {
     SIPUSH(0x11, 2),
     SWAP(0x5f);
 
-    public byte numParams() {
+    public byte getNumParams() {
         return numParams;
     }
     private final int opcode;

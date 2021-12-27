@@ -44,7 +44,6 @@ public final class ExecutionEngine {
             if (op == null) {
                 throw new RuntimeException("Unrecognised opcode byte: " + (b & 0xff) + " encountered at position " + (programCounter - 1) + ". Stopping.");
             }
-            byte num = op.numParams();
             int jumpTo;
 
             InstanceObject object;
@@ -513,6 +512,7 @@ public final class ExecutionEngine {
                 case JSR_W:
                 default:
                     System.err.println("Saw " + op + " - that can't happen. Stopping.");
+                    System.err.println(stackMethod[stackMethodPointer]);
                     System.exit(1);
             }
         }

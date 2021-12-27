@@ -1,6 +1,13 @@
 package jvm.parser;
 
 
+import jvm.engine.Opcode;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import static jvm.engine.Opcode.values;
+
 public class Method {
 
     private final String className;
@@ -11,6 +18,7 @@ public class Method {
     private int maxStack;
     private int maxLocal;
     private int argSize = -1;
+    private String mnemonics;
 
     public int getOperandSize() {
         return maxStack;
@@ -24,7 +32,7 @@ public class Method {
         this(klassName, signature, nameType, fls, null, -1, -1);
     }
 
-    public Method(String klassName, String signature, String nameType, int fls, byte[] buf, int maxStack, int maxLocal) {
+    public Method(String klassName, String signature, String nameType, int fls, @Nullable byte[] buf, int maxStack, int maxLocal) {
         this.signature = signature;
         this.nameAndType = nameType;
         this.flags = fls;
@@ -32,6 +40,36 @@ public class Method {
         this.maxStack = maxStack;
         this.bytecode = buf;
         this.maxLocal = maxLocal;
+        this.mnemonics = getMnemonics(buf);
+    }
+
+    @Nonnull
+    private String getMnemonics(@Nullable byte[] byteCode) {
+        if (byteCode == null) {
+            return "";
+        }
+        Opcode[] table = new Opcode[256];
+        for (Opcode op : values()) {
+            table[op.getOpcode()] = op;
+        }
+        int pointer = 0;
+        StringBuilder result = new StringBuilder();
+        result.append("| ");
+        while (pointer < byteCode.length) {
+            if (pointer != 0) {
+                result.append(" | ");
+            }
+            byte b = byteCode[pointer++];
+            Opcode op = table[b & 0xff];
+            if (op != null) {
+                pointer += op.getNumParams();
+                result.append(op);
+            } else {
+                result.append("ERROR");
+            }
+        }
+        result.append(" |");
+        return result.toString();
     }
 
     public void setMaxStack(int maxStack) {
@@ -44,6 +82,7 @@ public class Method {
 
     public void setBytecode(byte[] bytecode) {
         this.bytecode = bytecode;
+        this.mnemonics = getMnemonics(bytecode);
     }
 
     public String getClassName() {
@@ -116,7 +155,7 @@ public class Method {
 
     @Override
     public String toString() {
-        return "Method{" + "className=" + className + ", nameAndType=" + nameAndType + ", bytecode=" + bytecode + ", signature=" + signature + ", flags=" + flags + ", numParams=" + argSize + '}';
+        return "Method{" + "className=" + className + ", nameAndType=" + nameAndType + ", bytecode=" + mnemonics + ", signature=" + signature + ", flags=" + flags + ", numParams=" + argSize + '}';
     }
 
 
