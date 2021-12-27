@@ -127,7 +127,7 @@ public class SimpleObject {
         return 1;
     }
 
-    public int checkIfObjectNullMethod() {
+    public int checkIFNONNULLFalse() {
         Object object = new SimpleObject(1,2,3);
         if (object == null) {
             return 1;
@@ -136,7 +136,7 @@ public class SimpleObject {
         }
     }
 
-    public int checkIfObjectNullMethod2() {
+    public int checkIFNONNULLTrue() {
         Object object = null;
         if (object == null) {
             return 1;
@@ -145,7 +145,7 @@ public class SimpleObject {
         }
     }
 
-    public int checkIfObjectNonNullMethod() {
+    public int checkIFNULLTrue() {
         Object object = new SimpleObject(1,2,3);
         if (object != null) {
             return 1;
@@ -154,9 +154,49 @@ public class SimpleObject {
         }
     }
 
-    public int checkIfObjectNonNullMethod2() {
+    public int checkIFNULLFalse() {
         Object object = null;
         if (object != null) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public int checkIFICMPLT() {
+        int a = 10;
+        int b = 2;
+        if (a >= b) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public int checkIFICMPGT() {
+        int a = 2;
+        int b = 1;
+        if (a <= b) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public int checkIFICMPGE() {
+        int a = 2;
+        int b = 10;
+        if (a < b) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public int checkIFICMPLE() {
+        int a = 2;
+        int b = 10;
+        if (a > b) {
             return 1;
         } else {
             return 0;
@@ -171,7 +211,7 @@ public class SimpleObject {
         return a == that.a && b == that.b && c == that.c;
     }
 
-    public int checkDifferentObjectsAreNotEqual() {
+    public int checkIFACMPEQTrue() {
         SimpleObject object = new SimpleObject();
         SimpleObject object2 = new SimpleObject();
         int result = -1;
@@ -183,7 +223,7 @@ public class SimpleObject {
         return result;
     }
 
-    public int checkSameObjectsAreEqual() {
+    public int checkIFACMPEQFalse() {
         SimpleObject object = new SimpleObject();
         SimpleObject object2 = object;
         int result = -1;
@@ -195,7 +235,7 @@ public class SimpleObject {
         return result;
     }
 
-    public int checkSameIntAreEqual() {
+    public int checkIFICMPEQFalse() {
         int a = 5;
         int b = 5;
         int i = -1;
@@ -208,7 +248,7 @@ public class SimpleObject {
         return i;
     }
 
-    public int checkIntAreNotEqual() {
+    public int checkIFICMPEQTrue() {
         int a = 6;
         int b = 5;
         int i = -1;

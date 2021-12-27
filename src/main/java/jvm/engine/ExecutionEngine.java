@@ -218,13 +218,45 @@ public final class ExecutionEngine {
                     break;
                 case IF_ICMPEQ:
                     jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
-                    if (checkValueType(JVMType.I, stack.pop()) == checkValueType(JVMType.I, stack.pop())) {
+                    if (getPureValue(checkValueType(JVMType.I, stack.pop())) == getPureValue(checkValueType(JVMType.I, stack.pop()))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPNE:
                     jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
-                    if (checkValueType(JVMType.I, stack.pop()) != checkValueType(JVMType.I, stack.pop())) {
+                    if (getPureValue(checkValueType(JVMType.I, stack.pop())) != getPureValue(checkValueType(JVMType.I, stack.pop()))) {
+                        programCounter += jumpTo - 3;
+                    }
+                    break;
+                case IF_ICMPLT:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    first = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    second = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    if (second < first) {
+                        programCounter += jumpTo - 3;
+                    }
+                    break;
+                case IF_ICMPGT:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    first = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    second = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    if (second > first) {
+                        programCounter += jumpTo - 3;
+                    }
+                    break;
+                case IF_ICMPGE:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    first = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    second = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    if (second >= first) {
+                        programCounter += jumpTo - 3;
+                    }
+                    break;
+                case IF_ICMPLE:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    first = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    second = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    if (second <= first) {
                         programCounter += jumpTo - 3;
                     }
                     break;
