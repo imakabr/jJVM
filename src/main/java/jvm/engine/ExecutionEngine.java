@@ -115,6 +115,10 @@ public final class ExecutionEngine {
                     reference = stack.pop();
                     stack.setLocalVar(2, reference);
                     break;
+                case ASTORE_3:
+                    reference = stack.pop();
+                    stack.setLocalVar(3, reference);
+                    break;
                 case BIPUSH:
                     //The immediate byte is sign-extended to an int value. That value is pushed onto the operand stack.
                     stack.push(setIntValueType(byteCode[programCounter++]));
@@ -215,6 +219,12 @@ public final class ExecutionEngine {
                 case IF_ICMPEQ:
                     jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
                     if (checkValueType(JVMType.I, stack.pop()) == checkValueType(JVMType.I, stack.pop())) {
+                        programCounter += jumpTo - 3;
+                    }
+                    break;
+                case IF_ICMPNE:
+                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    if (checkValueType(JVMType.I, stack.pop()) != checkValueType(JVMType.I, stack.pop())) {
                         programCounter += jumpTo - 3;
                     }
                     break;

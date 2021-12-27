@@ -103,6 +103,12 @@ public class SimpleObject {
         return object.equals(object2);
     }
 
+    public boolean checkSimpleObjectNotEqualsMethod() {
+        Object object = new SimpleObject(1,2,3);
+        Object object2 = new SimpleObject(1,2,4);
+        return object.equals(object2);
+    }
+
     public int checkSimpleCastMethod() {
         Object object = new SimpleObject(1,2,3);
         SimpleObject simpleObject = (SimpleObject) object;
