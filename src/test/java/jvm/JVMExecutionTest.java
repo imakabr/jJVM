@@ -391,7 +391,7 @@ public class JVMExecutionTest {
     }
 
     @Test
-    public void checkSameIntAreNotEqual() {
+    public void checkIntAreNotEqual() {
         // check IF_ICMPEQ
         String fName = "jvm/examples/SimpleObject";
 
