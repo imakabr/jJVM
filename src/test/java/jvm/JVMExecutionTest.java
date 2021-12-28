@@ -586,6 +586,20 @@ public class JVMExecutionTest {
         assertEquals(0, result);
     }
 
+    @Test
+    public void createCharArray() {
+        // check CASTORE, CALOAD
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createCharArray:()C");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(102, result);
+    }
+
 
 
 

@@ -406,7 +406,7 @@ public final class ExecutionEngine {
                     stack.push(second % first);
                     break;
 //                    ----------------------------------------------------------------------------------------------------------------------------------
-                case IRETURN:
+                case IRETURN: //return type boolean, byte, short, char, or int.
                     if (stack.invokeCount == 0) {
                         return getPureValue(stack.pop());
                     }
@@ -501,6 +501,10 @@ public final class ExecutionEngine {
                 case BALOAD:
                     break;
                 case CALOAD:
+                    index = getPureValue(stack.pop());
+                    object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
+                    checkArrayObject(object);
+                    stack.push(checkValueType(JVMType.C, object.getValue(index)));
                     break;
                 case AASTORE:
                     value = checkValueType(JVMType.A, stack.pop());
@@ -515,6 +519,13 @@ public final class ExecutionEngine {
                     object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
                     checkArrayObject(object);
                     object.setValue(index, value);
+                    break;
+                case CASTORE:
+                    value = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    index = getPureValue(stack.pop());
+                    object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
+                    checkArrayObject(object);
+                    object.setValue(index, setCharValueType(value));
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------------
                 case NOP:
@@ -665,6 +676,10 @@ public final class ExecutionEngine {
 
     private long setIntValueType(long value) {
         return setValueType(JVMType.I.ordinal()) ^ value;
+    }
+
+    private long setCharValueType(long value) {
+        return setValueType(JVMType.C.ordinal()) ^ value;
     }
 
     private long setRefValueType(long value) {

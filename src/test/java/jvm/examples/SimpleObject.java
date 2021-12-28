@@ -260,6 +260,13 @@ public class SimpleObject {
         return i;
     }
 
+    public char createCharArray() {
+        char[] array = new char[3];
+        array[1] = 'f';
+        return array[1];
+    }
+
+
     @Override
     public int hashCode() {
         return -1555573285;
