@@ -131,13 +131,13 @@ public final class ExecutionEngine {
                     break;
                 //------------------------------------------------------------------------------------------------------------------------
                 case GETFIELD:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
                     fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup))); //todo restore index for resolving
                     stack.push(object.getValue(fieldValueIndex));
                     break;
                 case GETSTATIC:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);;
                     //---------------------------------------------------------------------------------
 
                     // todo restore indexes for resolving
@@ -149,7 +149,7 @@ public final class ExecutionEngine {
                     break;
                 //----------------------------------------------------------------------------------------------------------------------
                 case CHECKCAST:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);;
                     objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op));
                     object = heap.getInstanceObject(objectRef);
                     String castKlassName = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
@@ -166,7 +166,7 @@ public final class ExecutionEngine {
                     stack.push(setRefValueType(objectRef));
                     break;
                 case GOTO:
-                    programCounter += (((int) byteCode[programCounter] << 8) + (int) byteCode[programCounter + 1]) - 1;
+                    programCounter += (byteCode[programCounter] << 8) + (byteCode[programCounter + 1] & 0xff) - 1;
                     break;
                 case IADD:
                     stack.push(setIntValueType(getPureValue(stack.pop()) + getPureValue(stack.pop())));
@@ -202,33 +202,33 @@ public final class ExecutionEngine {
                     stack.push(second / first);
                     break;
                 case IF_ACMPNE:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);;
                     if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))
                             != getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ACMPEQ:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))
                             == getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPEQ:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op)) == getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPNE:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op)) != getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPLT:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (second < first) {
@@ -236,7 +236,7 @@ public final class ExecutionEngine {
                     }
                     break;
                 case IF_ICMPGT:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (second > first) {
@@ -244,7 +244,7 @@ public final class ExecutionEngine {
                     }
                     break;
                 case IF_ICMPGE:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (second >= first) {
@@ -252,7 +252,7 @@ public final class ExecutionEngine {
                     }
                     break;
                 case IF_ICMPLE:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (second <= first) {
@@ -261,42 +261,42 @@ public final class ExecutionEngine {
                     break;
                 case IFEQ:
                     first = (int) stack.pop();
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (first == 0) {
                         programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
                     }
                     break;
                 case IFGE:
                     first = (int) stack.pop();
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (first >= 0) {
                         programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
                     }
                     break;
                 case IFGT:
                     first = (int) stack.pop();
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (first > 0) {
                         programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
                     }
                     break;
                 case IFLE:
                     first = (int) stack.pop();
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (first <= 0) {
                         programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
                     }
                     break;
                 case IFLT:
                     first = (int) stack.pop();
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (first < 0) {
                         programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
                     }
                     break;
                 case IFNE:
                     first = (int) stack.pop();
-                    jumpTo = ((int) byteCode[programCounter] << 8) + (int) byteCode[programCounter + 1];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (first != 0) {
                         programCounter += jumpTo - 1;  // The -1 is necessary as we've already inc'd programCounter
                     }
@@ -304,23 +304,27 @@ public final class ExecutionEngine {
 
                 //---------------------------------------------------------------------------------------------------------------------------
                 case IFNONNULL:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)) != 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IFNULL:
-                    jumpTo = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)) == 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------
                 case IINC:
-                    // Increment local variable by constant
+                    /*
+                    *The index is an unsigned byte that must be an index into the local variable array of the current frame.
+                    * The const is an immediate signed byte. The local variable at index must contain an int.
+                    * The value const is first sign-extended to an int, and then the local variable at index is incremented by that amount.
+                    * */
                     int index = byteCode[programCounter++];
-                    first = (int) stack.getLocalVar(index);
-                    stack.setLocalVar(index, first + byteCode[programCounter++]);
+                    first = getPureValue(checkValueType(stack.getLocalVar(index), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.setLocalVar(index, setIntValueType(first + byteCode[programCounter++]));
                     break;
                 case ILOAD:
                     //Load int from local variable to the operand stack
@@ -349,7 +353,7 @@ public final class ExecutionEngine {
                     break;
                 //------------------------------------------------------------------------------------------------------------------------------------------
                 case INVOKESPECIAL:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     methodIndex = getMethodIndex(klassName, cpLookup); // todo restore to resolution
                     method = heap.getMethodRepo().getMethod(methodIndex);
                     byteCode = method.getBytecode();
@@ -360,7 +364,7 @@ public final class ExecutionEngine {
                     stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
                     break;
                 case INVOKESTATIC:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     methodIndex = getStaticMethodIndex(klassName, cpLookup); // todo restore to resolution
                     method = heap.getMethodRepo().getMethod(methodIndex);
                     byteCode = method.getBytecode();
@@ -371,7 +375,7 @@ public final class ExecutionEngine {
                     stack.initNewMethodStack(method.getArgSize(), method.getVarSize(), method.getOperandSize());
                     break;
                 case INVOKEVIRTUAL:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     int klassIndex = heap.getInstanceObject(
                                     getPureValue(
                                             checkValueType(
@@ -444,7 +448,7 @@ public final class ExecutionEngine {
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------------
                 case NEW:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     stack.push(setRefValueType(allocateInstanceObjectAndGetReference(klassName, cpLookup)));
                     break;
                 case NEWARRAY:
@@ -464,14 +468,14 @@ public final class ExecutionEngine {
                             getPureValue(stack.pop()))));
                     break;
                 case ANEWARRAY:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     stack.push(setRefValueType(allocateArrayOfRef(
                             klassName,
                             cpLookup,
                             getPureValue(stack.pop()))));
                     break;
                 case MULTIANEWARRAY:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     int[] dimensions = new int[byteCode[programCounter++]];
                     for (int i = dimensions.length - 1; i >= 0; i--) {
                         dimensions[i] = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
@@ -583,7 +587,7 @@ public final class ExecutionEngine {
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------------
                 case PUTFIELD:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
 
                     value = stack.pop();
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
@@ -591,7 +595,7 @@ public final class ExecutionEngine {
                     object.setValue(fieldValueIndex, value);
                     break;
                 case PUTSTATIC:
-                    cpLookup = ((int) byteCode[programCounter++] << 8) + (int) byteCode[programCounter++];
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     //---------------------------------------------------------------------------------
                     // todo restore indexes for resolving
                     objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup))).getObjectRef();

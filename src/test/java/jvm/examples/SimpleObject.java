@@ -273,6 +273,14 @@ public class SimpleObject {
         return result;
     }
 
+    public int calculateSum() {
+        int sum = 0;
+        for (int i = 1; i<=100; i++) {
+            sum += i;
+        }
+        return sum;
+    }
+
 
     @Override
     public int hashCode() {
