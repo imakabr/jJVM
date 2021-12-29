@@ -499,30 +499,76 @@ public final class ExecutionEngine {
                     stack.push(checkValueType(JVMType.I, object.getValue(index)));
                     break;
                 case BALOAD:
-                    break;
-                case CALOAD:
+                    /*
+                    * The arrayref must be of type reference and must refer to an array whose components are of type byte or of type boolean.
+                    * The index must be of type int. Both arrayref and index are popped from the operand stack.
+                    * The byte value in the component of the array at index is retrieved, sign-extended to an int value, and pushed onto the top of the operand stack.
+                    */
                     index = getPureValue(stack.pop());
                     object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
                     checkArrayObject(object);
-                    stack.push(checkValueType(JVMType.C, object.getValue(index)));
+                    stack.push(getPureValue(checkByteOrBooleanValueType(object.getValue(index))));
+                    break;
+                case CALOAD:
+                    /*
+                    * The arrayref must be of type reference and must refer to an array whose components are of type char.
+                    * The index must be of type int. Both arrayref and index are popped from the operand stack.
+                    * The component of the array at index is retrieved and zero-extended to an int value. That value is pushed onto the operand stack.
+                    */
+                    index = getPureValue(stack.pop());
+                    object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
+                    checkArrayObject(object);
+                    stack.push(getPureValue(checkValueType(JVMType.C, object.getValue(index))));
                     break;
                 case AASTORE:
+                    /*
+                    * The arrayref must be of type reference and must refer to an array whose components are of type reference.
+                    * The index must be of type int and value must be of type reference. The arrayref, index, and value are popped from the operand stack.
+                    * The reference value is stored as the component of the array at index.
+                    */
                     value = checkValueType(JVMType.A, stack.pop());
-                    index = getPureValue(stack.pop());
+                    index = getPureValue(checkValueType(JVMType.I, stack.pop()));
                     object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
                     checkArrayObject(object);
                     object.setValue(index, value);
                     break;
                 case IASTORE:
+                    /*
+                    * Store into int array
+                    * Both index and value must be of type int. The arrayref, index, and value are popped from the operand stack.
+                    * The int value is stored as the component of the array indexed by index.
+                    */
                     value = checkValueType(JVMType.I, stack.pop());
-                    index = getPureValue(stack.pop());
+                    index = getPureValue(checkValueType(JVMType.I, stack.pop()));
                     object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
                     checkArrayObject(object);
                     object.setValue(index, value);
                     break;
-                case CASTORE:
+                case BASTORE:
+                    /*
+                    * Store into byte or boolean array
+                    * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
+                    * The int value is truncated to a byte and stored as the component of the array indexed by index.
+                    */
                     value = getPureValue(checkValueType(JVMType.I, stack.pop()));
-                    index = getPureValue(stack.pop());
+                    index = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
+                    checkArrayObject(object);
+                    JVMType type = object.getArrayType();
+                    if (type == JVMType.Z || type == JVMType.B) {
+                        object.setValue(index, setValueType(value, type));
+                    } else {
+                        throw new RuntimeException("Wrong type of array\n" + getStackTrace(stackMethod, stackMethodPointer, op, false));
+                    }
+                    break;
+                case CASTORE:
+                    /*
+                    * The arrayref must be of type reference and must refer to an array whose components are of type char.
+                    * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
+                    * The int value is truncated to a char and stored as the component of the array indexed by index.
+                    */
+                    value = getPureValue(checkValueType(JVMType.I, stack.pop()));
+                    index = getPureValue(checkValueType(JVMType.I, stack.pop()));
                     object = heap.getInstanceObject(getPureValue(checkValueType(JVMType.A, stack.pop())));
                     checkArrayObject(object);
                     object.setValue(index, setCharValueType(value));
@@ -657,6 +703,13 @@ public final class ExecutionEngine {
         return value;
     }
 
+    private long checkByteOrBooleanValueType(long value) {
+        if (getValueType(value) == JVMType.Z.ordinal() || getValueType(value) == JVMType.B.ordinal()) {
+            return value;
+        }
+        throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(value)] + " is not equal " + "byte or boolean");
+    }
+
     private void checkArrayObject(InstanceObject object) {
         if (!object.isArray()) {
             throw new RuntimeException("Object is not array");
@@ -680,6 +733,10 @@ public final class ExecutionEngine {
 
     private long setCharValueType(long value) {
         return setValueType(JVMType.C.ordinal()) ^ value;
+    }
+
+    private long setValueType(long value, @Nonnull JVMType type) {
+        return setValueType(type.ordinal()) ^ value;
     }
 
     private long setRefValueType(long value) {

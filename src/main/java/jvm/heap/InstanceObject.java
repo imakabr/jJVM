@@ -2,6 +2,8 @@ package jvm.heap;
 
 import jvm.JVMType;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,8 @@ public class InstanceObject {
     private final Map<String, Integer> indexByFieldName;
     private int klassIndex;
     private final boolean array;
+    @Nullable
+    private JVMType arrayType;
 
     public InstanceObject(List<String> fields, int klassIndex) {
         this.fieldValues = new long[fields.size()];
@@ -19,7 +23,7 @@ public class InstanceObject {
         this.array = false;
         for (int fieldIndex = 0; fieldIndex < fieldValues.length; fieldIndex++) {
             String field = fields.get(fieldIndex);
-            setDefaultValue(fieldIndex, field);
+            setDefaultValue(fieldIndex, getValueType(field));
             indexByFieldName.put(field, fieldIndex);
         }
     }
@@ -29,8 +33,9 @@ public class InstanceObject {
         this.indexByFieldName = new HashMap<>();
         this.klassIndex = klassIndex;
         this.array = true;
+        this.arrayType = getValueType(type);
         for (int index = 0; index < size; index++) {
-            setDefaultValue(index, type);
+            setDefaultValue(index, getValueType(type));
         }
     }
 
@@ -42,10 +47,14 @@ public class InstanceObject {
         return fieldValues.length;
     }
 
-    private void setDefaultValue(int index, String field) {
+    @Nonnull
+    private JVMType getValueType(@Nonnull String field) {
         String t = field.substring(field.indexOf(':') + 1);
-        int type = t.startsWith("L") ? JVMType.valueOf("A").ordinal() : JVMType.valueOf(t).ordinal();
-        fieldValues[index] = setValueType(type);
+        return t.startsWith("L") ? JVMType.valueOf("A") : JVMType.valueOf(t);
+    }
+
+    private void setDefaultValue(int index, @Nonnull JVMType type) {
+        fieldValues[index] = setValueType(type.ordinal());
     }
 
     private long setValueType(int type) {
@@ -86,5 +95,10 @@ public class InstanceObject {
 
     public int getKlassIndex() {
         return klassIndex;
+    }
+
+    @Nullable
+    public JVMType getArrayType() {
+        return arrayType;
     }
 }

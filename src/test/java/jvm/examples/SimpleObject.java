@@ -266,6 +266,13 @@ public class SimpleObject {
         return array[1];
     }
 
+    public boolean createBooleanArray() {
+        boolean[] array = new boolean[3];
+        array[1] = true;
+        boolean result = array[1];
+        return result;
+    }
+
 
     @Override
     public int hashCode() {
