@@ -102,20 +102,24 @@ public final class ExecutionEngine {
                     stack.destroyCurrentMethodStack(method.getVarSize(), method.getOperandSize(), true);
                     programCounter = stack.programCounter;
                     break;
+                case ASTORE:
+                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
+                    stack.setLocalVar(byteCode[programCounter++], reference);
+                    break;
                 case ASTORE_0:
-                    reference = stack.pop();
+                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
                     stack.setLocalVar(0, reference);
                     break;
                 case ASTORE_1:
-                    reference = stack.pop();
+                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
                     stack.setLocalVar(1, reference);
                     break;
                 case ASTORE_2:
-                    reference = stack.pop();
+                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
                     stack.setLocalVar(2, reference);
                     break;
                 case ASTORE_3:
-                    reference = stack.pop();
+                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
                     stack.setLocalVar(3, reference);
                     break;
                 case BIPUSH:
@@ -217,13 +221,15 @@ public final class ExecutionEngine {
                     break;
                 case IF_ICMPEQ:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    if (getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op)) == getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))) {
+                    if (getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))
+                            == getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPNE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    if (getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op)) != getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))) {
+                    if (getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))
+                            != getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
@@ -510,7 +516,7 @@ public final class ExecutionEngine {
                     index = getPureValue(stack.pop());
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                    stack.push(getPureValue(checkByteOrBooleanValueType(object.getValue(index))));
+                    stack.push(setIntValueType(getPureValue(checkByteOrBooleanValueType(object.getValue(index)))));
                     break;
                 case CALOAD:
                     /*
@@ -521,7 +527,7 @@ public final class ExecutionEngine {
                     index = getPureValue(stack.pop());
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                    stack.push(getPureValue(checkValueType(object.getValue(index), JVMType.C, stackMethod, stackMethodPointer, op)));
+                    stack.push(setIntValueType(getPureValue(checkValueType(object.getValue(index), JVMType.C, stackMethod, stackMethodPointer, op))));
                     break;
                 case AASTORE:
                     /*
@@ -637,7 +643,8 @@ public final class ExecutionEngine {
                             stack.push(setIntValueType((Integer) entry.getNum()));
                             break;
                         case STRING:
-                            // todo implement String object
+                            String str = entry.getStr();
+                            stack.push(setRefValueType(createStringInstance(str.toCharArray())));
                             break;
                     }
                     break;
@@ -818,10 +825,26 @@ public final class ExecutionEngine {
                 .getArgSize();
     }
 
+    private int createStringInstance(@Nonnull char[] str) {
+        int stringObjectRef = allocateInstanceObjectAndGetReference(STRING);
+        int charArrayRef = allocateArray(JVMType.C.name(), str.length);
+        InstanceObject charArrayObj = heap.getInstanceObject(charArrayRef);
+        for (int i = 0; i < str.length; i++) {
+            charArrayObj.setValue(i, setCharValueType(str[i]));
+        }
+        InstanceObject stringObj = heap.getInstanceObject(stringObjectRef);
+        stringObj.setValue(0, setRefValueType(charArrayRef));
+        return stringObjectRef;
+    }
+
     private int allocateInstanceObjectAndGetReference(String sourceKlassName, int cpIndex) {
         Klass sourceKlass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
         String destKlassName = sourceKlass.getKlassNameByCPIndex((short) cpIndex);
-        Klass destKlass = heap.getKlassLoader().getLoadedKlassByName(destKlassName);
+        return allocateInstanceObjectAndGetReference(destKlassName);
+    }
+
+    private int allocateInstanceObjectAndGetReference(String klassName) {
+        Klass destKlass = heap.getKlassLoader().getLoadedKlassByName(klassName);
         List<Klass> klasses = new ArrayList<>();
         Klass current = destKlass;
         klasses.add(current);
@@ -835,11 +858,11 @@ public final class ExecutionEngine {
         }
 
         return heap.getObjectRef(new InstanceObject(fields,
-                heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, false)));
+                heap.getKlassLoader().getInstanceKlassIndexByName(klassName, false)));
     }
 
 
-    private long allocateArray(String type, int count) {
+    private int allocateArray(String type, int count) {
         int klassIndex = -1;
         if (type.startsWith("L")) {
             String klassName = type.substring(1, type.length() - 1);

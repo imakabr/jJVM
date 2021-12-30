@@ -1,8 +1,8 @@
 package jvm;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
@@ -24,5 +24,14 @@ public class Utils {
             throw new RuntimeException(String.format("Something wrong while read: %s", classFile));
         }
         return buffer;
+    }
+
+    @Nonnull
+    public static String checkSystemKlassName(@Nonnull String name) {
+        if (name.startsWith("jvm/lang/")) {
+            return name.replace("jvm", "java")
+                    .replace("JVM", "");
+        }
+        return name;
     }
 }

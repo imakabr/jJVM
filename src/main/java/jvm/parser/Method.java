@@ -123,6 +123,7 @@ public class Method {
             char c = chars[i];
             switch (c) {
                 case '(':
+                case '[':
                     break;
                 case 'Z':
                 case 'B':

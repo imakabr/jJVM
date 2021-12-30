@@ -301,6 +301,32 @@ public class SimpleObject {
         return true;
     }
 
+    public int checkStringToCharArray() {
+        String hello = "hello world";
+        char[] expected = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' };
+        char[] actual = hello.toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (actual[i] != expected[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    public int checkStringReplace() {
+        String hello = "hello to all";
+        String str = new String(hello);
+        String result = str.replace('l', 'r');
+        char[] actual = result.toCharArray();
+        char[] expected = "herro to arr".toCharArray();
+        for (int i = 0; i < actual.length; i++) {
+            if (actual[i] != expected[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
 
     @Override
     public int hashCode() {

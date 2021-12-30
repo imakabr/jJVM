@@ -4,7 +4,7 @@ public final class ConstantPoolEntry {
     private final short index;
     private final ConstantPoolType type;
     private final Number num;
-    private final String str;
+    private String str;
     private final ConstantPoolRef ref;
     private final ConstantPoolRef ref2;
 
@@ -47,6 +47,10 @@ public final class ConstantPoolEntry {
 
     public String getStr() {
         return str;
+    }
+
+    public void setStr(String str) {
+        this.str = str;
     }
 
     public ConstantPoolRef getRef() {

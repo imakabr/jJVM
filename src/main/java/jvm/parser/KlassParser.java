@@ -2,10 +2,13 @@ package jvm.parser;
 
 import jvm.JVMType;
 
+import javax.annotation.Nonnull;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static jvm.Utils.checkSystemKlassName;
 
 
 public final class KlassParser {
@@ -57,6 +60,9 @@ public final class KlassParser {
                     classIndex = cpe.getRef().getOther();
                     className = resolveAsString(classIndex);
                     klass.addCPKlassRef(cpe.getIndex(), className);
+                    break;
+                case STRING:
+                    cpe.setStr(resolveAsString(cpe.getRef().getOther()));
                     break;
             }
         }
@@ -166,7 +172,7 @@ public final class KlassParser {
             String descriptor = resolveAsString(desc_idx);
             String fieldName = resolveAsString(name_idx) + ":" + descriptor;
             JVMType type;
-            if (descriptor.startsWith("L")) {
+            if (descriptor.startsWith("L") || descriptor.startsWith("[")) {
                 type = JVMType.valueOf("A");
             } else {
                 type = JVMType.valueOf(descriptor);
@@ -264,32 +270,40 @@ public final class KlassParser {
 
         ConstantPoolEntry other = null;
         int left, right = 0;
+        String result;
         switch (top.getType()) {
             case UTF8:
-                return top.getStr();
+                result = top.getStr();
+                break;
             case INTEGER:
-                return "" + top.getNum().intValue();
+                result = "" + top.getNum().intValue();
+                break;
             case FLOAT:
-                return "" + top.getNum().floatValue();
+                result = "" + top.getNum().floatValue();
+                break;
             case LONG:
-                return "" + top.getNum().longValue();
+                result = "" + top.getNum().longValue();
+                break;
             case DOUBLE:
-                return "" + top.getNum().doubleValue();
+                result = "" + top.getNum().doubleValue();
+                break;
             case CLASS:
             case STRING:
                 other = items[top.getRef().getOther() - 1];
-                // Verification - could check type is STRING here
-                return other.getStr();
+                result = other.getStr();
+                break;
             case FIELDREF:
             case METHODREF:
             case INTERFACE_METHODREF:
             case NAMEANDTYPE:
                 left = top.getRef().getOther();
                 right = top.getRef2().getOther();
-                return resolveAsString(left) + top.getType().separator() + resolveAsString(right);
+                result = resolveAsString(left) + top.getType().separator() + resolveAsString(right);
+                break;
             default:
                 throw new RuntimeException("Reached impossible Constant Pool Tag: " + top);
         }
+        return checkSystemKlassName(result);
     }
 
 }

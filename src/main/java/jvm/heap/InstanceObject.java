@@ -50,7 +50,7 @@ public class InstanceObject {
     @Nonnull
     private JVMType getValueType(@Nonnull String field) {
         String t = field.substring(field.indexOf(':') + 1);
-        return t.startsWith("L") ? JVMType.valueOf("A") : JVMType.valueOf(t);
+        return t.startsWith("L") || t.startsWith("[") ? JVMType.valueOf("A") : JVMType.valueOf(t);
     }
 
     private void setDefaultValue(int index, @Nonnull JVMType type) {

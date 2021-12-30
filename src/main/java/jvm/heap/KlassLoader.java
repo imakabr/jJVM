@@ -11,12 +11,16 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
+import static jvm.Utils.checkSystemKlassName;
+
 public class KlassLoader {
 
     public static final String JAVA_LANG_OBJECT = "java/lang/Object";
     public static final String ABSENCE = "absence";
     public static final String CLASS_INIT = "<clinit>:()V";
     public static final String OBJECT_INIT = "<init>";
+    public static final String STRING_JVM = "jvm/lang/StringJVM";
+    public static final String STRING = "java/lang/String";
 
 
     Map<String, Integer> indexByName; // index to Heap.instanceKlasses
@@ -27,7 +31,12 @@ public class KlassLoader {
         this.indexByName = new HashMap<>();
         this.loadedKlasses = new HashMap<>();
         this.heap = heap;
+        initSystemKlasses();
+    }
+
+    private void initSystemKlasses() {
         initObjectKlass();
+        loadKlass(STRING_JVM);
     }
 
     private void initObjectKlass() {
@@ -61,9 +70,9 @@ public class KlassLoader {
         return loadedKlasses.get(name);
     }
 
-    public void loadKlass(String name) {
+    public void loadKlass(@Nonnull String name) {
         loadCurrentKlass(name);
-        List<Method> clInitMethods = prepareCurrentAndInheritedKlasses(getLoadedKlassByName(name));
+        List<Method> clInitMethods = prepareCurrentAndInheritedKlasses(getLoadedKlassByName(checkSystemKlassName(name)));
 
         //init Klass from top to bottom
         ExecutionEngine engine = new ExecutionEngine(heap);

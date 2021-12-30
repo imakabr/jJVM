@@ -85,7 +85,7 @@ public class JVMExecutionTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
 
-        InstanceObject simpleClassObject = heap.getInstanceObject(2);
+        InstanceObject simpleClassObject = heap.getInstanceObject(3);
 
         int fieldValueIndex = simpleClassObject.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
@@ -176,7 +176,7 @@ public class JVMExecutionTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
 
-        InstanceObject object = heap.getInstanceObject(2);
+        InstanceObject object = heap.getInstanceObject(3);
 
         int fieldValueIndex = object.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
@@ -303,7 +303,7 @@ public class JVMExecutionTest {
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createObjectGetHashCode:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
-        InstanceObject object = heap.getInstanceObject(2);
+        InstanceObject object = heap.getInstanceObject(3);
         assertEquals(Objects.hashCode(object), result);
     }
 
@@ -636,6 +636,32 @@ public class JVMExecutionTest {
         heap.getKlassLoader().loadKlass(fName);
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkBubbleSorting:()Z");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkStringToCharArray() {
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkStringToCharArray:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkString() {
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkStringReplace:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(1, result);
