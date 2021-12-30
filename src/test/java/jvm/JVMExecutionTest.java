@@ -628,6 +628,19 @@ public class JVMExecutionTest {
         assertEquals(5050, result);
     }
 
+    @Test
+    public void checkBubbleSorting() {
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkBubbleSorting:()Z");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
 
 
 
