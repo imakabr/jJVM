@@ -332,6 +332,10 @@ public final class ExecutionEngine {
                     first = getPureValue(checkValueType(stack.getLocalVar(index), JVMType.I, stackMethod, stackMethodPointer, op));
                     stack.setLocalVar(index, setIntValueType(first + byteCode[programCounter++]));
                     break;
+                case I2C:
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(setIntValueType((char) first));
+                    break;
                 case ILOAD:
                     //Load int from local variable to the operand stack
                     stack.push(stack.getLocalVar(byteCode[programCounter++]));

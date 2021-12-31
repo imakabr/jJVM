@@ -36,6 +36,7 @@ public enum Opcode {
     GETSTATIC(0xb2, 2),
     GOTO(0xa7, 2),
     I2D(0x87),
+    I2C(0x92),
     IADD(0x60),
     IAND(0x7e),
     ICONST_M1(0x02),
