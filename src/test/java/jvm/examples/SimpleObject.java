@@ -401,6 +401,11 @@ public class SimpleObject {
         return a != 0;
     }
 
+    public int checkINEG() {
+        int a = 1;
+        return -a;
+    }
+
     public boolean checkIFEQFalse() {
         int a = 0;
         return a != 0;
