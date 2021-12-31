@@ -459,6 +459,17 @@ public class SimpleObject {
         return 1;
     }
 
+    public int checkStringCharAt() {
+        char[] expected = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' };
+        String actual = "hello world";
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != actual.charAt(i)) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
     @Override
     public int hashCode() {
         return -1555573285;

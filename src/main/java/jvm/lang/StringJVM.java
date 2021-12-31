@@ -91,6 +91,10 @@ public class StringJVM {
         return true;
     }
 
+    public char charAt(int index) {
+        return value[index];
+    }
+
     @Override
     public int hashCode() {
         if (value == null) {
