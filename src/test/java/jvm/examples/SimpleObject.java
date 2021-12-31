@@ -435,6 +435,30 @@ public class SimpleObject {
         return a != 0;
     }
 
+    public int checkStringToUpperCase() {
+        String actual = "hEllo woRld!";
+        char[] expected = "HELLO WORLD!".toCharArray();
+        char[] result = actual.toUpperCase().toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != result[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    public int checkStringToLowerCase() {
+        String actual = "HElLo WoRLd!11";
+        char[] expected = "hello world!11".toCharArray();
+        char[] result = actual.toLowerCase().toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != result[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
     @Override
     public int hashCode() {
         return -1555573285;

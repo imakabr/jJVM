@@ -44,6 +44,38 @@ public class StringJVM {
         return new String(newValue);
     }
 
+    private boolean isSmallLetter(char a) {
+        return a >= 'a' && a <= 'z';
+    }
+
+    private boolean isCapitalLetter(char a) {
+        return a >= 'A' && a <= 'Z';
+    }
+
+    public String toUpperCase() {
+        char[] result = new char[value.length];
+        for (int i = 0; i < value.length; i++) {
+            if (isSmallLetter(value[i])) {
+                result[i] = (char) ('A' + value[i] - 'a');
+            } else {
+                result[i] = value[i];
+            }
+        }
+        return new String(result);
+    }
+
+    public String toLowerCase() {
+        char[] result = new char[value.length];
+        for (int i = 0; i < value.length; i++) {
+            if (isCapitalLetter(value[i])) {
+                result[i] = (char) ('a' + value[i] - 'A');
+            } else {
+                result[i] = value[i];
+            }
+        }
+        return new String(result);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

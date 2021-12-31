@@ -945,7 +945,31 @@ public class JVMExecutionTest {
     }
 
 
+    @Test
+    public void checkStringToUpperCase() {
+        String fName = "jvm/examples/SimpleObject";
 
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkStringToUpperCase:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkStringToLowerCase() {
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkStringToLowerCase:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
 
 
     private int getIntValue(long value) {
