@@ -916,6 +916,20 @@ public class JVMExecutionTest {
         assertEquals(2, result);
     }
 
+    @Test
+    public void checkIDIV() {
+        // check IDIV
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIDIV:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(2, result);
+    }
+
 
 
 

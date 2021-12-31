@@ -418,6 +418,12 @@ public class SimpleObject {
         return a - b;
     }
 
+    public int checkIDIV() {
+        int a = 6;
+        int b = 3;
+        return a / b;
+    }
+
     public boolean checkIFEQFalse() {
         int a = 0;
         return a != 0;

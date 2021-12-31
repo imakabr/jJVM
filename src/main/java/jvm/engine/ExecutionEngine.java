@@ -200,10 +200,10 @@ public final class ExecutionEngine {
                     stack.push(setIntValueType(-1));
                     break;
                 case IDIV:
-                    first = (int) stack.pop();
-                    second = (int) stack.pop();
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (second == 0) throw new ArithmeticException("cannot divide 0");
-                    stack.push(second / first);
+                    stack.push(setIntValueType(second / first));
                     break;
                 case IF_ACMPNE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);;
