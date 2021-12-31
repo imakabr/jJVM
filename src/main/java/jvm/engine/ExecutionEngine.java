@@ -405,14 +405,14 @@ public final class ExecutionEngine {
                     break;
                 //------------------------------------------------------------------------------------------------------------------------------------------
                 case IOR:
-                    first = (int) stack.pop();
-                    second = (int) stack.pop();
-                    stack.push(first | second);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(setIntValueType(first | second));
                     break;
                 case IREM:
-                    first = (int) stack.pop();
-                    second = (int) stack.pop();
-                    stack.push(second % first);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(setIntValueType(second % first));
                     break;
 //                    ----------------------------------------------------------------------------------------------------------------------------------
                 case IRETURN: //return type boolean, byte, short, char, or int.

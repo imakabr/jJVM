@@ -930,6 +930,20 @@ public class JVMExecutionTest {
         assertEquals(2, result);
     }
 
+    @Test
+    public void checkIREM() {
+        // check IREM
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIREM:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(3, result);
+    }
+
 
 
 

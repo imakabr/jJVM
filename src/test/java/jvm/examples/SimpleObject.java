@@ -424,6 +424,12 @@ public class SimpleObject {
         return a / b;
     }
 
+    public int checkIREM() {
+        int a = 10;
+        int b = 7;
+        return a % b;
+    }
+
     public boolean checkIFEQFalse() {
         int a = 0;
         return a != 0;
