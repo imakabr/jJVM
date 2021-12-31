@@ -406,6 +406,12 @@ public class SimpleObject {
         return -a;
     }
 
+    public int checkIMUL() {
+        int a = 2;
+        int b = 3;
+        return a * b;
+    }
+
     public boolean checkIFEQFalse() {
         int a = 0;
         return a != 0;

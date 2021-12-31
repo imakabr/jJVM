@@ -861,6 +861,34 @@ public class JVMExecutionTest {
     }
 
     @Test
+    public void checkIFEQFalse() {
+        // check IFEQ
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIFEQFalse:()Z");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(0, result);
+    }
+
+    @Test
+    public void checkIMUL() {
+        // check IMUL
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIMUL:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(6, result);
+    }
+
+    @Test
     public void checkINEG() {
         // check INEG
         String fName = "jvm/examples/SimpleObject";
@@ -874,19 +902,6 @@ public class JVMExecutionTest {
         assertEquals(-1, result);
     }
 
-    @Test
-    public void checkIFEQFalse() {
-        // check IFEQ
-        String fName = "jvm/examples/SimpleObject";
-
-        Heap heap = new Heap(500, 50);
-        heap.getKlassLoader().loadKlass(fName);
-
-        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkIFEQFalse:()Z");
-        Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(0, result);
-    }
 
 
 

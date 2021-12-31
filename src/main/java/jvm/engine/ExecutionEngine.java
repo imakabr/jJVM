@@ -349,9 +349,9 @@ public final class ExecutionEngine {
                     stack.push(stack.getLocalVar(3));
                     break;
                 case IMUL:
-                    first = (int) stack.pop();
-                    second = (int) stack.pop();
-                    stack.push((long) first * second);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(setIntValueType((long) first * second));
                     break;
                 case INEG:
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
