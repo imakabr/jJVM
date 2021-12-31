@@ -655,7 +655,7 @@ public class JVMExecutionTest {
     }
 
     @Test
-    public void checkString() {
+    public void checkStringReplace() {
         String fName = "jvm/examples/SimpleObject";
 
         Heap heap = new Heap(500, 50);
@@ -667,7 +667,44 @@ public class JVMExecutionTest {
         assertEquals(1, result);
     }
 
+    @Test
+    public void checkStringEqualsTrue() {
+        String fName = "jvm/examples/SimpleObject";
 
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkStringEqualsTrue:()Z");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1, result);
+    }
+
+    @Test
+    public void checkStringEqualsFalse() {
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkStringEqualsFalse:()Z");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(0, result);
+    }
+
+    @Test
+    public void checkStringHashCode() {
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkStringHashCode:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(1923188771, result);
+    }
 
 
     private int getIntValue(long value) {

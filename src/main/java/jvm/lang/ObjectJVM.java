@@ -9,7 +9,7 @@ import static jvm.heap.KlassLoader.ABSENCE;
 import static jvm.parser.ParserConstants.ACC_NATIVE;
 import static jvm.parser.ParserConstants.ACC_PUBLIC;
 
-public class Object {
+public class ObjectJVM {
 
     private static final byte[] JUST_RETURN = {RETURN.b()};
     private static final byte[] EQUALS_BYTECODE = {ALOAD_0.b(), ALOAD_1.b(), IF_ACMPNE.b(), (byte) 0, (byte) 7, ICONST_1.b(), GOTO.b(), (byte) 0, (byte) 4, ICONST_0.b(), IRETURN.b()};

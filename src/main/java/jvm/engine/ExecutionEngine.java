@@ -443,8 +443,8 @@ public final class ExecutionEngine {
                     stack.setLocalVar(3, stack.pop());
                     break;
                 case ISUB:
-                    first = getPureValue(stack.pop());
-                    second = getPureValue(stack.pop());
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     stack.push(setIntValueType(first - second));
                     break;
 

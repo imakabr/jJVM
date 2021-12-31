@@ -327,6 +327,24 @@ public class SimpleObject {
         return 1;
     }
 
+    public boolean checkStringEqualsTrue() {
+        char[] expected = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' };
+        String first = new String(expected);
+        String second = "hello world";
+        return first.equals(second);
+    }
+
+    public boolean checkStringEqualsFalse() {
+        char[] expected = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' };
+        String first = new String(expected);
+        String second = "hallo world";
+        return first.equals(second);
+    }
+
+    public int checkStringHashCode() {
+        String actual = new String("hello world");
+        return actual.hashCode();
+    }
 
     @Override
     public int hashCode() {

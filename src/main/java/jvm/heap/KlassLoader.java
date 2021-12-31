@@ -2,7 +2,7 @@ package jvm.heap;
 
 import jvm.engine.ExecutionEngine;
 import jvm.Utils;
-import jvm.lang.Object;
+import jvm.lang.ObjectJVM;
 import jvm.parser.Method;
 import jvm.parser.Klass;
 import jvm.parser.KlassParser;
@@ -40,7 +40,7 @@ public class KlassLoader {
     }
 
     private void initObjectKlass() {
-        Klass object = Object.getObjectKlass();
+        Klass object = ObjectJVM.getObjectKlass();
         prepareKlass(object);
         setConstantPoolKlassByName(object.getKlassName(), object);
     }
