@@ -176,7 +176,7 @@ public final class ExecutionEngine {
                     stack.push(setIntValueType(getPureValue(stack.pop()) + getPureValue(stack.pop())));
                     break;
                 case IAND:
-                    stack.push(stack.pop() & stack.pop());
+                    stack.push(setIntValueType(getPureValue(stack.pop()) & getPureValue(stack.pop())));
                     break;
                 case ICONST_0:
                     stack.push(setIntValueType(0));
@@ -445,7 +445,7 @@ public final class ExecutionEngine {
                 case ISUB:
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    stack.push(setIntValueType(first - second));
+                    stack.push(setIntValueType(second - first));
                     break;
 
                 //--------------------------------------------------------------------------------------------------------------------------------------

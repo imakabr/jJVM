@@ -70,7 +70,7 @@ public class JVMExecutionTest {
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ComplexStatic.m:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
-        assertEquals(2569, result);
+        assertEquals(2057, result);
     }
 
     @Test
@@ -900,6 +900,20 @@ public class JVMExecutionTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
         assertEquals(-1, result);
+    }
+
+    @Test
+    public void checkISUB() {
+        // check ISUB
+        String fName = "jvm/examples/SimpleObject";
+
+        Heap heap = new Heap(500, 50);
+        heap.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.checkISUB:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long result = new ExecutionEngine(heap).invoke(method);
+        assertEquals(2, result);
     }
 
 
