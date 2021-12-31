@@ -346,6 +346,66 @@ public class SimpleObject {
         return actual.hashCode();
     }
 
+    public boolean checkIFGEFalse() {
+        int a = 1;
+        return a < 0;
+    }
+
+    public boolean checkIFGETrue() {
+        int a = -1;
+        return a < 0;
+    }
+
+    public boolean checkIFLETrue() {
+        int a = 1;
+        return a > 0;
+    }
+
+    public boolean checkIFLEFalse() {
+        int a = -1;
+        return a > 0;
+    }
+
+    public boolean checkIFLTTrue() {
+        int a = 1;
+        return a >= 0;
+    }
+
+    public boolean checkIFLTFalse() {
+        int a = -1;
+        return a >= 0;
+    }
+
+    public boolean checkIFGTTrue() {
+        int a = -1;
+        return a <= 0;
+    }
+
+    public boolean checkIFGTFalse() {
+        int a = 1;
+        return a <= 0;
+    }
+
+    public boolean checkIFNETrue() {
+        int a = 0;
+        return a == 0;
+    }
+
+    public boolean checkIFNEFalse() {
+        int a = 1;
+        return a == 0;
+    }
+
+    public boolean checkIFEQTrue() {
+        int a = 1;
+        return a != 0;
+    }
+
+    public boolean checkIFEQFalse() {
+        int a = 0;
+        return a != 0;
+    }
+
     @Override
     public int hashCode() {
         return -1555573285;

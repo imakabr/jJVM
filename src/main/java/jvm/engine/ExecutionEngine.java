@@ -266,45 +266,45 @@ public final class ExecutionEngine {
                     }
                     break;
                 case IFEQ:
-                    first = (int) stack.pop();
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (first == 0) {
-                        programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
+                        programCounter += jumpTo - 3;
                     }
                     break;
                 case IFGE:
-                    first = (int) stack.pop();
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (first >= 0) {
-                        programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
+                        programCounter += jumpTo - 3;
                     }
                     break;
                 case IFGT:
-                    first = (int) stack.pop();
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (first > 0) {
-                        programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
+                        programCounter += jumpTo - 3;
                     }
                     break;
                 case IFLE:
-                    first = (int) stack.pop();
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (first <= 0) {
-                        programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
+                        programCounter += jumpTo - 3;
                     }
                     break;
                 case IFLT:
-                    first = (int) stack.pop();
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (first < 0) {
-                        programCounter += jumpTo - 1; // The -1 is necessary as we've already inc'd programCounter
+                        programCounter += jumpTo - 3;
                     }
                     break;
                 case IFNE:
-                    first = (int) stack.pop();
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     if (first != 0) {
-                        programCounter += jumpTo - 1;  // The -1 is necessary as we've already inc'd programCounter
+                        programCounter += jumpTo - 3;
                     }
                     break;
 
