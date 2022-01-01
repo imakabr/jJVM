@@ -81,7 +81,4 @@ public class StringBuilder {
         return result;
     }
 
-    public static void main(String[] args) {
-        System.out.println(new StringBuilder("hello world!").hashCode());
-    }
 }

@@ -26,6 +26,18 @@ public class StringJVM {
         }
     }
 
+    public String concat(String str) {
+        int oldLen = value.length;
+        int addedLen = str.length();
+        char[] buf = new char[oldLen + addedLen];
+        arrayCopy(value, buf);
+        char[] strChars = str.toCharArray();
+        for (int i = 0; i < addedLen; i++) {
+            buf[i + oldLen] = strChars[i];
+        }
+        return new String(buf);
+    }
+
     public char[] toCharArray() {
         char[] copy = new char[value.length];
         arrayCopy(this.value, copy);

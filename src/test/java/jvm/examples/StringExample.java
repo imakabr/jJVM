@@ -96,4 +96,18 @@ public class StringExample {
         return 1;
     }
 
+    public int checkStringConcatMethod() {
+        String hello = new String(new char[]{'h', 'e', 'l', 'l', 'o'});
+        String world = new String(new char[]{'w', 'o', 'r', 'l', 'd'});
+        String helloWorld = hello.concat(" ").concat(world).concat("!");
+        char[] expected = "hello world!".toCharArray();
+        char[] actual = helloWorld.toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != actual[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
 }

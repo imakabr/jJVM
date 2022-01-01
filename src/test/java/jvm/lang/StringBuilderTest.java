@@ -15,29 +15,29 @@ public class StringBuilderTest {
 
     @Test
     public void checkStringBuilder() {
-        checkMethod(".checkStringBuilder:()I", 1);
+        checkMethod("checkStringBuilder:()I", 1);
     }
 
     @Test
     public void checkStringBuilderAppend() {
-        checkMethod(".checkStringBuilderAppend:()I", 1);
+        checkMethod("checkStringBuilderAppend:()I", 1);
     }
 
     @Test
     public void checkStringBuilderEquals() {
-        checkMethod(".checkStringBuilderEquals:()Z", 1);
+        checkMethod("checkStringBuilderEquals:()Z", 1);
     }
 
     @Test
     public void checkStringBuilderHashCode() {
-        checkMethod(".checkStringBuilderHashCode:()I", -510690210);
+        checkMethod("checkStringBuilderHashCode:()I", -510690210);
     }
 
     private void checkMethod(@Nonnull String methodName, long expected) {
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(klass);
 
-        int methodIndex = heap.getMethodRepo().getIndexByName(klass + methodName);
+        int methodIndex = heap.getMethodRepo().getIndexByName(klass + "." + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long actual = new ExecutionEngine(heap).invoke(method);
         assertEquals(expected, actual);
