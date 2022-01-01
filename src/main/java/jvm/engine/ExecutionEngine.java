@@ -862,7 +862,7 @@ public final class ExecutionEngine {
         }
 
         return heap.getObjectRef(new InstanceObject(fields,
-                heap.getKlassLoader().getInstanceKlassIndexByName(klassName, false)));
+                heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true)));
     }
 
 
@@ -870,7 +870,7 @@ public final class ExecutionEngine {
         int klassIndex = -1;
         if (type.startsWith("L")) {
             String klassName = type.substring(1, type.length() - 1);
-            klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(klassName, false);
+            klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
         }
         return heap.getObjectRef(new InstanceObject(type, count, klassIndex));
     }
@@ -882,7 +882,7 @@ public final class ExecutionEngine {
         if (destKlass == null) {
             throw new RuntimeException("Class is not found");
         }
-        int klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, false);
+        int klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, true);
         return heap.getObjectRef(allocateArrayOfRef(count, klassIndex));
     }
 
