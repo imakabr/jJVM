@@ -53,6 +53,11 @@ public class StringTest {
         checkMethod(".checkStringToLowerCase:()I", 1);
     }
 
+    @Test
+    public void checkStringConcat() {
+        checkMethod(".checkStringConcat:()I", 1);
+    }
+
     private void checkMethod(@Nonnull String methodName, long expected) {
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(klass);

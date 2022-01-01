@@ -81,4 +81,19 @@ public class StringExample {
         String actual = new String("hello world");
         return actual.hashCode();
     }
+
+    public int checkStringConcat() {
+        String hello = new String(new char[]{'h', 'e', 'l', 'l', 'o'});
+        String world = new String(new char[]{'w', 'o', 'r', 'l', 'd'});
+        String helloWorld = hello + " " + world + "!";
+        char[] expected = "hello world!".toCharArray();
+        char[] actual = helloWorld.toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != actual[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
 }
