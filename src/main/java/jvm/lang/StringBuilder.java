@@ -35,6 +35,13 @@ public class StringBuilder {
         return this;
     }
 
+    public StringBuilder append(char letter) {
+        checkCapacity(count + 1);
+        value[count] = letter;
+        count++;
+        return this;
+    }
+
     public int length() {
         return count;
     }

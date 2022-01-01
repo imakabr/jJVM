@@ -15,6 +15,7 @@ public class Heap {
         this.instanceKlasses = new InstanceKlass[klassesSize];
         this.methodRepo = new MethodRepo();
         this.klassLoader = new KlassLoader(this);
+        this.klassLoader.initSystemKlasses();
     }
 
     public int getObjectRef(InstanceObject object) {

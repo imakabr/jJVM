@@ -22,6 +22,8 @@ public class KlassLoader {
     public static final String STRING_JVM = "jvm/lang/StringJVM";
     public static final String STRING = "java/lang/String";
     public static final String STRING_BUILDER = "jvm/lang/StringBuilder";
+    public static final String SYSTEM = "jvm/lang/System";
+    public static final String PRINT_STREAM = "jvm/io/PrintStream";
 
 
     Map<String, Integer> indexByName; // index to Heap.instanceKlasses
@@ -32,13 +34,14 @@ public class KlassLoader {
         this.indexByName = new HashMap<>();
         this.loadedKlasses = new HashMap<>();
         this.heap = heap;
-        initSystemKlasses();
     }
 
-    private void initSystemKlasses() {
+    public void initSystemKlasses() {
         initObjectKlass();
         loadKlass(STRING_JVM);
         loadKlass(STRING_BUILDER);
+        loadKlass(PRINT_STREAM);
+        loadKlass(SYSTEM);
     }
 
     private void initObjectKlass() {

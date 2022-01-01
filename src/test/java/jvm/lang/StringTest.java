@@ -68,6 +68,37 @@ public class StringTest {
         checkMethod("checkToString:()Z", 1);
     }
 
+    @Test
+    public void checkPrintlnString() {
+        checkMethod("checkPrintlnString:()I", 1);
+    }
+
+    @Test
+    public void checkPrintString() {
+        checkMethod("checkPrintString:()I", 1);
+    }
+
+    @Test
+    public void checkPrintChar() {
+        checkMethod("checkPrintChar:()I", 1);
+    }
+
+    @Test
+    public void checkPrintlnChar() {
+        checkMethod("checkPrintlnChar:()I", 1);
+    }
+
+    @Test
+    public void checkPrintInt() {
+        checkMethod("checkPrintInt:()I", 1);
+    }
+
+    @Test
+    public void checkPrintlnInt() {
+        checkMethod("checkPrintlnInt:()I", 1);
+    }
+
+
     private void checkMethod(@Nonnull String methodName, long expected) {
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(klass);

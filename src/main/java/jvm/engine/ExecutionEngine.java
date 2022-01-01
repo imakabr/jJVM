@@ -19,6 +19,13 @@ import static jvm.heap.KlassLoader.*;
 public final class ExecutionEngine {
 
     private final static int NULL = 0;
+    private final static String HASHCODE = "hashCode:()I";
+    private final static String STRING_PRINTLN = "println:(Ljava/lang/String;)V";
+    private final static String STRING_PRINT = "print:(Ljava/lang/String;)V";
+    private final static String CHAR_PRINTLN = "println:(C)V";
+    private final static String CHAR_PRINT = "print:(C)V";
+    private final static String INT_PRINTLN = "println:(I)V";
+    private final static String INT_PRINT = "print:(I)V";
 
     private final Opcode[] table = new Opcode[256];
     private final Heap heap;
@@ -51,7 +58,7 @@ public final class ExecutionEngine {
                         + ". Stopping."
                         + "\n"
                         + "\n"
-                        + getStackTrace(stackMethod, stackMethodPointer, null,true));
+                        + getStackTrace(stackMethod, stackMethodPointer, null, true));
             }
             int jumpTo;
 
@@ -141,7 +148,7 @@ public final class ExecutionEngine {
                     stack.push(object.getValue(fieldValueIndex));
                     break;
                 case GETSTATIC:
-                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);;
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     //---------------------------------------------------------------------------------
 
                     // todo restore indexes for resolving
@@ -153,7 +160,7 @@ public final class ExecutionEngine {
                     break;
                 //----------------------------------------------------------------------------------------------------------------------
                 case CHECKCAST:
-                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);;
+                    cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op));
                     object = heap.getInstanceObject(objectRef);
                     String castKlassName = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
@@ -206,7 +213,7 @@ public final class ExecutionEngine {
                     stack.push(setIntValueType(second / first));
                     break;
                 case IF_ACMPNE:
-                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);;
+                    jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))
                             != getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))) {
                         programCounter += jumpTo - 3;
@@ -324,10 +331,10 @@ public final class ExecutionEngine {
                 //--------------------------------------------------------------------------------------------------------------------------------
                 case IINC:
                     /*
-                    *The index is an unsigned byte that must be an index into the local variable array of the current frame.
-                    * The const is an immediate signed byte. The local variable at index must contain an int.
-                    * The value const is first sign-extended to an int, and then the local variable at index is incremented by that amount.
-                    * */
+                     *The index is an unsigned byte that must be an index into the local variable array of the current frame.
+                     * The const is an immediate signed byte. The local variable at index must contain an int.
+                     * The value const is first sign-extended to an int, and then the local variable at index is incremented by that amount.
+                     * */
                     int index = byteCode[programCounter++];
                     first = getPureValue(checkValueType(stack.getLocalVar(index), JVMType.I, stackMethod, stackMethodPointer, op));
                     stack.setLocalVar(index, setIntValueType(first + byteCode[programCounter++]));
@@ -404,7 +411,7 @@ public final class ExecutionEngine {
                         programCounter = 0;
                         stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
                     } else {
-                        invokeNativeMethod(stack, method, stackMethod, stackMethodPointer ,op);
+                        invokeNativeMethod(stack, method, stackMethod, stackMethodPointer, op);
                     }
                     break;
                 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -513,10 +520,10 @@ public final class ExecutionEngine {
                     break;
                 case BALOAD:
                     /*
-                    * The arrayref must be of type reference and must refer to an array whose components are of type byte or of type boolean.
-                    * The index must be of type int. Both arrayref and index are popped from the operand stack.
-                    * The byte value in the component of the array at index is retrieved, sign-extended to an int value, and pushed onto the top of the operand stack.
-                    */
+                     * The arrayref must be of type reference and must refer to an array whose components are of type byte or of type boolean.
+                     * The index must be of type int. Both arrayref and index are popped from the operand stack.
+                     * The byte value in the component of the array at index is retrieved, sign-extended to an int value, and pushed onto the top of the operand stack.
+                     */
                     index = getPureValue(stack.pop());
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
@@ -524,10 +531,10 @@ public final class ExecutionEngine {
                     break;
                 case CALOAD:
                     /*
-                    * The arrayref must be of type reference and must refer to an array whose components are of type char.
-                    * The index must be of type int. Both arrayref and index are popped from the operand stack.
-                    * The component of the array at index is retrieved and zero-extended to an int value. That value is pushed onto the operand stack.
-                    */
+                     * The arrayref must be of type reference and must refer to an array whose components are of type char.
+                     * The index must be of type int. Both arrayref and index are popped from the operand stack.
+                     * The component of the array at index is retrieved and zero-extended to an int value. That value is pushed onto the operand stack.
+                     */
                     index = getPureValue(stack.pop());
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
@@ -535,10 +542,10 @@ public final class ExecutionEngine {
                     break;
                 case AASTORE:
                     /*
-                    * The arrayref must be of type reference and must refer to an array whose components are of type reference.
-                    * The index must be of type int and value must be of type reference. The arrayref, index, and value are popped from the operand stack.
-                    * The reference value is stored as the component of the array at index.
-                    */
+                     * The arrayref must be of type reference and must refer to an array whose components are of type reference.
+                     * The index must be of type int and value must be of type reference. The arrayref, index, and value are popped from the operand stack.
+                     * The reference value is stored as the component of the array at index.
+                     */
                     value = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
                     index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
@@ -547,10 +554,10 @@ public final class ExecutionEngine {
                     break;
                 case IASTORE:
                     /*
-                    * Store into int array
-                    * Both index and value must be of type int. The arrayref, index, and value are popped from the operand stack.
-                    * The int value is stored as the component of the array indexed by index.
-                    */
+                     * Store into int array
+                     * Both index and value must be of type int. The arrayref, index, and value are popped from the operand stack.
+                     * The int value is stored as the component of the array indexed by index.
+                     */
                     value = checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op);
                     index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
@@ -559,10 +566,10 @@ public final class ExecutionEngine {
                     break;
                 case BASTORE:
                     /*
-                    * Store into byte or boolean array
-                    * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
-                    * The int value is truncated to a byte and stored as the component of the array indexed by index.
-                    */
+                     * Store into byte or boolean array
+                     * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
+                     * The int value is truncated to a byte and stored as the component of the array indexed by index.
+                     */
                     value = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
@@ -576,10 +583,10 @@ public final class ExecutionEngine {
                     break;
                 case CASTORE:
                     /*
-                    * The arrayref must be of type reference and must refer to an array whose components are of type char.
-                    * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
-                    * The int value is truncated to a char and stored as the component of the array indexed by index.
-                    */
+                     * The arrayref must be of type reference and must refer to an array whose components are of type char.
+                     * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
+                     * The int value is truncated to a char and stored as the component of the array indexed by index.
+                     */
                     value = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
@@ -692,10 +699,45 @@ public final class ExecutionEngine {
     }
 
     private void invokeNativeMethod(@Nonnull StackFrame stack, @Nonnull Method method, @Nonnull Method[] stackMethod, int pointer, Opcode opcode) {
-        if ("hashCode:()I".equals(method.getNameAndType())) {
+        String methodName = method.getNameAndType();
+        if (HASHCODE.equals(methodName)) {
             InstanceObject object1 = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode)));
             stack.push(setIntValueType(Objects.hashCode(object1)));
+        } else if (STRING_PRINTLN.equals(methodName)) {
+            System.out.println(printString(stack, stackMethod, pointer, opcode));
+        } else if (STRING_PRINT.equals(methodName)) {
+            System.out.print(printString(stack, stackMethod, pointer, opcode));
+        } else if (CHAR_PRINT.equals(methodName)) {
+            System.out.print((char) getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
+            stack.pop();
+        } else if (CHAR_PRINTLN.equals(methodName)) {
+            System.out.println((char) getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
+            stack.pop();
+        } else if (INT_PRINT.equals(methodName)) {
+            System.out.print(getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
+            stack.pop();
+        } else if (INT_PRINTLN.equals(methodName)) {
+            System.out.println(getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
+            stack.pop();
         }
+    }
+
+    @Nonnull
+    private char[] printString(@Nonnull StackFrame stack, @Nonnull Method[] stackMethod, int pointer, Opcode opcode) {
+        InstanceObject stringObject = heap.getInstanceObject(
+                getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode)));
+        InstanceObject charArrayObject = heap.getInstanceObject(getPureValue(checkValueType(
+                stringObject.getValue(stringObject.getIndexByFieldName("value:[C")),
+                JVMType.A,
+                stackMethod,
+                pointer,
+                opcode)));
+        stack.pop();
+        char[] buf = new char[charArrayObject.size()];
+        for (int i = 0; i < buf.length; i++) {
+            buf[i] = (char) charArrayObject.getValue(i);
+        }
+        return buf;
     }
 
     private void createMultiArray(int indexDim, int[] dimensions, InstanceObject object, String type) {

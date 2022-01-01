@@ -116,4 +116,50 @@ public class StringExample {
         return hello == dup;
     }
 
+    public int checkPrintlnString() {
+        String hello = "hello world";
+        System.out.println(hello);
+        System.out.println("With great power comes great responsibility");
+        return 1;
+    }
+
+    public int checkPrintString() {
+        System.out.print("hello ");
+        System.out.print("word");
+        System.out.print("!");
+        return 1;
+    }
+
+    public int checkPrintChar() {
+        char[] hello = {'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd' };
+        for (char letter : hello) {
+            System.out.print(letter);
+        }
+        return 1;
+    }
+
+    public int checkPrintlnChar() {
+        char[] hello = {'h', 'e', 'l', 'l', 'o'};
+        for (char letter : hello) {
+            System.out.println(letter);
+        }
+        return 1;
+    }
+
+    public int checkPrintInt() {
+        int[] digits = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        for (int digit : digits) {
+            System.out.print(digit);
+        }
+        return 1;
+    }
+
+    public int checkPrintlnInt() {
+        int[] digits = {1, 2, 3, 4, 5};
+        for (int digit : digits) {
+            System.out.println(digit);
+        }
+        return 1;
+    }
+
 }
