@@ -110,4 +110,10 @@ public class StringExample {
         return 1;
     }
 
+    public boolean checkToString() {
+        String hello = new String(new char[]{'h', 'e', 'l', 'l', 'o'});
+        String dup = hello.toString();
+        return hello == dup;
+    }
+
 }

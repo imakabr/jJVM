@@ -63,6 +63,11 @@ public class StringTest {
         checkMethod("checkStringConcatMethod:()I", 1);
     }
 
+    @Test
+    public void checkToString() {
+        checkMethod("checkToString:()Z", 1);
+    }
+
     private void checkMethod(@Nonnull String methodName, long expected) {
         Heap heap = new Heap(500, 50);
         heap.getKlassLoader().loadKlass(klass);

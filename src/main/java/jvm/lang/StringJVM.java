@@ -123,8 +123,8 @@ public class StringJVM {
         return result;
     }
 
-    public String toString() {
-        return new String(value);
+    public StringJVM toStringJVM() {
+        return this;
     }
 
 }
