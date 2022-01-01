@@ -95,6 +95,10 @@ public class StringJVM {
         return value[index];
     }
 
+    public int length() {
+        return value.length;
+    }
+
     @Override
     public int hashCode() {
         if (value == null) {

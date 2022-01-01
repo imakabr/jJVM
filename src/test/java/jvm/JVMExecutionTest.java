@@ -13,6 +13,8 @@ import static org.junit.Assert.*;
 
 public class JVMExecutionTest {
 
+    public static final int FIRST_NOT_SYSTEM_INSTANCE = 4;
+
     @Test
     public void simpleStaticFieldsInstanceKlassTest() throws NoSuchFieldException, IllegalAccessException {
         String fName = "jvm/examples/SimpleStatic";
@@ -85,7 +87,7 @@ public class JVMExecutionTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
 
-        InstanceObject simpleClassObject = heap.getInstanceObject(3);
+        InstanceObject simpleClassObject = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
 
         int fieldValueIndex = simpleClassObject.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
@@ -176,7 +178,7 @@ public class JVMExecutionTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
 
-        InstanceObject object = heap.getInstanceObject(3);
+        InstanceObject object = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
 
         int fieldValueIndex = object.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
@@ -303,7 +305,7 @@ public class JVMExecutionTest {
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createObjectGetHashCode:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         long result = new ExecutionEngine(heap).invoke(method);
-        InstanceObject object = heap.getInstanceObject(3);
+        InstanceObject object = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
         assertEquals(Objects.hashCode(object), result);
     }
 

@@ -21,6 +21,7 @@ public class KlassLoader {
     public static final String OBJECT_INIT = "<init>";
     public static final String STRING_JVM = "jvm/lang/StringJVM";
     public static final String STRING = "java/lang/String";
+    public static final String STRING_BUILDER = "jvm/lang/StringBuilder";
 
 
     Map<String, Integer> indexByName; // index to Heap.instanceKlasses
@@ -37,6 +38,7 @@ public class KlassLoader {
     private void initSystemKlasses() {
         initObjectKlass();
         loadKlass(STRING_JVM);
+        loadKlass(STRING_BUILDER);
     }
 
     private void initObjectKlass() {
