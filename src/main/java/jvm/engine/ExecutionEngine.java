@@ -188,7 +188,7 @@ public final class ExecutionEngine {
                 case ISHL:
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    stack.push(setIntValueType((long) second << first));
+                    stack.push(setIntValueType(second << first));
                     break;
                 case ISHR:
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
@@ -229,7 +229,7 @@ public final class ExecutionEngine {
                 case IDIV:
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    if (second == 0) throw new ArithmeticException("cannot divide 0");
+                    if (first == 0) throw new ArithmeticException("cannot divide 0");
                     stack.push(setIntValueType(second / first));
                     break;
                 case IF_ACMPNE:
@@ -382,7 +382,7 @@ public final class ExecutionEngine {
                 case IMUL:
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    stack.push(setIntValueType((long) first * second));
+                    stack.push(setIntValueType(first * second));
                     break;
                 case INEG:
                     first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
@@ -590,13 +590,13 @@ public final class ExecutionEngine {
                      * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                      * The int value is truncated to a byte and stored as the component of the array indexed by index.
                      */
-                    value = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
                     JVMType type = object.getArrayType();
                     if (type == JVMType.Z || type == JVMType.B) {
-                        object.setValue(index, setValueType(value, type));
+                        object.setValue(index, setValueType(first, type));
                     } else {
                         throw new RuntimeException("Wrong type of array\n" + getStackTrace(stackMethod, stackMethodPointer, op, false));
                     }
@@ -607,11 +607,11 @@ public final class ExecutionEngine {
                      * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                      * The int value is truncated to a char and stored as the component of the array indexed by index.
                      */
-                    value = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
                     object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                    object.setValue(index, setCharValueType(value));
+                    object.setValue(index, setCharValueType(first));
                     break;
                 //--------------------------------------------------------------------------------------------------------------------------------------
                 case NOP:
@@ -808,19 +808,19 @@ public final class ExecutionEngine {
         return des.substring(des.lastIndexOf('[') + 1);
     }
 
-    private long setIntValueType(long value) {
+    private long setIntValueType(int value) {
         return setValueType(JVMType.I.ordinal()) ^ value;
     }
 
-    private long setCharValueType(long value) {
+    private long setCharValueType(int value) {
         return setValueType(JVMType.C.ordinal()) ^ value;
     }
 
-    private long setValueType(long value, @Nonnull JVMType type) {
+    private long setValueType(int value, @Nonnull JVMType type) {
         return setValueType(type.ordinal()) ^ value;
     }
 
-    private long setRefValueType(long value) {
+    private long setRefValueType(int value) {
         return setValueType(JVMType.A.ordinal()) ^ value;
     }
 
@@ -937,7 +937,7 @@ public final class ExecutionEngine {
         return heap.getObjectRef(new InstanceObject(type, count, klassIndex));
     }
 
-    private long allocateArrayOfRef(String sourceKlassName, int cpIndex, int count) {
+    private int allocateArrayOfRef(String sourceKlassName, int cpIndex, int count) {
         Klass sourceKlass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
         String destKlassName = sourceKlass.getKlassNameByCPIndex((short) cpIndex);
         Klass destKlass = heap.getKlassLoader().getLoadedKlassByName(destKlassName);

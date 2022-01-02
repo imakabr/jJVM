@@ -36,9 +36,48 @@ public class StringBuilder {
     }
 
     public StringBuilder append(char letter) {
-        checkCapacity(count + 1);
+        checkCapacity(1);
         value[count] = letter;
         count++;
+        return this;
+    }
+
+    public StringBuilder append(int number) {
+        if (number == 0) {
+            checkCapacity(1);
+            value[count++] = '0';
+            return this;
+        }
+        int d = number;
+        int length = 0;
+        int div1 = 1;
+        int div2 = 1;
+        while (d != 0) {
+            d /= 10;
+            length++;
+            div1 *= 10;
+            div2 *= 10;
+        }
+        checkCapacity(length);
+        if (number >>> 31 == 1) { // if number is negative
+            if (number == Integer.MIN_VALUE) {
+                append("-2147483648");
+                return this;
+            }
+            value[count++] = '-';
+            number *= -1;
+        }
+        if (length == 10) { // if number >= 10^9
+            div1 = div2 = 1000000000;
+            value[count++] = (char) ('0' + number / div1);
+            length--;
+        }
+        div2 /= 10;
+        for (int i = 0; i < length; i++) {
+            value[count++] = (char) ('0' + (number % div1 / div2));
+            div1 /= 10;
+            div2 /= 10;
+        }
         return this;
     }
 

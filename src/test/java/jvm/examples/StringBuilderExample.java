@@ -44,4 +44,48 @@ public class StringBuilderExample {
     public int checkStringBuilderHashCode() {
         return new StringBuilder().append("hello world!").hashCode();
     }
+
+    public int checkStringBuilderAppendChar() {
+        char[] actual = new StringBuilder("hello world").append('!').toString().toCharArray();
+        char[] expected = "hello world!".toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != actual[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    public int checkStringBuilderAppendInt() {
+        char[] actual = new StringBuilder().append(-123456789).toString().toCharArray();
+        char[] expected = "-123456789".toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != actual[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    public int checkStringBuilderAppendIntMax() {
+        char[] actual = new StringBuilder().append(Integer.MAX_VALUE).toString().toCharArray();
+        char[] expected = "2147483647".toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != actual[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
+
+    public int checkStringBuilderAppendIntMin() {
+        char[] actual = new StringBuilder().append(Integer.MIN_VALUE).toString().toCharArray();
+        char[] expected = "-2147483648".toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != actual[i]) {
+                return 0;
+            }
+        }
+        return 1;
+    }
 }
