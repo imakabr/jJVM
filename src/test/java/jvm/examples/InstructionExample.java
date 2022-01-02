@@ -265,4 +265,26 @@ public class InstructionExample {
         }
         return i;
     }
+
+    public int checkISHL() {
+        int a = 32;
+        return a << 2;
+    }
+
+    public int checkISHR() {
+        int a = 128;
+        return a >> 2;
+    }
+
+    public int checkIUSHR() {
+        // check negative sign
+        int a = -128;
+        return a >>> 31;
+    }
+
+    public int checkIXOR() {
+        int a = 128;
+        return ~a;
+    }
+
 }

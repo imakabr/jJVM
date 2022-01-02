@@ -472,6 +472,30 @@ public class JVMExecutionTest {
         checkMethodInInstructionClass("checkIREM:()I", 3);
     }
 
+    @Test
+    public void checkISHL() {
+        // check checkISHL
+        checkMethodInInstructionClass("checkISHL:()I", 128);
+    }
+
+    @Test
+    public void checkISHR() {
+        // check ISHR
+        checkMethodInInstructionClass("checkISHR:()I", 32);
+    }
+
+    @Test
+    public void checkIUSHR() {
+        // check IUSHR
+        checkMethodInInstructionClass("checkIUSHR:()I", 1);
+    }
+
+    @Test
+    public void checkIXOR() {
+        // check IXOR
+        checkMethodInInstructionClass("checkIXOR:()I", -129);
+    }
+
     private void checkMethodInInstructionClass(@Nonnull String methodName, long expected) {
         checkMethod(INSTRUCTION, methodName, expected);
     }

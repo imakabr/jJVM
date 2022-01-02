@@ -185,6 +185,26 @@ public final class ExecutionEngine {
                 case IAND:
                     stack.push(setIntValueType(getPureValue(stack.pop()) & getPureValue(stack.pop())));
                     break;
+                case ISHL:
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(setIntValueType((long) second << first));
+                    break;
+                case ISHR:
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(setIntValueType(second >> first));
+                    break;
+                case IUSHR:
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(setIntValueType(second >>> first));
+                    break;
+                case IXOR:
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(setIntValueType(~second));
+                    break;
                 case ICONST_0:
                     stack.push(setIntValueType(0));
                     break;
