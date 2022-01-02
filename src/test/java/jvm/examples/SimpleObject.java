@@ -58,6 +58,11 @@ public class SimpleObject {
         return -1555573285;
     }
 
+    @Override
+    public String toString() {
+        return "I'm SimpleObject, a = " + a + " b = " + b + " c = " + c;
+    }
+
     public static void main(String[] args) {
         System.out.println(m3());
     }

@@ -22,8 +22,8 @@ public class KlassLoader {
     public static final String STRING_JVM = "jvm/lang/StringJVM";
     public static final String STRING = "java/lang/String";
     public static final String STRING_BUILDER = "jvm/lang/StringBuilder";
-    public static final String SYSTEM = "jvm/lang/System";
-    public static final String PRINT_STREAM = "jvm/io/PrintStream";
+    public static final String SYSTEM = "jvm/lang/SystemJVM";
+    public static final String PRINT_STREAM = "jvm/io/PrintStreamJVM";
 
 
     Map<String, Integer> indexByName; // index to Heap.instanceKlasses

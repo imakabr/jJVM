@@ -162,4 +162,10 @@ public class StringExample {
         return 1;
     }
 
+    public int checkPrintlnObject() {
+        SimpleObject simpleObject = new SimpleObject(1, 2, 3);
+        System.out.println(simpleObject);
+        return 1;
+    }
+
 }

@@ -98,6 +98,11 @@ public class StringTest {
         checkMethod("checkPrintlnInt:()I", 1);
     }
 
+    @Test
+    public void checkPrintlnObject() {
+        checkMethod("checkPrintlnObject:()I", 1);
+    }
+
 
     private void checkMethod(@Nonnull String methodName, long expected) {
         Heap heap = new Heap(500, 50);
