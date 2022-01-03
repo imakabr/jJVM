@@ -20,6 +20,7 @@ public final class ExecutionEngine {
 
     private final static int NULL = 0;
     private final static String HASHCODE = "hashCode:()I";
+    private final static String TO_STRING = "toString:()Ljava/lang/String;";
     private final static String STRING_PRINTLN = "println:(Ljava/lang/String;)V";
     private final static String STRING_PRINT = "print:(Ljava/lang/String;)V";
     private final static String CHAR_PRINTLN = "println:(C)V";
@@ -723,6 +724,13 @@ public final class ExecutionEngine {
         if (HASHCODE.equals(methodName)) {
             InstanceObject object1 = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode)));
             stack.push(setIntValueType(Objects.hashCode(object1)));
+        } else if (TO_STRING.equals(methodName)) {
+            int objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            InstanceObject object1 = heap.getInstanceObject(objectRef);
+            String result = heap.getInstanceKlass(object1.getKlassIndex()).getName().replace('/', '.')
+                    + "@"
+                    + Integer.toHexString(objectRef);
+            stack.push(setRefValueType(createStringInstance(result.toCharArray())));
         } else if (STRING_PRINTLN.equals(methodName)) {
             System.out.println(printString(stack, stackMethod, pointer, opcode));
         } else if (STRING_PRINT.equals(methodName)) {

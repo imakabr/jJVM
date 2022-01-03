@@ -99,8 +99,18 @@ public class StringTest {
     }
 
     @Test
+    public void checkPrintlnSimpleObject() {
+        checkMethod("checkPrintlnSimpleObject:()I", 1);
+    }
+
+    @Test
     public void checkPrintlnObject() {
         checkMethod("checkPrintlnObject:()I", 1);
+    }
+
+    @Test
+    public void checkObjectToString() {
+        checkMethod("checkObjectToString:()I", 0);
     }
 
 

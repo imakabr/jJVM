@@ -162,9 +162,28 @@ public class StringExample {
         return 1;
     }
 
-    public int checkPrintlnObject() {
+    public int checkPrintlnSimpleObject() {
         SimpleObject simpleObject = new SimpleObject(1, 2, 3);
         System.out.println(simpleObject);
+        return 1;
+    }
+
+    public int checkPrintlnObject() {
+        StringExample stringExample = new StringExample();
+        System.out.println(stringExample);
+        return 1;
+    }
+
+    public int checkObjectToString() {
+        StringExample stringExample = new StringExample();
+        StringExample stringExample2 = new StringExample();
+        char[] actual = stringExample.toString().toCharArray();
+        char[] expected = stringExample2.toString().toCharArray();
+        for (int i = 0; i < expected.length; i++) {
+            if (expected[i] != actual[i]) {
+                return 0;
+            }
+        }
         return 1;
     }
 
