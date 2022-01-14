@@ -19,14 +19,14 @@ import static jvm.heap.KlassLoader.*;
 public final class ExecutionEngine {
 
     private final static int NULL = 0;
-    private final static String HASHCODE = "hashCode:()I";
-    private final static String TO_STRING = "toString:()Ljava/lang/String;";
-    private final static String STRING_PRINTLN = "println:(Ljava/lang/String;)V";
-    private final static String STRING_PRINT = "print:(Ljava/lang/String;)V";
-    private final static String CHAR_PRINTLN = "println:(C)V";
-    private final static String CHAR_PRINT = "print:(C)V";
-    private final static String INT_PRINTLN = "println:(I)V";
-    private final static String INT_PRINT = "print:(I)V";
+    private final static String HASHCODE = "java/lang/Object.hashCode:()I";
+    private final static String TO_STRING = "java/lang/Object.toString:()Ljava/lang/String;";
+    private final static String STRING_PRINTLN = "java/io/PrintStream.println:(Ljava/lang/String;)V";
+    private final static String STRING_PRINT = "java/io/PrintStream.print:(Ljava/lang/String;)V";
+    private final static String CHAR_PRINTLN = "java/io/PrintStream.println:(C)V";
+    private final static String CHAR_PRINT = "java/io/PrintStream.print:(C)V";
+    private final static String INT_PRINTLN = "java/io/PrintStream.println:(I)V";
+    private final static String INT_PRINT = "java/io/PrintStream.print:(I)V";
 
     private final Opcode[] table = new Opcode[256];
     private final Heap heap;
@@ -720,7 +720,7 @@ public final class ExecutionEngine {
     }
 
     private void invokeNativeMethod(@Nonnull StackFrame stack, @Nonnull Method method, @Nonnull Method[] stackMethod, int pointer, Opcode opcode) {
-        String methodName = method.getNameAndType();
+        String methodName = method.getClassName() + "." + method.getNameAndType();
         if (HASHCODE.equals(methodName)) {
             InstanceObject object1 = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode)));
             stack.push(setIntValueType(Objects.hashCode(object1)));
