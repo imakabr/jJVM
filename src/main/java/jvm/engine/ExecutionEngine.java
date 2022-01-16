@@ -9,9 +9,9 @@ import jvm.parser.ConstantPoolEntry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.*;
 
 import static jvm.engine.Opcode.*;
 import static jvm.heap.KlassLoader.*;
@@ -27,9 +27,12 @@ public final class ExecutionEngine {
     private final static String CHAR_PRINT = "java/io/PrintStream.print:(C)V";
     private final static String INT_PRINTLN = "java/io/PrintStream.println:(I)V";
     private final static String INT_PRINT = "java/io/PrintStream.print:(I)V";
+    private final static String INIT_SOCKET = "java/net/Socket.initSocket:(Ljava/lang/String;I)V";
 
     private final Opcode[] table = new Opcode[256];
     private final Heap heap;
+
+    private final Map<Integer, Object> nativeOjbects = new HashMap<>();
 
     public ExecutionEngine(Heap heap) {
         this.heap = heap;
@@ -394,12 +397,16 @@ public final class ExecutionEngine {
                     cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     methodIndex = getMethodIndex(klassName, cpLookup); // todo restore to resolution
                     method = heap.getMethodRepo().getMethod(methodIndex);
-                    byteCode = method.getBytecode();
-                    klassName = method.getClassName();
-                    stackMethod[++stackMethodPointer] = method;
-                    stack.programCounter = programCounter;
-                    programCounter = 0;
-                    stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
+                    if (!method.isNative()) {
+                        byteCode = method.getBytecode();
+                        klassName = method.getClassName();
+                        stackMethod[++stackMethodPointer] = method;
+                        stack.programCounter = programCounter;
+                        programCounter = 0;
+                        stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
+                    } else {
+                        invokeNativeMethod(stack, method, stackMethod, stackMethodPointer, op);
+                    }
                     break;
                 case INVOKESTATIC:
                     cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -732,9 +739,13 @@ public final class ExecutionEngine {
                     + Integer.toHexString(objectRef);
             stack.push(setRefValueType(createStringInstance(result.toCharArray())));
         } else if (STRING_PRINTLN.equals(methodName)) {
-            System.out.println(printString(stack, stackMethod, pointer, opcode));
+            int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            System.out.println(getString(stringObjectRef, stackMethod, pointer, opcode));
+            stack.pop();
         } else if (STRING_PRINT.equals(methodName)) {
-            System.out.print(printString(stack, stackMethod, pointer, opcode));
+            int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            System.out.print(getString(stringObjectRef, stackMethod, pointer, opcode));
+            stack.pop();
         } else if (CHAR_PRINT.equals(methodName)) {
             System.out.print((char) getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
             stack.pop();
@@ -747,25 +758,33 @@ public final class ExecutionEngine {
         } else if (INT_PRINTLN.equals(methodName)) {
             System.out.println(getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
             stack.pop();
+        } else if (INIT_SOCKET.equals(methodName)) {
+            int socketObjRef = getPureValue(checkValueType(stack.getLocalVar(0), JVMType.A, stackMethod, pointer, opcode));
+            int stringObjRef = getPureValue(checkValueType(stack.getLocalVar(1), JVMType.A, stackMethod, pointer, opcode));
+            int port = getPureValue(checkValueType(stack.getLocalVar(2), JVMType.I, stackMethod, pointer, opcode));
+            String ipAddress = getString(stringObjRef, stackMethod, pointer, opcode);
+            try {
+                nativeOjbects.put(socketObjRef, new Socket(ipAddress, port));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     @Nonnull
-    private char[] printString(@Nonnull StackFrame stack, @Nonnull Method[] stackMethod, int pointer, Opcode opcode) {
-        InstanceObject stringObject = heap.getInstanceObject(
-                getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode)));
+    private String getString(int objectRef, @Nonnull Method[] stackMethod, int pointer, Opcode opcode) {
+        InstanceObject stringObject = heap.getInstanceObject(objectRef);
         InstanceObject charArrayObject = heap.getInstanceObject(getPureValue(checkValueType(
                 stringObject.getValue(stringObject.getIndexByFieldName("value:[C")),
                 JVMType.A,
                 stackMethod,
                 pointer,
                 opcode)));
-        stack.pop();
         char[] buf = new char[charArrayObject.size()];
         for (int i = 0; i < buf.length; i++) {
             buf[i] = (char) charArrayObject.getValue(i);
         }
-        return buf;
+        return String.valueOf(buf);
     }
 
     private void createMultiArray(int indexDim, int[] dimensions, InstanceObject object, String type) {
