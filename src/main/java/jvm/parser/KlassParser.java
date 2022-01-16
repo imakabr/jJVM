@@ -3,6 +3,7 @@ package jvm.parser;
 import jvm.JVMType;
 
 import javax.annotation.Nonnull;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,11 +70,11 @@ public final class KlassParser {
     }
 
     private void parse() {
-            parseHeader();
-            parseConstantPool();
-            parseBasicTypeInfo();
-            parseFields();
-            parseMethods();
+        parseHeader();
+        parseConstantPool();
+        parseBasicTypeInfo();
+        parseFields();
+        parseMethods();
     }
 
     public Klass getKlass() {
@@ -192,7 +193,7 @@ public final class KlassParser {
     }
 
     private int read4Bytes() {
-//        int result = ByteBuffer.wrap(clzBytes, current, 4).getInt();
+        int result = ByteBuffer.wrap(clzBytes, current, 4).getInt();
 //        current += 4;
 //        return result;
         return (clzBytes[current++] << 24) + ((clzBytes[current++] & 0xff) << 16) + ((clzBytes[current++] & 0xff) << 8) + (clzBytes[current++] & 0xff);
@@ -229,18 +230,16 @@ public final class KlassParser {
     }
 
     void parseMethodAttributes(Method method) {
-        int nameCPIdx = read2Bytes();
-        int attrLen = read4Bytes();
+        int nameCPIdx = read2Bytes(); // attribute_name_index
+        int attrLen = read4Bytes(); // attribute_length
         int endIndex = current + attrLen;
         String s = getConstantPoolEntry(nameCPIdx).getStr();
-        if (!"Code".equals(s)) {
-            throw new IllegalArgumentException("Must be code");
-        }
-        method.setMaxStack(read2Bytes());
-        method.setMaxLocal(read2Bytes());
-        int codeLen = read4Bytes();
-        byte[] bytecode = Arrays.copyOfRange(clzBytes, current, current + codeLen);
-        method.setBytecode(bytecode);
+        if ("Code".equals(s)) {
+            method.setMaxStack(read2Bytes());
+            method.setMaxLocal(read2Bytes());
+            int codeLen = read4Bytes();
+            byte[] bytecode = Arrays.copyOfRange(clzBytes, current, current + codeLen);
+            method.setBytecode(bytecode);
 //    u2 exception_table_length;
 //    {   u2 start_pc;
 //        u2 end_pc;
@@ -249,7 +248,16 @@ public final class KlassParser {
 //    } exception_table[exception_table_length];
 //    u2 attributes_count;
 //    attribute_info attributes[attributes_count];
-        // Skip to the end
+            // Skip to the end
+        } else if ("Exceptions".equals(s)) {
+            int number_of_exceptions = read2Bytes();
+            int[] exception_index_table = new int[number_of_exceptions]; //todo implement Exceptions
+            for (int i = 0; i < number_of_exceptions; i++) {
+                exception_index_table[i] = read2Bytes();
+            }
+        } else {
+            throw new IllegalArgumentException("Must be code");
+        }
         current = endIndex;
     }
 
