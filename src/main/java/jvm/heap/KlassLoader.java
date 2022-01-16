@@ -11,7 +11,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
-import static jvm.Utils.checkSystemKlassName;
+import static jvm.Utils.changeSystemKlassNameToJVMKlassName;
+import static jvm.Utils.changeJVMKlassNameToSystemKlassName;
 
 public class KlassLoader {
 
@@ -39,9 +40,6 @@ public class KlassLoader {
     public void initSystemKlasses() {
         initObjectKlass();
         loadKlass(STRING_JVM);
-        loadKlass(STRING_BUILDER);
-        loadKlass(PRINT_STREAM);
-        loadKlass(SYSTEM);
     }
 
     private void initObjectKlass() {
@@ -58,7 +56,7 @@ public class KlassLoader {
     public Integer getInstanceKlassIndexByName(String name, boolean loadIfAbsent) {
         Integer index = indexByName.get(name);
         if (index == null && loadIfAbsent) {
-            loadKlass(name);
+            loadKlass(changeSystemKlassNameToJVMKlassName(name));
         }
         return indexByName.get(name);
     }
@@ -70,14 +68,14 @@ public class KlassLoader {
     public Klass getLoadedKlassByName(String name) {
         Klass klass = loadedKlasses.get(name);
         if (klass == null) {
-            loadKlass(name);
+            loadKlass(changeSystemKlassNameToJVMKlassName(name));
         }
         return loadedKlasses.get(name);
     }
 
     public void loadKlass(@Nonnull String name) {
         loadCurrentKlass(name);
-        List<Method> clInitMethods = prepareCurrentAndInheritedKlasses(getLoadedKlassByName(checkSystemKlassName(name)));
+        List<Method> clInitMethods = prepareCurrentAndInheritedKlasses(getLoadedKlassByName(changeJVMKlassNameToSystemKlassName(name)));
 
         //init Klass from top to bottom
         ExecutionEngine engine = new ExecutionEngine(heap);

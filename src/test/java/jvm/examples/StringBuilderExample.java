@@ -1,6 +1,5 @@
 package jvm.examples;
 
-import jvm.lang.StringBuilder;
 
 public class StringBuilderExample {
 

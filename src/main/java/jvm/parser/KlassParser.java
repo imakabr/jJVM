@@ -2,14 +2,13 @@ package jvm.parser;
 
 import jvm.JVMType;
 
-import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static jvm.Utils.checkSystemKlassName;
+import static jvm.Utils.changeJVMKlassNameToSystemKlassName;
 
 
 public final class KlassParser {
@@ -311,7 +310,7 @@ public final class KlassParser {
             default:
                 throw new RuntimeException("Reached impossible Constant Pool Tag: " + top);
         }
-        return checkSystemKlassName(result);
+        return changeJVMKlassNameToSystemKlassName(result);
     }
 
 }

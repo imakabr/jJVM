@@ -1,16 +1,16 @@
 package jvm.lang;
 
-public class StringBuilder {
+public class StringBuilderJVM {
 
     private char[] value;
     private int count;
 
 
-    public StringBuilder() {
+    public StringBuilderJVM() {
         this.value = new char[16];
     }
 
-    public StringBuilder(String str) {
+    public StringBuilderJVM(String str) {
         int length = str.length();
         char[] value = new char[length + 16];
         arrayCopy(str.toCharArray(), value, length);
@@ -24,7 +24,7 @@ public class StringBuilder {
         }
     }
 
-    public StringBuilder append(String str) {
+    public StringBuilderJVM append(String str) {
         char[] buf = str.toCharArray();
         int length = str.length();
         checkCapacity(length);
@@ -35,14 +35,14 @@ public class StringBuilder {
         return this;
     }
 
-    public StringBuilder append(char letter) {
+    public StringBuilderJVM append(char letter) {
         checkCapacity(1);
         value[count] = letter;
         count++;
         return this;
     }
 
-    public StringBuilder append(int number) {
+    public StringBuilderJVM append(int number) {
         if (number == 0) {
             checkCapacity(1);
             value[count++] = '0';
@@ -104,7 +104,7 @@ public class StringBuilder {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null) return false;
-        StringBuilder that = (StringBuilder) o;
+        StringBuilderJVM that = (StringBuilderJVM) o;
         char[] thatValue = that.value;
         if (count != that.count) return false;
         for (int i = 0; i < count; i++) {

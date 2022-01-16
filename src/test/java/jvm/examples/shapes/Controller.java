@@ -1,6 +1,5 @@
 package jvm.examples.shapes;
 
-import jvm.lang.StringBuilder;
 
 import javax.annotation.Nonnull;
 import java.util.Random;

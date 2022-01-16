@@ -27,10 +27,17 @@ public class Utils {
     }
 
     @Nonnull
-    public static String checkSystemKlassName(@Nonnull String name) {
-        if (name.contains("jvm/lang/") || name.contains("jvm/io/") || name.contains("JVM")) {
+    public static String changeJVMKlassNameToSystemKlassName(@Nonnull String name) {
+        if (name.contains("JVM")) {
             return name.replace("jvm", "java")
                     .replace("JVM", "");
+        }
+        return name;
+    }
+    @Nonnull
+    public static String changeSystemKlassNameToJVMKlassName(@Nonnull String name) {
+        if (name.contains("java/lang/") || name.contains("java/io/") || name.contains("java/net/")) {
+            return name.replace("java", "jvm") + "JVM";
         }
         return name;
     }
