@@ -9,7 +9,7 @@ import jvm.parser.ConstantPoolEntry;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.*;
 
@@ -28,11 +28,18 @@ public final class ExecutionEngine {
     private final static String INT_PRINTLN = "java/io/PrintStream.println:(I)V";
     private final static String INT_PRINT = "java/io/PrintStream.print:(I)V";
     private final static String INIT_SOCKET = "java/net/Socket.initSocket:(Ljava/lang/String;I)V";
+    private final static String GET_INPUT_STREAM = "java/net/Socket.getInputStream:()Ljava/io/InputStream;";
+    private final static String INPUT_STREAM = "java/io/InputStream";
+    private final static String GET_OUTPUT_STREAM = "java/net/Socket.getOutputStream:()Ljava/io/OutputStream;";
+    private final static String INIT_INPUT_STREAM_READER = "java/io/InputStreamReader.initInputStreamReader:(Ljava/io/InputStream;)V";
+    private final static String INIT_BUFFERED_READER = "java/io/BufferedReader.initBufferedReader:(Ljava/io/Reader;)V";
+    private final static String INIT_PRINT_WRITER = "java/io/PrintWriter.initPrintWriter:(Ljava/io/OutputStream;Z)V";
+    private final static String PRINT_WRITER_PRINTLN = "java/io/PrintWriter.println:(Ljava/lang/String;)V";
 
     private final Opcode[] table = new Opcode[256];
     private final Heap heap;
 
-    private final Map<Integer, Object> nativeOjbects = new HashMap<>();
+    private final Map<Integer, Object> nativeObjects = new HashMap<>();
 
     public ExecutionEngine(Heap heap) {
         this.heap = heap;
@@ -764,10 +771,42 @@ public final class ExecutionEngine {
             int port = getPureValue(checkValueType(stack.getLocalVar(2), JVMType.I, stackMethod, pointer, opcode));
             String ipAddress = getString(stringObjRef, stackMethod, pointer, opcode);
             try {
-                nativeOjbects.put(socketObjRef, new Socket(ipAddress, port));
+                nativeObjects.put(socketObjRef, new Socket(ipAddress, port));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        } else if (GET_INPUT_STREAM.equals(methodName) || GET_OUTPUT_STREAM.equals(methodName)) {
+            int streamObjRef = allocateInstanceObjectAndGetReference(INPUT_STREAM);
+            int socketObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            stack.push(setRefValueType(streamObjRef));
+            Socket socket = (Socket) nativeObjects.get(socketObjRef);
+            try {
+                nativeObjects.put(streamObjRef, GET_INPUT_STREAM.equals(methodName) ? socket.getInputStream() : socket.getOutputStream());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else if (INIT_INPUT_STREAM_READER.equals(methodName)) {
+            int inputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            InputStream inputStream = (InputStream) nativeObjects.get(inputStreamObjRef);
+            nativeObjects.put(inputStreamReaderObjRef, new InputStreamReader(inputStream));
+        } else if (INIT_BUFFERED_READER.equals(methodName)) {
+            int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            Reader inputStreamReader = (Reader) nativeObjects.get(inputStreamReaderObjRef);
+            nativeObjects.put(bufferedReaderObjRef, new BufferedReader(inputStreamReader));
+        } else if (INIT_PRINT_WRITER.equals(methodName)) {
+            int bool = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode));
+            int outputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            OutputStream outputStream = (OutputStream) nativeObjects.get(outputStreamObjRef);
+            nativeObjects.put(printWriterObjRef, new PrintWriter(outputStream, bool == 1));
+        } else if (PRINT_WRITER_PRINTLN.equals(methodName)) {
+            int stringObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            String message = getString(stringObjRef, stackMethod, pointer, opcode);
+            int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            PrintWriter printWriter = (PrintWriter) nativeObjects.get(printWriterObjRef);
+            printWriter.println(message);
         }
     }
 

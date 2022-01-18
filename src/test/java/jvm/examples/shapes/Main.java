@@ -10,7 +10,18 @@ public class Main {
     String[] colors = {"red", "yellow", "purple", "blue", "green"};
     int count = 7;
 
-    public static void main(String[] args) throws InterruptedException {
+    SystemSocket systemSocket;
+
+    public Main() throws IOException {
+        clientSocket = new Socket("127.0.0.1", port);
+        out = new PrintWriter(clientSocket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
+//        systemSocket = new SystemSocket("127.0.0.1", port);
+
+    }
+
+    public static void main(String[] args) throws InterruptedException, IOException {
         new Main().main();
     }
 

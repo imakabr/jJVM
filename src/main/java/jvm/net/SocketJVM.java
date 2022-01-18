@@ -1,7 +1,7 @@
 package jvm.net;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import jvm.io.InputStreamJVM;
+import jvm.io.OutputStreamJVM;
 
 public class SocketJVM {
 
@@ -11,7 +11,7 @@ public class SocketJVM {
 
     private native void initSocket(String ipAddress, int port);
 
-    public native InputStream getInputStream();
+    public native InputStreamJVM getInputStream();
 
-    public native OutputStream getOutputStream();
+    public native OutputStreamJVM getOutputStream();
 }
