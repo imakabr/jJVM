@@ -89,7 +89,7 @@ public class KlassLoader {
         Klass constantPoolKlass = new KlassParser(klassData, name).getKlass();
         setConstantPoolKlassByName(constantPoolKlass.getKlassName(), constantPoolKlass);
         if (!JAVA_LANG_OBJECT.equals(constantPoolKlass.getParent())) {
-            loadCurrentKlass(constantPoolKlass.getParent());
+            loadCurrentKlass(changeSystemKlassNameToJVMKlassName(constantPoolKlass.getParent()));
         }
     }
 
