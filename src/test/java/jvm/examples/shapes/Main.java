@@ -1,66 +1,75 @@
 package jvm.examples.shapes;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import java.io.*;
+import java.net.Socket;
 import java.util.Random;
 
 public class Main {
 
     String[] shapes = {"square", "triangle", "circle", "cross", "diamond", "pentagon", "star"};
     String[] colors = {"red", "yellow", "purple", "blue", "green"};
-    int count = 7;
+    int count = 35;
+    int port = 10003;
 
-    SystemSocket systemSocket;
+    PrintWriter out;
+    Socket clientSocket;
+    BufferedReader in;
 
     public Main() throws IOException {
         clientSocket = new Socket("127.0.0.1", port);
         out = new PrintWriter(clientSocket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
-//        systemSocket = new SystemSocket("127.0.0.1", port);
-
     }
 
     public static void main(String[] args) throws InterruptedException, IOException {
         new Main().main();
     }
 
-    public void main() throws InterruptedException {
+    private void sendToServer(String message) throws IOException {
+        out.println(message);
+        if (!"next".equals(in.readLine())) {
+            System.out.println("something wrong");
+            System.exit(-1);
+        }
+    }
+
+
+    public void main() throws InterruptedException, IOException {
         Shape[][] shapes = new Shape[count][count];
-        for (int y = 0; y < shapes.length; y++) {
-            for (int x = 0; x < shapes[0].length; x++) {
-                if (shapes[y][x] == null) {
-                    shapes[y][x] = createNewShape(x, y);
+        while (true) {
+            for (int y = 0; y < shapes.length; y++) {
+                for (int x = 0; x < shapes[0].length; x++) {
+                    if (shapes[y][x] == null) {
+                        shapes[y][x] = createNewShape(x, y);
+                    }
+                    checkTime(shapes);
                 }
-                Thread.sleep(200);
-                checkTime(shapes);
             }
         }
     }
 
-    private void print(@Nonnull String str) {
+    private void print(String str) throws IOException {
         System.out.println(str);
+        sendToServer(str);
     }
 
-    private void checkTime(@Nonnull Shape[][] shapes) throws InterruptedException {
+    private void checkTime(Shape[][] shapes) throws InterruptedException, IOException {
         for (int y = 0; y < shapes.length; y++) {
             for (int x = 0; x < shapes[0].length; x++) {
                 Shape shape = shapes[y][x];
                 if (shape != null && shape.isDead()) {
                     print(x + " " + y + " null");
                     shapes[y][x] = null;
-                    Thread.sleep(200);
                 }
             }
         }
     }
 
-    @Nullable
-    public Shape createNewShape(int x, int y) {
+    public Shape createNewShape(int x, int y) throws IOException {
         Random random = new Random();
         int shapeIndex = random.nextInt(shapes.length);
         int color = random.nextInt(colors.length);
-        int velocity = random.nextInt(3) + 1;
+        int velocity = random.nextInt(6) + 1;
         int time = random.nextInt(200);
         Shape shape;
         if (shapeIndex == 0) {
