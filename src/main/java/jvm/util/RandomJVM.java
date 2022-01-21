@@ -7,4 +7,6 @@ public class RandomJVM {
     }
 
     private native void initRandomJVM();
+
+    public native int nextInt(int bound);
 }
