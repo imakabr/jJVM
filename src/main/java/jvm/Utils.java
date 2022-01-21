@@ -37,7 +37,7 @@ public class Utils {
     }
     @Nonnull
     public static String changeSystemKlassNameToJVMKlassName(@Nonnull String name) {
-        if (name.contains("java/lang/") || name.contains("java/io/") || name.contains("java/net/")) {
+        if (name.contains("java/lang/") || name.contains("java/io/") || name.contains("java/net/") || name.contains("java/util/")) {
             return name.replace("java", "jvm") + "JVM";
         }
         return name;
