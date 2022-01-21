@@ -1,6 +1,5 @@
 package jvm.examples.shapes;
 
-import javax.annotation.Nonnull;
 import java.util.Random;
 
 public class Triangle extends Shape {
@@ -9,7 +8,7 @@ public class Triangle extends Shape {
     private final int y;
     private final int velocity;
 
-    public Triangle(int x, int y, @Nonnull String color, int velocity, int time) {
+    public Triangle(int x, int y, String color, int velocity, int time) {
         super("triangle", color, time);
         this.x = x;
         this.y = y;
@@ -17,8 +16,7 @@ public class Triangle extends Shape {
     }
 
     @Override
-    @Nonnull
-    public String draw(@Nonnull Random random) {
+    public String draw(Random random) {
         return x + " " + y + " " + controller.draw(name, color, velocity, random);
     }
 

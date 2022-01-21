@@ -1,7 +1,6 @@
 package jvm.examples.shapes;
 
 
-import javax.annotation.Nonnull;
 import java.util.Random;
 
 public class Controller {
@@ -11,8 +10,7 @@ public class Controller {
     public Controller() {
     }
 
-    @Nonnull
-    public String draw(@Nonnull String name, @Nonnull String color, int velocity, @Nonnull Random random) {
+    public String draw(String name, String color, int velocity, Random random) {
         int move = random.nextInt(moves.length);
         return new StringBuilder()
                 .append(name)

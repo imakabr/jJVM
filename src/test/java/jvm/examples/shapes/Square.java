@@ -1,6 +1,5 @@
 package jvm.examples.shapes;
 
-import javax.annotation.Nonnull;
 import java.util.Random;
 
 public class Square extends Shape {
@@ -10,7 +9,7 @@ public class Square extends Shape {
     private final int velocity;
 
 
-    public Square(int x, int y, @Nonnull String color, int velocity, int time) {
+    public Square(int x, int y, String color, int velocity, int time) {
         super("square", color, time);
         this.x = x;
         this.y = y;
@@ -18,8 +17,7 @@ public class Square extends Shape {
     }
 
     @Override
-    @Nonnull
-    public String draw(@Nonnull Random random) {
+    public String draw(Random random) {
         return x + " " + y + " " + controller.draw(name, color, velocity, random);
     }
 
