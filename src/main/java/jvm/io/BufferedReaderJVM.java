@@ -11,5 +11,5 @@ public class BufferedReaderJVM {
 
     private native void initBufferedReaderJVM(ReaderJVM reader);
 
-
+    public native String readLine();
 }

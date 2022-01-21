@@ -35,6 +35,7 @@ public final class ExecutionEngine {
     private final static String INIT_BUFFERED_READER = "java/io/BufferedReader.initBufferedReader:(Ljava/io/Reader;)V";
     private final static String INIT_PRINT_WRITER = "java/io/PrintWriter.initPrintWriter:(Ljava/io/OutputStream;Z)V";
     private final static String PRINT_WRITER_PRINTLN = "java/io/PrintWriter.println:(Ljava/lang/String;)V";
+    private final static String READ_LINE = "java/io/BufferedReader.readLine:()Ljava/lang/String;";
 
     private final Opcode[] table = new Opcode[256];
     private final Heap heap;
@@ -807,6 +808,15 @@ public final class ExecutionEngine {
             int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
             PrintWriter printWriter = (PrintWriter) nativeObjects.get(printWriterObjRef);
             printWriter.println(message);
+        } else if (READ_LINE.equals(methodName)) {
+            int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            BufferedReader bufferedReader = (BufferedReader) nativeObjects.get(bufferedReaderObjRef);
+            try {
+                String message = bufferedReader.readLine();
+                stack.push(setRefValueType(createStringInstance(message.toCharArray())));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
