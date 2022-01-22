@@ -36,7 +36,6 @@ public final class ExecutionEngine {
     private final static String INIT_PRINT_WRITER = "java/io/PrintWriter.initPrintWriter:(Ljava/io/OutputStream;Z)V";
     private final static String PRINT_WRITER_PRINTLN = "java/io/PrintWriter.println:(Ljava/lang/String;)V";
     private final static String READ_LINE = "java/io/BufferedReader.readLine:()Ljava/lang/String;";
-    private final static String INIT_RANDOM = "java/util/Random.initRandom:()V";
     private final static String RANDOM_NEXT_INT = "java/util/Random.nextInt:(I)I";
 
     private final Opcode[] table = new Opcode[256];
@@ -819,14 +818,10 @@ public final class ExecutionEngine {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        } else if (INIT_RANDOM.equals(methodName)) {
-            int randomObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
-            nativeObjects.put(randomObjRef, new Random());
         } else if (RANDOM_NEXT_INT.equals(methodName)) {
             int bound = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode));
             int randomObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
-            Random random = (Random) nativeObjects.get(randomObjRef);
-            stack.push(setIntValueType(random.nextInt(bound)));
+            stack.push(setIntValueType(new Random().nextInt(bound)));
 
         }
     }
