@@ -11,6 +11,15 @@ public class StackFrame {
     int invokeCount;
 
     public StackFrame(int varSize, int operandSize) {
+        init(varSize, operandSize);
+        stack = new long[1000];
+    }
+
+    public StackFrame(int size) {
+        stack = new long[size];
+    }
+
+    public final void init(int varSize, int operandSize) {
         this.varSize = varSize;
         this.operandSize = operandSize;
         this.stackPointer = varSize;

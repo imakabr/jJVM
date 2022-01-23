@@ -39,18 +39,22 @@ public final class ExecutionEngine {
     private final static String RANDOM_NEXT_INT = "java/util/Random.nextInt:(I)I";
 
     private final Opcode[] table = new Opcode[256];
+    @Nonnull
     private final Heap heap;
+    @Nonnull
+    private final StackFrame stackFrame;
 
     private final Map<Integer, Object> nativeObjects = new HashMap<>();
 
-    public ExecutionEngine(Heap heap) {
+    public ExecutionEngine(@Nonnull Heap heap, @Nonnull StackFrame stackFrame) {
         this.heap = heap;
+        this.stackFrame = stackFrame;
         for (Opcode op : values()) {
             table[op.getOpcode()] = op;
         }
     }
 
-    public long invoke(Method firstMethod) {
+    public long invoke(@Nonnull Method firstMethod) {
 
         int programCounter = 0;
         Method[] stackMethod = new Method[100];
@@ -59,7 +63,8 @@ public final class ExecutionEngine {
         byte[] byteCode = firstMethod.getBytecode();
         String klassName = firstMethod.getClassName();
 
-        StackFrame stack = new StackFrame(firstMethod.getVarSize(), firstMethod.getOperandSize());
+        StackFrame stack = stackFrame;
+        stack.init(firstMethod.getVarSize(), firstMethod.getOperandSize());
         while (true) {
             byte b = byteCode[programCounter++];
             Opcode op = table[b & 0xff];

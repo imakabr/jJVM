@@ -21,12 +21,13 @@ public class ShapesTest {
     }
 
     private void checkMethod(@Nonnull String methodName, long expected) {
-        Heap heap = new Heap(50000, 50);
-        heap.getKlassLoader().loadKlass(klass);
+        Main main = new Main(50000, 50, 10000);
+        main.getKlassLoader().loadKlass(klass);
+        Heap heap = main.getHeap();
 
         int methodIndex = heap.getMethodRepo().getIndexByName(klass + "." + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long actual = new ExecutionEngine(heap).invoke(method);
+        long actual = main.getEngine().invoke(method);
         assertEquals(expected, actual);
     }
 }

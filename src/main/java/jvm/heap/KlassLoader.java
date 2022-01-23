@@ -2,6 +2,7 @@ package jvm.heap;
 
 import jvm.engine.ExecutionEngine;
 import jvm.Utils;
+import jvm.engine.StackFrame;
 import jvm.lang.ObjectJVM;
 import jvm.parser.Method;
 import jvm.parser.Klass;
@@ -27,11 +28,14 @@ public class KlassLoader {
     public static final String PRINT_STREAM = "jvm/io/PrintStreamJVM";
 
 
-    Map<String, Integer> indexByName; // index to Heap.instanceKlasses
-    Map<String, Klass> loadedKlasses;
-    Heap heap;
+    @Nonnull
+    private final Map<String, Integer> indexByName; // index to Heap.instanceKlasses
+    @Nonnull
+    private final Map<String, Klass> loadedKlasses;
+    @Nonnull
+    private final Heap heap;
 
-    KlassLoader(Heap heap) {
+    KlassLoader(@Nonnull Heap heap) {
         this.indexByName = new HashMap<>();
         this.loadedKlasses = new HashMap<>();
         this.heap = heap;
@@ -78,9 +82,8 @@ public class KlassLoader {
         List<Method> clInitMethods = prepareCurrentAndInheritedKlasses(getLoadedKlassByName(changeJVMKlassNameToSystemKlassName(name)));
 
         //init Klass from top to bottom
-        ExecutionEngine engine = new ExecutionEngine(heap);
         for (Method clInit : clInitMethods) {
-            engine.invoke(clInit);
+            new ExecutionEngine(heap, new StackFrame(10000)).invoke(clInit);
         }
     }
 

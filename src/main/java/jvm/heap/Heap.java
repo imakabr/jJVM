@@ -1,11 +1,24 @@
 package jvm.heap;
 
+import jvm.garbage_collector.GarbageCollector;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public class Heap {
+    @Nonnull
     private final ReferenceTable refTable;
+    @Nonnull
     private final InstanceObject[] instanceObjects;
+    @Nonnull
     private final InstanceKlass[] instanceKlasses;
+    @Nonnull
     private final MethodRepo methodRepo;
+    @Nonnull
     private final KlassLoader klassLoader;
+    @Nullable
+    private GarbageCollector collector;
+
     private int klassIndex;
     private int objectIndex = 1; // 0 is null, so object indices begin with 1
 
@@ -16,6 +29,10 @@ public class Heap {
         this.methodRepo = new MethodRepo();
         this.klassLoader = new KlassLoader(this);
         this.klassLoader.initSystemKlasses();
+    }
+
+    public void setGarbageCollector(@Nonnull GarbageCollector collector) {
+        this.collector = collector;
     }
 
     public int getObjectRef(InstanceObject object) {

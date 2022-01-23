@@ -1,5 +1,6 @@
 package jvm.lang;
 
+import jvm.Main;
 import jvm.engine.ExecutionEngine;
 import jvm.heap.Heap;
 import jvm.parser.Method;
@@ -115,12 +116,13 @@ public class StringTest {
 
 
     private void checkMethod(@Nonnull String methodName, long expected) {
-        Heap heap = new Heap(500, 50);
-        heap.getKlassLoader().loadKlass(klass);
+        Main main = new Main(500, 50, 10000);
+        Heap heap = main.getHeap();
+        main.getKlassLoader().loadKlass(klass);
 
         int methodIndex = heap.getMethodRepo().getIndexByName(klass + "." + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long actual = new ExecutionEngine(heap).invoke(method);
+        long actual = main.getEngine().invoke(method);
         assertEquals(expected, actual);
     }
 }
