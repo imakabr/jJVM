@@ -22,7 +22,7 @@ public class Diamond extends Shape {
 
     @Override
     protected void finalize() throws Throwable {
-        print(y + " " + x + " empty");
+        print(y + " " + x + " cleared");
         inHeap[y][x] = false;
     }
 }
