@@ -1,6 +1,6 @@
 package jvm.examples.shapes;
 
-import java.util.Random;
+import static jvm.examples.shapes.Main.inHeap;
 
 public class Square extends Shape {
 
@@ -9,20 +9,21 @@ public class Square extends Shape {
     private final int velocity;
 
 
-    public Square(int x, int y, String color, int velocity, int time) {
-        super("square", color, time);
+    public Square(int x, int y, String color, int velocity, int time, Service service) {
+        super("square", color, time, service);
         this.x = x;
         this.y = y;
         this.velocity = velocity;
     }
 
     @Override
-    public String draw(Random random) {
-        return x + " " + y + " " + controller.draw(name, color, velocity, random);
+    public String toString() {
+        return y + " " + x + " " + super.toString() + " " + velocity + " " + service.getMoves();
     }
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
+        print(y + " " + x + " empty");
+        inHeap[y][x] = false;
     }
 }

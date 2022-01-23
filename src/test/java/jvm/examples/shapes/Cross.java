@@ -1,6 +1,6 @@
 package jvm.examples.shapes;
 
-import java.util.Random;
+import static jvm.examples.shapes.Main.inHeap;
 
 public class Cross extends Shape {
 
@@ -8,20 +8,21 @@ public class Cross extends Shape {
     private final int y;
     private final int velocity;
 
-    public Cross(int x, int y, String color, int velocity, int time) {
-        super("cross", color, time);
+    public Cross(int x, int y, String color, int velocity, int time, Service service) {
+        super("cross", color, time, service);
         this.x = x;
         this.y = y;
         this.velocity = velocity;
     }
 
     @Override
-    public String draw(Random random) {
-        return x + " " + y + " " + controller.draw(name, color, velocity, random);
+    public String toString() {
+        return y + " " + x + " " + super.toString() + " " + velocity + " " + service.getMoves();
     }
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
+        print(y + " " + x + " cleared");
+        inHeap[y][x] = false;
     }
 }
