@@ -20,7 +20,8 @@ public class Heap {
     private GarbageCollector collector;
 
     private int klassIndex;
-    private int objectIndex = 1; // 0 is null, so object indices begin with 1
+    private int objectIndex = 0;
+    private int instanceObjectSize;
 
     public Heap(int instancesSize, int klassesSize) {
         this.refTable = new ReferenceTable(instancesSize);
@@ -66,8 +67,25 @@ public class Heap {
     }
 
     public int setInstanceObject(InstanceObject object) {
-        instanceObjects[objectIndex] = object;
-        return objectIndex++;
+        incrementInstanceObjectSize();
+        while (instanceObjects[objectIndex] != null) {
+            incrementObjectIndex();
+        }
+        int index = objectIndex;
+        incrementObjectIndex();
+        instanceObjects[index] = object;
+        return index;
+    }
+
+    private void incrementObjectIndex() {
+        objectIndex = (objectIndex + 1) % instanceObjects.length;
+    }
+
+    private void incrementInstanceObjectSize() {
+        instanceObjectSize++;
+        if (instanceObjectSize > instanceObjects.length) {
+            throw new OutOfMemoryError("Java heap space");
+        }
     }
 
     public InstanceKlass getInstanceKlass(int instKlassIndex) {

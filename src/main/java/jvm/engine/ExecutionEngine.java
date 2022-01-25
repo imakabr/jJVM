@@ -43,12 +43,16 @@ public final class ExecutionEngine {
     private final Heap heap;
     @Nonnull
     private final StackFrame stackFrame;
+    @Nonnull
+    private final Method[] stackMethod;
+    int stackMethodPointer = 0;
 
     private final Map<Integer, Object> nativeObjects = new HashMap<>();
 
     public ExecutionEngine(@Nonnull Heap heap, @Nonnull StackFrame stackFrame) {
         this.heap = heap;
         this.stackFrame = stackFrame;
+        this.stackMethod = new Method[100];
         for (Opcode op : values()) {
             table[op.getOpcode()] = op;
         }
@@ -57,8 +61,6 @@ public final class ExecutionEngine {
     public long invoke(@Nonnull Method firstMethod) {
 
         int programCounter = 0;
-        Method[] stackMethod = new Method[100];
-        int stackMethodPointer = 0;
         stackMethod[0] = firstMethod;
         byte[] byteCode = firstMethod.getBytecode();
         String klassName = firstMethod.getClassName();
@@ -76,7 +78,7 @@ public final class ExecutionEngine {
                         + ". Stopping."
                         + "\n"
                         + "\n"
-                        + getStackTrace(stackMethod, stackMethodPointer, null, true));
+                        + getStackTrace(null, true));
             }
             int jumpTo;
 
@@ -118,7 +120,7 @@ public final class ExecutionEngine {
                     break;
                 case ARETURN:
                     if (stack.invokeCount == 0) {
-                        return getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op));
+                        return getPureValue(checkValueType(stack.pop(), JVMType.A, op));
                     }
                     method = stackMethod[--stackMethodPointer];
                     stackMethod[stackMethodPointer + 1] = null;
@@ -128,23 +130,23 @@ public final class ExecutionEngine {
                     programCounter = stack.programCounter;
                     break;
                 case ASTORE:
-                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
+                    reference = checkValueType(stack.pop(), JVMType.A, op);
                     stack.setLocalVar(byteCode[programCounter++], reference);
                     break;
                 case ASTORE_0:
-                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
+                    reference = checkValueType(stack.pop(), JVMType.A, op);
                     stack.setLocalVar(0, reference);
                     break;
                 case ASTORE_1:
-                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
+                    reference = checkValueType(stack.pop(), JVMType.A, op);
                     stack.setLocalVar(1, reference);
                     break;
                 case ASTORE_2:
-                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
+                    reference = checkValueType(stack.pop(), JVMType.A, op);
                     stack.setLocalVar(2, reference);
                     break;
                 case ASTORE_3:
-                    reference = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
+                    reference = checkValueType(stack.pop(), JVMType.A, op);
                     stack.setLocalVar(3, reference);
                     break;
                 case BIPUSH:
@@ -161,7 +163,7 @@ public final class ExecutionEngine {
                 //------------------------------------------------------------------------------------------------------------------------
                 case GETFIELD:
                     cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup))); //todo restore index for resolving
                     stack.push(object.getValue(fieldValueIndex));
                     break;
@@ -179,7 +181,7 @@ public final class ExecutionEngine {
                 //----------------------------------------------------------------------------------------------------------------------
                 case CHECKCAST:
                     cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op));
+                    objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, op));
                     object = heap.getInstanceObject(objectRef);
                     String castKlassName = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
                     Klass klass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
@@ -190,7 +192,7 @@ public final class ExecutionEngine {
                                 + castKlassName.replace("/", ".")
                                 + "\n"
                                 + "\n"
-                                + getStackTrace(stackMethod, stackMethodPointer, null, false));
+                                + getStackTrace(null, false));
                     }
                     stack.push(setRefValueType(objectRef));
                     break;
@@ -204,23 +206,23 @@ public final class ExecutionEngine {
                     stack.push(setIntValueType(getPureValue(stack.pop()) & getPureValue(stack.pop())));
                     break;
                 case ISHL:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(second << first));
                     break;
                 case ISHR:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(second >> first));
                     break;
                 case IUSHR:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(second >>> first));
                     break;
                 case IXOR:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(~second));
                     break;
                 case ICONST_0:
@@ -245,109 +247,109 @@ public final class ExecutionEngine {
                     stack.push(setIntValueType(-1));
                     break;
                 case IDIV:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (first == 0) throw new ArithmeticException("cannot divide 0");
                     stack.push(setIntValueType(second / first));
                     break;
                 case IF_ACMPNE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))
-                            != getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))) {
+                    if (getPureValue(checkValueType(stack.pop(), JVMType.A, op))
+                            != getPureValue(checkValueType(stack.pop(), JVMType.A, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ACMPEQ:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))
-                            == getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op))) {
+                    if (getPureValue(checkValueType(stack.pop(), JVMType.A, op))
+                            == getPureValue(checkValueType(stack.pop(), JVMType.A, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPEQ:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    if (getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))
-                            == getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))) {
+                    if (getPureValue(checkValueType(stack.pop(), JVMType.I, op))
+                            == getPureValue(checkValueType(stack.pop(), JVMType.I, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPNE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    if (getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))
-                            != getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op))) {
+                    if (getPureValue(checkValueType(stack.pop(), JVMType.I, op))
+                            != getPureValue(checkValueType(stack.pop(), JVMType.I, op))) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPLT:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (second < first) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPGT:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (second > first) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPGE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (second >= first) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IF_ICMPLE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (second <= first) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IFEQ:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (first == 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IFGE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (first >= 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IFGT:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (first > 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IFLE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (first <= 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IFLT:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (first < 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IFNE:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     if (first != 0) {
                         programCounter += jumpTo - 3;
                     }
@@ -356,13 +358,13 @@ public final class ExecutionEngine {
                 //---------------------------------------------------------------------------------------------------------------------------
                 case IFNONNULL:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)) != 0) {
+                    if (getPureValue(checkValueType(stack.pop(), JVMType.A, op)) != 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
                 case IFNULL:
                     jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                    if (getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)) == 0) {
+                    if (getPureValue(checkValueType(stack.pop(), JVMType.A, op)) == 0) {
                         programCounter += jumpTo - 3;
                     }
                     break;
@@ -374,11 +376,11 @@ public final class ExecutionEngine {
                      * The value const is first sign-extended to an int, and then the local variable at index is incremented by that amount.
                      * */
                     int index = byteCode[programCounter++];
-                    first = getPureValue(checkValueType(stack.getLocalVar(index), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.getLocalVar(index), JVMType.I, op));
                     stack.setLocalVar(index, setIntValueType(first + byteCode[programCounter++]));
                     break;
                 case I2C:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType((char) first));
                     break;
                 case ILOAD:
@@ -398,12 +400,12 @@ public final class ExecutionEngine {
                     stack.push(stack.getLocalVar(3));
                     break;
                 case IMUL:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(first * second));
                     break;
                 case INEG:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(-first));
                     break;
                 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -439,7 +441,7 @@ public final class ExecutionEngine {
                                     getPureValue(
                                             checkValueType(
                                                     stack.getObjectRefBeforeInvoke(getArgSize(klassName, cpLookup)), JVMType.A,
-                                                    stackMethod, stackMethodPointer, op)))
+                                                    op)))
                             .getKlassIndex();
                     int virtualMethodIndex = getVirtualMethodIndex(klassName, cpLookup, klassIndex); // todo restore to resolution
                     methodIndex = heap.getInstanceKlass(klassIndex).getMethodIndex(virtualMethodIndex);
@@ -458,13 +460,13 @@ public final class ExecutionEngine {
                     break;
                 //------------------------------------------------------------------------------------------------------------------------------------------
                 case IOR:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(first | second));
                     break;
                 case IREM:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(second % first));
                     break;
 //                    ----------------------------------------------------------------------------------------------------------------------------------
@@ -496,8 +498,8 @@ public final class ExecutionEngine {
                     stack.setLocalVar(3, stack.pop());
                     break;
                 case ISUB:
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     stack.push(setIntValueType(second - first));
                     break;
 
@@ -537,28 +539,32 @@ public final class ExecutionEngine {
                     cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                     int[] dimensions = new int[byteCode[programCounter++]];
                     for (int i = dimensions.length - 1; i >= 0; i--) {
-                        dimensions[i] = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
+                        dimensions[i] = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                     }
                     object = allocateArrayOfRef(dimensions[0], -1);
-                    stack.push(setRefValueType(heap.getObjectRef(object)));
+                    try {
+                        stack.push(setRefValueType(heap.getObjectRef(object)));
+                    } catch (OutOfMemoryError e) {
+                        throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
+                    }
                     createMultiArray(1, dimensions, object, getValueType(klassName, cpLookup));
                     break;
                 case ARRAYLENGTH:
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
                     stack.push(setIntValueType(object.size()));
                     break;
                 case AALOAD:
                     index = getPureValue(stack.pop());
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                    stack.push(checkValueType(object.getValue(index), JVMType.A, stackMethod, stackMethodPointer, op));
+                    stack.push(checkValueType(object.getValue(index), JVMType.A, op));
                     break;
                 case IALOAD:
                     index = getPureValue(stack.pop());
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                    stack.push(checkValueType(object.getValue(index), JVMType.I, stackMethod, stackMethodPointer, op));
+                    stack.push(checkValueType(object.getValue(index), JVMType.I, op));
                     break;
                 case BALOAD:
                     /*
@@ -567,7 +573,7 @@ public final class ExecutionEngine {
                      * The byte value in the component of the array at index is retrieved, sign-extended to an int value, and pushed onto the top of the operand stack.
                      */
                     index = getPureValue(stack.pop());
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
                     stack.push(setIntValueType(getPureValue(checkByteOrBooleanValueType(object.getValue(index)))));
                     break;
@@ -578,9 +584,9 @@ public final class ExecutionEngine {
                      * The component of the array at index is retrieved and zero-extended to an int value. That value is pushed onto the operand stack.
                      */
                     index = getPureValue(stack.pop());
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                    stack.push(setIntValueType(getPureValue(checkValueType(object.getValue(index), JVMType.C, stackMethod, stackMethodPointer, op))));
+                    stack.push(setIntValueType(getPureValue(checkValueType(object.getValue(index), JVMType.C, op))));
                     break;
                 case AASTORE:
                     /*
@@ -588,9 +594,9 @@ public final class ExecutionEngine {
                      * The index must be of type int and value must be of type reference. The arrayref, index, and value are popped from the operand stack.
                      * The reference value is stored as the component of the array at index.
                      */
-                    value = checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op);
-                    index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    value = checkValueType(stack.pop(), JVMType.A, op);
+                    index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
                     object.setValue(index, value);
                     break;
@@ -600,9 +606,9 @@ public final class ExecutionEngine {
                      * Both index and value must be of type int. The arrayref, index, and value are popped from the operand stack.
                      * The int value is stored as the component of the array indexed by index.
                      */
-                    value = checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op);
-                    index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    value = checkValueType(stack.pop(), JVMType.I, op);
+                    index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
                     object.setValue(index, value);
                     break;
@@ -612,15 +618,15 @@ public final class ExecutionEngine {
                      * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                      * The int value is truncated to a byte and stored as the component of the array indexed by index.
                      */
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
                     JVMType type = object.getArrayType();
                     if (type == JVMType.Z || type == JVMType.B) {
                         object.setValue(index, setValueType(first, type));
                     } else {
-                        throw new RuntimeException("Wrong type of array\n" + getStackTrace(stackMethod, stackMethodPointer, op, false));
+                        throw new RuntimeException("Wrong type of array\n" + getStackTrace(op, false));
                     }
                     break;
                 case CASTORE:
@@ -629,9 +635,9 @@ public final class ExecutionEngine {
                      * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                      * The int value is truncated to a char and stored as the component of the array indexed by index.
                      */
-                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    index = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, stackMethodPointer, op));
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     checkArrayObject(object, stackMethod, stackMethodPointer, op);
                     object.setValue(index, setCharValueType(first));
                     break;
@@ -649,7 +655,7 @@ public final class ExecutionEngine {
                     cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
 
                     value = stack.pop();
-                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, stackMethodPointer, op)));
+                    object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                     fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup))); //todo restore index for resolving
                     object.setValue(fieldValueIndex, value);
                     break;
@@ -709,22 +715,22 @@ public final class ExecutionEngine {
                 case JSR_W:
                 default:
                     System.err.println("Saw " + op + " - that can't happen. Stopping.");
-                    System.err.println(getStackTrace(stackMethod, stackMethodPointer, op, true));
+                    System.err.println(getStackTrace(op, true));
                     System.exit(1);
             }
         }
     }
 
     @Nonnull
-    private String getStackTrace(@Nonnull Method[] stackMethod, int pointer, @Nullable Opcode opcode, boolean showMnemonics) {
+    private String getStackTrace(@Nullable Opcode opcode, boolean showMnemonics) {
         StringBuilder stackTrace = new StringBuilder();
-        for (int i = pointer; i >= 0; i--) {
+        for (int i = stackMethodPointer; i >= 0; i--) {
             Method method = stackMethod[i];
             stackTrace.append("at ")
                     .append(method.getClassName())
                     .append(".")
                     .append(method.getNameAndType())
-                    .append(i == pointer && opcode != null ? " " + opcode : "")
+                    .append(i == stackMethodPointer && opcode != null ? " " + opcode : "")
                     .append("\n")
                     .append(showMnemonics ? method.getMnemonics() + "\n" : "");
         }
@@ -743,39 +749,39 @@ public final class ExecutionEngine {
     private void invokeNativeMethod(@Nonnull StackFrame stack, @Nonnull Method method, @Nonnull Method[] stackMethod, int pointer, Opcode opcode) {
         String methodName = method.getClassName() + "." + method.getNameAndType();
         if (HASHCODE.equals(methodName)) {
-            InstanceObject object1 = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode)));
+            InstanceObject object1 = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, opcode)));
             stack.push(setIntValueType(Objects.hashCode(object1)));
         } else if (TO_STRING.equals(methodName)) {
-            int objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             InstanceObject object1 = heap.getInstanceObject(objectRef);
             String result = heap.getInstanceKlass(object1.getKlassIndex()).getName().replace('/', '.')
                     + "@"
                     + Integer.toHexString(objectRef);
             stack.push(setRefValueType(createStringInstance(result.toCharArray())));
         } else if (STRING_PRINTLN.equals(methodName)) {
-            int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             System.out.println(getString(stringObjectRef, stackMethod, pointer, opcode));
             stack.pop();
         } else if (STRING_PRINT.equals(methodName)) {
-            int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             System.out.print(getString(stringObjectRef, stackMethod, pointer, opcode));
             stack.pop();
         } else if (CHAR_PRINT.equals(methodName)) {
-            System.out.print((char) getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
+            System.out.print((char) getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
             stack.pop();
         } else if (CHAR_PRINTLN.equals(methodName)) {
-            System.out.println((char) getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
+            System.out.println((char) getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
             stack.pop();
         } else if (INT_PRINT.equals(methodName)) {
-            System.out.print(getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
+            System.out.print(getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
             stack.pop();
         } else if (INT_PRINTLN.equals(methodName)) {
-            System.out.println(getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode)));
+            System.out.println(getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
             stack.pop();
         } else if (INIT_SOCKET.equals(methodName)) {
-            int socketObjRef = getPureValue(checkValueType(stack.getLocalVar(0), JVMType.A, stackMethod, pointer, opcode));
-            int stringObjRef = getPureValue(checkValueType(stack.getLocalVar(1), JVMType.A, stackMethod, pointer, opcode));
-            int port = getPureValue(checkValueType(stack.getLocalVar(2), JVMType.I, stackMethod, pointer, opcode));
+            int socketObjRef = getPureValue(checkValueType(stack.getLocalVar(0), JVMType.A, opcode));
+            int stringObjRef = getPureValue(checkValueType(stack.getLocalVar(1), JVMType.A, opcode));
+            int port = getPureValue(checkValueType(stack.getLocalVar(2), JVMType.I, opcode));
             String ipAddress = getString(stringObjRef, stackMethod, pointer, opcode);
             try {
                 nativeObjects.put(socketObjRef, new Socket(ipAddress, port));
@@ -784,7 +790,7 @@ public final class ExecutionEngine {
             }
         } else if (GET_INPUT_STREAM.equals(methodName) || GET_OUTPUT_STREAM.equals(methodName)) {
             int streamObjRef = allocateInstanceObjectAndGetReference(INPUT_STREAM);
-            int socketObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int socketObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             stack.push(setRefValueType(streamObjRef));
             Socket socket = (Socket) nativeObjects.get(socketObjRef);
             try {
@@ -793,29 +799,29 @@ public final class ExecutionEngine {
                 throw new RuntimeException(e);
             }
         } else if (INIT_INPUT_STREAM_READER.equals(methodName)) {
-            int inputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
-            int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int inputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+            int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             InputStream inputStream = (InputStream) nativeObjects.get(inputStreamObjRef);
             nativeObjects.put(inputStreamReaderObjRef, new InputStreamReader(inputStream));
         } else if (INIT_BUFFERED_READER.equals(methodName)) {
-            int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
-            int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+            int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             Reader inputStreamReader = (Reader) nativeObjects.get(inputStreamReaderObjRef);
             nativeObjects.put(bufferedReaderObjRef, new BufferedReader(inputStreamReader));
         } else if (INIT_PRINT_WRITER.equals(methodName)) {
-            int bool = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode));
-            int outputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
-            int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int bool = getPureValue(checkValueType(stack.pop(), JVMType.I, opcode));
+            int outputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+            int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             OutputStream outputStream = (OutputStream) nativeObjects.get(outputStreamObjRef);
             nativeObjects.put(printWriterObjRef, new PrintWriter(outputStream, bool == 1));
         } else if (PRINT_WRITER_PRINTLN.equals(methodName)) {
-            int stringObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int stringObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             String message = getString(stringObjRef, stackMethod, pointer, opcode);
-            int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             PrintWriter printWriter = (PrintWriter) nativeObjects.get(printWriterObjRef);
             printWriter.println(message);
         } else if (READ_LINE.equals(methodName)) {
-            int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             BufferedReader bufferedReader = (BufferedReader) nativeObjects.get(bufferedReaderObjRef);
             try {
                 String message = bufferedReader.readLine();
@@ -824,8 +830,8 @@ public final class ExecutionEngine {
                 throw new RuntimeException(e);
             }
         } else if (RANDOM_NEXT_INT.equals(methodName)) {
-            int bound = getPureValue(checkValueType(stack.pop(), JVMType.I, stackMethod, pointer, opcode));
-            int randomObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, stackMethod, pointer, opcode));
+            int bound = getPureValue(checkValueType(stack.pop(), JVMType.I, opcode));
+            int randomObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             stack.push(setIntValueType(new Random().nextInt(bound)));
 
         }
@@ -837,8 +843,6 @@ public final class ExecutionEngine {
         InstanceObject charArrayObject = heap.getInstanceObject(getPureValue(checkValueType(
                 stringObject.getValue(stringObject.getIndexByFieldName("value:[C")),
                 JVMType.A,
-                stackMethod,
-                pointer,
                 opcode)));
         char[] buf = new char[charArrayObject.size()];
         for (int i = 0; i < buf.length; i++) {
@@ -853,20 +857,24 @@ public final class ExecutionEngine {
                 object.setValue(i, setRefValueType(allocateArray(type, dimensions[indexDim])));
             } else {
                 InstanceObject newObject = allocateArrayOfRef(dimensions[indexDim], -1);
-                object.setValue(i, setRefValueType(heap.getObjectRef(newObject)));
+                try {
+                    object.setValue(i, setRefValueType(heap.getObjectRef(newObject)));
+                } catch (OutOfMemoryError e) {
+                    throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
+                }
                 createMultiArray(indexDim + 1, dimensions, newObject, type);
             }
         }
     }
 
-    private long checkValueType(long value, @Nonnull JVMType type, @Nonnull Method[] stackMethod, int pointer, Opcode opcode) {
+    private long checkValueType(long value, @Nonnull JVMType type, Opcode opcode) {
         if (getValueType(value) != type.ordinal()) {
             throw new RuntimeException("Wrong types: "
                     + JVMType.values()[getValueType(value)]
                     + " is not equal "
                     + type.name()
                     + "\n"
-                    + getStackTrace(stackMethod, pointer, opcode, false));
+                    + getStackTrace(opcode, false));
         }
         return value;
     }
@@ -880,7 +888,7 @@ public final class ExecutionEngine {
 
     private void checkArrayObject(@Nonnull InstanceObject object, @Nonnull Method[] stackMethod, int pointer, @Nullable Opcode opcode) {
         if (!object.isArray()) {
-            throw new RuntimeException("Object is not array\n" + getStackTrace(stackMethod, pointer, opcode, false));
+            throw new RuntimeException("Object is not array\n" + getStackTrace(opcode, false));
         }
     }
 
@@ -1010,8 +1018,12 @@ public final class ExecutionEngine {
             fields.addAll(klasses.get(i).getObjectFieldNames());
         }
 
-        return heap.getObjectRef(new InstanceObject(fields,
-                heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true)));
+        try {
+            return heap.getObjectRef(new InstanceObject(fields,
+                    heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true)));
+        } catch (OutOfMemoryError e) {
+            throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
+        }
     }
 
 
@@ -1021,7 +1033,11 @@ public final class ExecutionEngine {
             String klassName = type.substring(1, type.length() - 1);
             klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
         }
-        return heap.getObjectRef(new InstanceObject(type, count, klassIndex));
+        try {
+            return heap.getObjectRef(new InstanceObject(type, count, klassIndex));
+        } catch (OutOfMemoryError e) {
+            throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
+        }
     }
 
     private int allocateArrayOfRef(String sourceKlassName, int cpIndex, int count) {
@@ -1032,7 +1048,11 @@ public final class ExecutionEngine {
             throw new RuntimeException("Class is not found");
         }
         int klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, true);
-        return heap.getObjectRef(allocateArrayOfRef(count, klassIndex));
+        try {
+            return heap.getObjectRef(allocateArrayOfRef(count, klassIndex));
+        } catch (OutOfMemoryError e) {
+            throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
+        }
     }
 
     private InstanceObject allocateArrayOfRef(int count, int klassIndex) {
