@@ -948,8 +948,12 @@ public final class ExecutionEngine {
                 .getIndexByFieldName(getFieldName(klassFieldName));
     }
 
-    private int getInstanceKlassIndex(String fullName) {
+    private int getInstanceKlassIndex(@Nonnull String fullName) {
         return heap.getKlassLoader().getInstanceKlassIndexByName(getKlassName(fullName), true);
+    }
+
+    private int getInstanceKlassIndexByKlassName(@Nonnull String klassName) {
+        return heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
     }
 
     private String getKlassFieldName(String sourceKlassName, int cpLookup) {
@@ -980,10 +984,18 @@ public final class ExecutionEngine {
     private int getArgSize(String sourceKlassName, int cpIndex) {
         Klass klass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
         String fullName = klass.getMethodNameByCPIndex((short) cpIndex);
-        return heap.getInstanceKlass(getInstanceKlassIndex(fullName))
-                .getCpKlass()
-                .getMethodByName(getMethodName(fullName))
-                .getArgSize();
+        Klass cpKlass = heap.getInstanceKlass(getInstanceKlassIndex(fullName)).getCpKlass();
+        Method method = null;
+        String parentName = null;
+        while (method == null) {
+            method = cpKlass.getMethodByName(getMethodName(fullName));
+            parentName = cpKlass.getParent();
+            if (ABSENCE.equals(parentName)) {
+                break;
+            }
+            cpKlass = heap.getInstanceKlass(getInstanceKlassIndexByKlassName(cpKlass.getParent())).getCpKlass();
+        }
+        return method.getArgSize();
     }
 
     private int createStringInstance(@Nonnull char[] str) {
