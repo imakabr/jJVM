@@ -1,7 +1,7 @@
 package jvm.engine;
 
 public class StackFrame {
-    long[] stack = new long[100000];
+    long[] stack;
     int localVariable;
     public int programCounter;
     int stackPointer;
@@ -99,5 +99,13 @@ public class StackFrame {
         if (index < 0 || index >= varSize) {
             throw new IndexOutOfBoundsException("wrong index for local variables stack");
         }
+    }
+
+    public long[] getStack() {
+        return stack;
+    }
+
+    public int getSize() {
+        return localVariable + varSize + (invokeCount > 0 ? 2 : 0) + operandSize;
     }
 }

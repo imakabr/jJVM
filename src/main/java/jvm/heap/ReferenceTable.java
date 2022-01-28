@@ -12,10 +12,13 @@ public class ReferenceTable {
     }
 
     public int getObjectReference(int objectIndex) {
-        int index = pointer;
-        instanceTable[index] = objectIndex;
+        while (instanceTable[pointer] != -1) {
+            incrementPointer();
+        }
+        int objRef = pointer;
+        instanceTable[objRef] = objectIndex;
         incrementPointer();
-        return index;
+        return objRef;
     }
 
     private void incrementPointer() {
@@ -24,6 +27,10 @@ public class ReferenceTable {
 
     public int getInstanceObjectIndex(int objectRef) {
         return instanceTable[objectRef];
+    }
+
+    public void clearObjectIndex(int objRef) {
+        instanceTable[objRef] = -1;
     }
 
 }

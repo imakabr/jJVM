@@ -39,6 +39,10 @@ public class InstanceObject {
         }
     }
 
+    public long[] getFieldValues() {
+        return fieldValues;
+    }
+
     public boolean isArray() {
         return array;
     }

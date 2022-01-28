@@ -17,9 +17,9 @@ public class Main {
 
     public Main(int instancesSize, int klassesSize, int stackSize) {
         this.stackFrame = new StackFrame(stackSize);
-        this.heap = new Heap(instancesSize, klassesSize);
-        this.collector = new MarkAndSweep(stackFrame, heap);
-        this.heap.setGarbageCollector(collector);
+        this.collector = new MarkAndSweep(stackFrame);
+        this.heap = new Heap(collector, instancesSize, klassesSize);
+        this.collector.setHeap(heap);
         this.engine = new ExecutionEngine(heap, stackFrame);
         this.klassLoader = heap.getKlassLoader();
     }

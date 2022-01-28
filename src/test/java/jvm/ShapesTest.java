@@ -1,6 +1,5 @@
 package jvm;
 
-import jvm.engine.ExecutionEngine;
 import jvm.heap.Heap;
 import jvm.parser.Method;
 import org.junit.Ignore;
@@ -21,7 +20,7 @@ public class ShapesTest {
     }
 
     private void checkMethod(@Nonnull String methodName, long expected) {
-        Main main = new Main(50000, 50, 10000);
+        Main main = new Main(10000, 50, 10000);
         main.getKlassLoader().loadKlass(klass);
         Heap heap = main.getHeap();
 

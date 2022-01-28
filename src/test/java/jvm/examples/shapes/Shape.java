@@ -40,10 +40,12 @@ public class Shape {
     }
 
     private void sendMessage(String message) throws IOException {
-        service.send(message);
-        if (!"next".equals(service.receive())) {
-            System.out.println("something wrong");
-            System.exit(-1);
-        }
+//        synchronized (service) {
+            service.send(message);
+            if (!service.receive().equals("next")) {
+                System.out.println("something wrong");
+                System.exit(-1);
+            }
+//        }
     }
 }

@@ -16,14 +16,15 @@ public class Heap {
     private final MethodRepo methodRepo;
     @Nonnull
     private final KlassLoader klassLoader;
-    @Nullable
-    private GarbageCollector collector;
+    @Nonnull
+    private final GarbageCollector collector;
 
     private int klassIndex;
     private int objectIndex = 0;
     private int instanceObjectSize;
 
-    public Heap(int instancesSize, int klassesSize) {
+    public Heap(@Nonnull GarbageCollector collector, int instancesSize, int klassesSize) {
+        this.collector = collector;
         this.refTable = new ReferenceTable(instancesSize);
         this.instanceObjects = new InstanceObject[instancesSize];
         this.instanceKlasses = new InstanceKlass[klassesSize];
@@ -32,15 +33,11 @@ public class Heap {
         this.klassLoader.initSystemKlasses();
     }
 
-    public void setGarbageCollector(@Nonnull GarbageCollector collector) {
-        this.collector = collector;
-    }
-
-    public int getObjectRef(InstanceObject object) {
+    public int getObjectRef(@Nonnull InstanceObject object) {
         return refTable.getObjectReference(setInstanceObject(object));
     }
 
-    public int changeObject(int objectRef, InstanceObject object) {
+    public int changeObject(int objectRef, @Nonnull InstanceObject object) {
         if (objectRef != -1) {
             instanceObjects[refTable.getInstanceObjectIndex(objectRef)] = object;
             return objectRef;
@@ -49,8 +46,17 @@ public class Heap {
         }
     }
 
+    @Nonnull
     public InstanceObject getInstanceObject(int objectRef) {
-        return instanceObjects[refTable.getInstanceObjectIndex(objectRef)];
+        int objectIndex = refTable.getInstanceObjectIndex(objectRef);
+        if (objectIndex == -1) {
+            throw new RuntimeException("No such object on the heap");
+        }
+        return instanceObjects[objectIndex];
+    }
+
+    public ReferenceTable getReferenceTable() {
+        return refTable;
     }
 
     public MethodRepo getMethodRepo() {
@@ -83,8 +89,26 @@ public class Heap {
 
     private void incrementInstanceObjectSize() {
         instanceObjectSize++;
+        if (collector.isInProgress()) {
+            checkCapacity();
+        } else {
+            if (instanceObjectSize > instanceObjects.length / 10 * 7) {
+                collector.run();
+                checkCapacity();
+            }
+        }
+    }
+
+    private void checkCapacity() {
         if (instanceObjectSize > instanceObjects.length) {
             throw new OutOfMemoryError("Java heap space");
+        }
+    }
+
+    public void decrementInstanceObjectSize() {
+        instanceObjectSize--;
+        if (instanceObjectSize < 0) {
+            throw new RuntimeException("size of instance objects can not be negative");
         }
     }
 
@@ -92,5 +116,14 @@ public class Heap {
         return instanceKlasses[instKlassIndex];
     }
 
+    @Nonnull
+    public InstanceKlass[] getInstanceKlasses() {
+        return instanceKlasses;
+    }
+
+    @Nonnull
+    public InstanceObject[] getInstanceObjects() {
+        return instanceObjects;
+    }
 
 }

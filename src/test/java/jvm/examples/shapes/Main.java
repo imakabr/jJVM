@@ -6,7 +6,7 @@ import java.util.Random;
 public class Main {
 
     private final int port = 10003;
-    private final static int count = 35;
+    private final static int count = 18;
 
     private final String[] shapes = {"square", "triangle", "circle", "cross", "diamond", "pentagon", "star"};
     private final String[] colors = {"red", "yellow", "purple", "blue", "green"};
