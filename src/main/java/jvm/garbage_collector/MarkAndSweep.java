@@ -23,6 +23,7 @@ public class MarkAndSweep implements GarbageCollector {
     private Heap heap;
     private int count;
     private boolean inProgress;
+    private int startObjRef;
 
     public MarkAndSweep(@Nonnull StackFrame stackFrame) {
         this.stackFrame = stackFrame;
@@ -39,41 +40,36 @@ public class MarkAndSweep implements GarbageCollector {
             inProgress = true;
             HashSet<Integer> aliveObjects = new HashSet<>();
             LinkedList<Integer> queue = new LinkedList<>();
-            for (InstanceKlass klass : heap.getInstanceKlasses()) {
-                if (klass == null) {
-                    break;
-                }
-                int objectRef = klass.getObjectRef();
-                if (objectRef != -1) {
-                    queue.add(objectRef);
-                }
-            }
+
+            collectObjectsFromInstanceKlassess(queue);
             findAliveObjects(queue, aliveObjects);
 
-            long[] stack = stackFrame.getStack();
-            int stackSize = stackFrame.getSize();
-            for (int i = 0; i <= stackSize; i++) {
-                long value = stack[i];
-                if (getValueType(value) == JVMType.A.ordinal() && getPureValue(value) != NULL) {
-                    queue.add(getPureValue(value));
-                }
-            }
-
+            collectObjectsFromStackFrame(queue);
             findAliveObjects(queue, aliveObjects);
 
+            removeDeadObjectsFromHeap(aliveObjects);
+
+            System.out.println("GC completed " + count++);
+            inProgress = false;
+        }
+    }
+
+    private void removeDeadObjectsFromHeap(@Nonnull Set<Integer> aliveObjects) {
+        if (heap != null) {
             long startTime = System.currentTimeMillis();
             InstanceObject[] objects = heap.getInstanceObjects();
             ReferenceTable refTable = heap.getReferenceTable();
-            for (int objRef = 0; objRef < objects.length; objRef++) {
+            int objRef = startObjRef;
+            for (int i = 0; i < objects.length; i++) {
                 int objIndex = refTable.getInstanceObjectIndex(objRef);
                 if (objIndex != -1 && objects[objIndex] != null && !aliveObjects.contains(objRef)) {
                     InstanceObject object = objects[objIndex];
                     int klassIndex = object.getKlassIndex();
                     if (klassIndex != -1) {
                         InstanceKlass klass = heap.getInstanceKlass(klassIndex);
-                        int virtualMethodIndex = klass.getIndexByVirtualMethodName("finalize:()V");
-                        int methodIndex = klass.getMethodIndex(virtualMethodIndex);
-                        Method method = heap.getMethodRepo().getMethod(methodIndex);
+                        Method method = heap.getMethodRepo().getMethod(
+                                klass.getMethodIndex(
+                                        klass.getIndexByVirtualMethodName("finalize:()V")));
                         StackFrame stackFrame = new StackFrame(method.getVarSize(), method.getOperandSize());
                         stackFrame.setLocalVar(0, setRefValueType(objRef));
                         new ExecutionEngine(heap, stackFrame).invoke(method);
@@ -83,11 +79,37 @@ public class MarkAndSweep implements GarbageCollector {
                     refTable.clearObjectIndex(objRef);
                 }
                 if (System.currentTimeMillis() - startTime > 400) {
+                    startObjRef = objRef;
+                    return;
+                }
+                objRef = (objRef + 1) % objects.length;
+            }
+            startObjRef = 0;
+        }
+    }
+
+    private void collectObjectsFromStackFrame(@Nonnull LinkedList<Integer> queue) {
+        long[] stack = stackFrame.getStack();
+        int stackSize = stackFrame.getSize();
+        for (int i = 0; i <= stackSize; i++) {
+            long value = stack[i];
+            if (getValueType(value) == JVMType.A.ordinal() && getPureValue(value) != NULL) {
+                queue.add(getPureValue(value));
+            }
+        }
+    }
+
+    private void collectObjectsFromInstanceKlassess(@Nonnull LinkedList<Integer> queue) {
+        if (heap != null) {
+            for (InstanceKlass klass : heap.getInstanceKlasses()) {
+                if (klass == null) {
                     break;
                 }
+                int objectRef = klass.getObjectRef();
+                if (objectRef != -1) {
+                    queue.add(objectRef);
+                }
             }
-            System.out.println("GC done " + count++);
-            inProgress = false;
         }
     }
 
@@ -102,8 +124,6 @@ public class MarkAndSweep implements GarbageCollector {
             while (!queue.isEmpty()) {
                 int objectRef = queue.pop();
                 if (!visitedObjects.contains(objectRef)) {
-                    setRefValueType(objectRef);
-                    stackFrame.getSize();
                     int objectIndex = refTable.getInstanceObjectIndex(objectRef);
                     if (objectIndex != -1) {
                         InstanceObject object = heap.getInstanceObject(objectRef);
