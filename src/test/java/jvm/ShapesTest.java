@@ -15,7 +15,7 @@ public class ShapesTest {
 
     @Test
     @Ignore
-    public void checkWriteToFile() {
+    public void runShapes() {
         checkMethod("main:([Ljava/lang/String;)V", 0);
     }
 
