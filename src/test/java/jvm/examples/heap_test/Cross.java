@@ -1,16 +1,15 @@
-package jvm.examples.shapes;
+package jvm.examples.heap_test;
 
-import static jvm.examples.shapes.Main.inHeap;
+import static jvm.examples.heap_test.Main.inHeap;
 
-public class Square extends Shape {
+public class Cross extends Shape {
 
     private final int x;
     private final int y;
     private final int velocity;
 
-
-    public Square(int x, int y, String color, int velocity, int time, Service service) {
-        super("square", color, time, service);
+    public Cross(int x, int y, String color, int velocity, int time, Service service) {
+        super("cross", color, time, service);
         this.x = x;
         this.y = y;
         this.velocity = velocity;

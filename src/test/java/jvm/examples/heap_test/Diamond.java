@@ -1,15 +1,15 @@
-package jvm.examples.shapes;
+package jvm.examples.heap_test;
 
-import static jvm.examples.shapes.Main.inHeap;
+import static jvm.examples.heap_test.Main.inHeap;
 
-public class Triangle extends Shape {
+public class Diamond extends Shape {
 
     private final int x;
     private final int y;
     private final int velocity;
 
-    public Triangle(int x, int y, String color, int velocity, int time, Service service) {
-        super("triangle", color, time, service);
+    public Diamond(int x, int y, String color, int velocity, int time, Service service) {
+        super("diamond", color, time, service);
         this.x = x;
         this.y = y;
         this.velocity = velocity;

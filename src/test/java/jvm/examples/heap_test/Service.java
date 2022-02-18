@@ -1,4 +1,4 @@
-package jvm.examples.shapes;
+package jvm.examples.heap_test;
 
 
 import java.io.BufferedReader;

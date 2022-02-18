@@ -11,7 +11,7 @@ import static org.junit.Assert.assertEquals;
 
 public class ShapesTest {
 
-    public static final String klass = "jvm/examples/shapes/Main";
+    public static final String klass = "jvm/examples/heap_test/Main";
 
     @Test
     @Ignore

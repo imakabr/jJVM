@@ -1,15 +1,15 @@
-package jvm.examples.shapes;
+package jvm.examples.heap_test;
 
-import static jvm.examples.shapes.Main.inHeap;
+import static jvm.examples.heap_test.Main.inHeap;
 
-public class Star extends Shape {
+public class Circle extends Shape {
 
     private final int x;
     private final int y;
     private final int velocity;
 
-    public Star(int x, int y, String color, int velocity, int time, Service service) {
-        super("star", color, time, service);
+    public Circle(int x, int y, String color, int velocity, int time, Service service) {
+        super("circle", color, time, service);
         this.x = x;
         this.y = y;
         this.velocity = velocity;
