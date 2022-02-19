@@ -3,7 +3,6 @@ package jvm.heap;
 import jvm.garbage_collector.GarbageCollector;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public class Heap {
     @Nonnull
@@ -55,14 +54,17 @@ public class Heap {
         return instanceObjects[objectIndex];
     }
 
+    @Nonnull
     public ReferenceTable getReferenceTable() {
         return refTable;
     }
 
+    @Nonnull
     public MethodRepo getMethodRepo() {
         return methodRepo;
     }
 
+    @Nonnull
     public KlassLoader getKlassLoader() {
         return klassLoader;
     }
@@ -126,4 +128,7 @@ public class Heap {
         return instanceObjects;
     }
 
+    public int getInstanceObjectSize() {
+        return instanceObjectSize;
+    }
 }
