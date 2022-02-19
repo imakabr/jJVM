@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 
 public class StringTest {
 
-    public static final String klass = "jvm/examples/StringExample";
+    public static final String klass = "jvm/examples/lang/StringExample";
 
     @Test
     public void checkStringToCharArray() {

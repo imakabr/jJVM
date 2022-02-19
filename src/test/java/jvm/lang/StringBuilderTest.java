@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 
 public class StringBuilderTest {
 
-    public static final String klass = "jvm/examples/StringBuilderExample";
+    public static final String klass = "jvm/examples/lang/StringBuilderExample";
 
     @Test
     public void checkStringBuilder() {

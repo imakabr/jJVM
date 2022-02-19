@@ -1,4 +1,6 @@
-package jvm.examples;
+package jvm.examples.lang;
+
+import jvm.examples.SimpleObject;
 
 public class StringExample {
 

@@ -1,4 +1,4 @@
-package jvm.examples;
+package jvm.examples.lang;
 
 
 public class StringBuilderExample {
