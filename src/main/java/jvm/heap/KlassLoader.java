@@ -120,7 +120,7 @@ public class KlassLoader {
         List<String> allFields = new ArrayList<>();
         allFields.addAll(parentKlass != null ? parentKlass.getOrderedFieldNames() : Collections.emptyList());
         allFields.addAll(constantPoolKlass.getStaticFieldNames());
-        InstanceObject object = new InstanceObject(allFields, -1);
+        InstanceObject object = new InstanceObject(heap, allFields, -1);
         int objectRef = heap.changeObject(parentKlass != null
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
                 ? parentKlass.getObjectRef() : -1, object);

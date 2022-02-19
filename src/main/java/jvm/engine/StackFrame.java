@@ -1,5 +1,7 @@
 package jvm.engine;
 
+import jvm.Utils;
+
 public class StackFrame {
     long[] stack;
     int localVariable;
@@ -108,4 +110,10 @@ public class StackFrame {
     public int getSize() {
         return localVariable + varSize + (invokeCount > 0 ? 2 : 0) + operandSize;
     }
+
+    @Override
+    public String toString() {
+        return Utils.toString(stack, getSize());
+    }
+
 }

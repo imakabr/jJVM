@@ -1,6 +1,7 @@
 package jvm.heap;
 
 import jvm.JVMType;
+import jvm.Utils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -15,8 +16,11 @@ public class InstanceObject {
     private final boolean array;
     @Nullable
     private JVMType arrayType;
+    @Nonnull
+    private final Heap heap;
 
-    public InstanceObject(List<String> fields, int klassIndex) {
+    public InstanceObject(@Nonnull Heap heap, List<String> fields, int klassIndex) {
+        this.heap = heap;
         this.fieldValues = new long[fields.size()];
         this.indexByFieldName = new HashMap<>();
         this.klassIndex = klassIndex;
@@ -28,7 +32,8 @@ public class InstanceObject {
         }
     }
 
-    public InstanceObject(String type, int size, int klassIndex) {
+    public InstanceObject(@Nonnull Heap heap, String type, int size, int klassIndex) {
+        this.heap = heap;
         this.fieldValues = new long[size];
         this.indexByFieldName = new HashMap<>();
         this.klassIndex = klassIndex;
@@ -104,5 +109,14 @@ public class InstanceObject {
     @Nullable
     public JVMType getArrayType() {
         return arrayType;
+    }
+
+    @Override
+    public String toString() {
+        String type = array ? "Array" : klassIndex == -1 ? "Object | Fields : " : heap.getInstanceKlass(klassIndex).getName() + " | Fields : " ;
+        type = array && arrayType != JVMType.C ? type + " | Values : " : type;
+        String fields = Utils.toString(fieldValues, fieldValues.length);
+        String str = arrayType == JVMType.C ? " | String : " + Utils.toStringFromCharArray(fieldValues) : "";
+        return type + (!str.isEmpty() ? str : (fields.isEmpty() ? "absence" : fields));
     }
 }

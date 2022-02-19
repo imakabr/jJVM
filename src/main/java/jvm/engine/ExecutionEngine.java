@@ -527,7 +527,7 @@ public final class ExecutionEngine {
                         T_LONG	    11
                         */
                         stack.push(setRefValueType(allocateArray(
-                                JVMType.values()[atype - 4].name(),
+                                JVMType.values()[atype - 3].name(),
                                 getPureValue(stack.pop()))));
                         break;
                     case ANEWARRAY:
@@ -1049,7 +1049,7 @@ public final class ExecutionEngine {
             fields.addAll(klasses.get(i).getObjectFieldNames());
         }
 
-        return new InstanceObject(fields, heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true));
+        return new InstanceObject(heap, fields, heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true));
     }
 
 
@@ -1060,7 +1060,7 @@ public final class ExecutionEngine {
             klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
         }
         try {
-            return heap.getObjectRef(new InstanceObject(type, count, klassIndex));
+            return heap.getObjectRef(new InstanceObject(heap, type, count, klassIndex));
         } catch (OutOfMemoryError e) {
             throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
         }
@@ -1082,7 +1082,7 @@ public final class ExecutionEngine {
     }
 
     private InstanceObject allocateArrayOfRef(int count, int klassIndex) {
-        return new InstanceObject(JVMType.A.name(), count, klassIndex);
+        return new InstanceObject(heap, JVMType.A.name(), count, klassIndex);
     }
 
 

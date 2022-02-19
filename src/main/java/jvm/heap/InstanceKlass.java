@@ -100,4 +100,9 @@ public class InstanceKlass {
     public int getIndexByVirtualMethodName(String methodName) {
         return indexByVirtualMethodName.get(methodName);
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

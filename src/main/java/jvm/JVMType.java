@@ -1,9 +1,10 @@
 package jvm;
 
 public enum JVMType {
-    Z, C, F, D, B, S, I, J, A
+    N, Z, C, F, D, B, S, I, J, A
 }
 
+// N - does not have any type
 // Z - boolean
 // C - char
 // F - float
