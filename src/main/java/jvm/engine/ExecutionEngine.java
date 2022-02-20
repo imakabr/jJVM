@@ -3,6 +3,7 @@ package jvm.engine;
 import jvm.JVMType;
 import jvm.Utils;
 import jvm.heap.*;
+import jvm.lang.OutOfMemoryErrorJVM;
 import jvm.lang.RuntimeExceptionJVM;
 import jvm.lang.ClassCastExceptionJVM;
 import jvm.lang.NullPointerExceptionJVM;
@@ -544,11 +545,7 @@ public final class ExecutionEngine {
                             dimensions[i] = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         }
                         object = allocateArrayOfRef(dimensions[0], -1);
-                        try {
-                            stack.push(setRefValueType(heap.getObjectRef(object)));
-                        } catch (OutOfMemoryError e) {
-                            throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
-                        }
+                        stack.push(setRefValueType(heap.getObjectRef(object)));
                         createMultiArray(1, dimensions, object, getValueType(klassName, cpLookup));
                         break;
                     case ARRAYLENGTH:
@@ -729,11 +726,12 @@ public final class ExecutionEngine {
                         throw new ClassCastExceptionJVM(e.getLocalizedMessage() + "\n" + getStackTrace(op, false));
                     } else if (e instanceof NullPointerExceptionJVM) {
                         throw new NullPointerExceptionJVM("\n" + getStackTrace(op, false));
+                    } else if (e instanceof OutOfMemoryErrorJVM) {
+                        throw new OutOfMemoryErrorJVM("\n" + getStackTrace(op, false));
+                    } else {
+                        throw e;
                     }
-                    throw e;
                 }
-//            } catch (RuntimeException e) {
-//                throw e;
             } catch (Exception e) {
                 throw new RuntimeException("\n" + getStackTrace(op, false) + "\n\n" + e);
             }
@@ -876,11 +874,7 @@ public final class ExecutionEngine {
                 object.setValue(i, setRefValueType(allocateArray(type, dimensions[indexDim])));
             } else {
                 InstanceObject newObject = allocateArrayOfRef(dimensions[indexDim], -1);
-                try {
-                    object.setValue(i, setRefValueType(heap.getObjectRef(newObject)));
-                } catch (OutOfMemoryError e) {
-                    throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
-                }
+                object.setValue(i, setRefValueType(heap.getObjectRef(newObject)));
                 createMultiArray(indexDim + 1, dimensions, newObject, type);
             }
         }
@@ -1039,11 +1033,7 @@ public final class ExecutionEngine {
     }
 
     private int getInstanceObjectReference(@Nonnull InstanceObject object) {
-        try {
-            return heap.getObjectRef(object);
-        } catch (OutOfMemoryError e) {
-            throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
-        }
+        return heap.getObjectRef(object);
     }
 
     @Nonnull
@@ -1071,11 +1061,7 @@ public final class ExecutionEngine {
             String klassName = type.substring(1, type.length() - 1);
             klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
         }
-        try {
-            return heap.getObjectRef(new InstanceObject(heap, type, count, klassIndex));
-        } catch (OutOfMemoryError e) {
-            throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
-        }
+        return heap.getObjectRef(new InstanceObject(heap, type, count, klassIndex));
     }
 
     private int allocateArrayOfRef(String sourceKlassName, int cpIndex, int count) {
@@ -1086,11 +1072,7 @@ public final class ExecutionEngine {
             throw new RuntimeException("Class is not found");
         }
         int klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, true);
-        try {
-            return heap.getObjectRef(allocateArrayOfRef(count, klassIndex));
-        } catch (OutOfMemoryError e) {
-            throw new OutOfMemoryError(e.getLocalizedMessage() + "\n" + getStackTrace(null, false));
-        }
+        return heap.getObjectRef(allocateArrayOfRef(count, klassIndex));
     }
 
     private InstanceObject allocateArrayOfRef(int count, int klassIndex) {

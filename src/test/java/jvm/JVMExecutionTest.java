@@ -3,6 +3,7 @@ package jvm;
 import jvm.heap.*;
 import jvm.lang.ClassCastExceptionJVM;
 import jvm.lang.NullPointerExceptionJVM;
+import jvm.lang.OutOfMemoryErrorJVM;
 import jvm.lang.RuntimeExceptionJVM;
 import jvm.parser.Method;
 import org.junit.Test;
@@ -511,6 +512,12 @@ public class JVMExecutionTest {
     public void checkNPEWhithPutField() {
         // check NPE with PUTFIELD
         checkException(".checkNPEWhithPutField:()V", NullPointerExceptionJVM.class, "Should throw NullPointerExceptionJVM");
+    }
+
+    @Test
+    public void checkOutOfMemoryError() {
+        // check OutOfMemoryError - Java heap space
+        checkException(".checkOutOfMemoryError:()V", OutOfMemoryErrorJVM.class, "Should throw OutOfMemoryError");
     }
 
     public void checkException(@Nonnull String methodName, @Nonnull Class<? extends RuntimeExceptionJVM> klass, @Nonnull String message) {

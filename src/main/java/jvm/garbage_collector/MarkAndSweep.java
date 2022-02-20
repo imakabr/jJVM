@@ -49,7 +49,7 @@ public class MarkAndSweep implements GarbageCollector {
 
             removeDeadObjectsFromHeap(aliveObjects);
 
-            System.out.println("GC completed " + count++);
+//            System.out.println("GC completed " + count++);
             inProgress = false;
         }
     }

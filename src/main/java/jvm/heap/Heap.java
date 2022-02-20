@@ -1,6 +1,7 @@
 package jvm.heap;
 
 import jvm.garbage_collector.GarbageCollector;
+import jvm.lang.OutOfMemoryErrorJVM;
 
 import javax.annotation.Nonnull;
 
@@ -103,7 +104,7 @@ public class Heap {
 
     private void checkCapacity() {
         if (instanceObjectSize > instanceObjects.length) {
-            throw new OutOfMemoryError("Java heap space");
+            throw new OutOfMemoryErrorJVM("Java heap space");
         }
     }
 

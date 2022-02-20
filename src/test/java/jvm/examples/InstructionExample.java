@@ -1,5 +1,7 @@
 package jvm.examples;
 
+import jvm.examples.garbage_collector.GarbageObj;
+
 public class InstructionExample {
 
     public int calculateSum() {
@@ -300,6 +302,16 @@ public class InstructionExample {
     public void checkNPEWhithPutField() {
         ComplexObject complexObject = null;
         complexObject.simpleObject = new SimpleObject();
+    }
+
+    public void checkOutOfMemoryError() {
+        GarbageObj root = new GarbageObj();
+        GarbageObj current = root;
+        for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            GarbageObj next = new GarbageObj();
+            current.setObj(next);
+            current = next;
+        }
     }
 
 }
