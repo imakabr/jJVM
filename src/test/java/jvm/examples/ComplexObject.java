@@ -3,7 +3,7 @@ package jvm.examples;
 public class ComplexObject {
 
     private int a;
-    private SimpleObject simpleObject;
+    public SimpleObject simpleObject;
 
     public ComplexObject(int a) {
         this.simpleObject = new SimpleObject(1, 2, 3);

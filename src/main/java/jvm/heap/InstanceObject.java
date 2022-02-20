@@ -2,6 +2,8 @@ package jvm.heap;
 
 import jvm.JVMType;
 import jvm.Utils;
+import jvm.lang.NullPointerExceptionJVM;
+import jvm.lang.RuntimeExceptionJVM;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -98,8 +100,12 @@ public class InstanceObject {
         indexByFieldName.put(name, index);
     }
 
-    public int getIndexByFieldName(String name) {
-        return indexByFieldName.get(name);
+    public int getIndexByFieldName(String name) throws NullPointerExceptionJVM {
+        Integer result = indexByFieldName.get(name);
+        if (result == null) {
+            throw new NullPointerExceptionJVM();
+        }
+        return result;
     }
 
     public int getKlassIndex() {

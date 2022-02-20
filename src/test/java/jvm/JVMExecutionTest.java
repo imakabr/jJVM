@@ -1,8 +1,9 @@
 package jvm;
 
-import jvm.engine.ExecutionEngine;
 import jvm.heap.*;
-import jvm.lang.KlassCastException;
+import jvm.lang.ClassCastExceptionJVM;
+import jvm.lang.NullPointerExceptionJVM;
+import jvm.lang.RuntimeExceptionJVM;
 import jvm.parser.Method;
 import org.junit.Test;
 
@@ -316,19 +317,6 @@ public class JVMExecutionTest {
     }
 
     @Test
-    public void checkComplexCastMethod2() {
-        // check CHECKCAST
-
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(INSTRUCTION);
-
-        int methodIndex = heap.getMethodRepo().getIndexByName(INSTRUCTION + ".checkComplexCastMethod2:()I");
-        Method method = heap.getMethodRepo().getMethod(methodIndex);
-        assertThrows("Should throw KlassCastException", KlassCastException.class, () -> main.getEngine().invoke(method));
-    }
-
-    @Test
     public void checkIFICMPLT() {
         // check IF_ICMPLT
         checkMethodInInstructionClass("checkIFICMPLT:()I", 1);
@@ -499,6 +487,40 @@ public class JVMExecutionTest {
     public void checkIXOR() {
         // check IXOR
         checkMethodInInstructionClass("checkIXOR:()I", -129);
+    }
+
+    @Test
+    public void checkClassCastException() {
+        // check CHECKCAST
+        checkException(".checkComplexCastMethod2:()I", ClassCastExceptionJVM.class, "Should throw ClassCastExceptionJVM");
+    }
+
+    @Test
+    public void checkNPEWithINVOKEVIRTUAL() {
+        // check NPE with INVOKEVIRTUAL
+        checkException(".checkNPEWithIV:()V", NullPointerExceptionJVM.class, "Should throw NullPointerExceptionJVM");
+    }
+
+    @Test
+    public void checkNPEWhithGetField() {
+        // check NPE with GETFIELD
+        checkException(".checkNPEWhithGetField:()V", NullPointerExceptionJVM.class, "Should throw NullPointerExceptionJVM");
+    }
+
+    @Test
+    public void checkNPEWhithPutField() {
+        // check NPE with PUTFIELD
+        checkException(".checkNPEWhithPutField:()V", NullPointerExceptionJVM.class, "Should throw NullPointerExceptionJVM");
+    }
+
+    public void checkException(@Nonnull String methodName, @Nonnull Class<? extends RuntimeExceptionJVM> klass, @Nonnull String message) {
+        Main main = new Main(500, 50, 10000);
+        Heap heap = main.getHeap();
+        main.getKlassLoader().loadKlass(INSTRUCTION);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName(INSTRUCTION + methodName);
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        assertThrows(message, klass, () -> main.getEngine().invoke(method));
     }
 
     private void checkMethodInInstructionClass(@Nonnull String methodName, long expected) {

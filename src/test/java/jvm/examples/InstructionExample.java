@@ -287,4 +287,19 @@ public class InstructionExample {
         return ~a;
     }
 
+    public void checkNPEWithIV() {
+        String o = null;
+        o.length();
+    }
+
+    public void checkNPEWhithGetField() {
+        ComplexObject complexObject = null;
+        SimpleObject simpleObject= complexObject.simpleObject;
+    }
+
+    public void checkNPEWhithPutField() {
+        ComplexObject complexObject = null;
+        complexObject.simpleObject = new SimpleObject();
+    }
+
 }

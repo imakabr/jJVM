@@ -1,8 +1,11 @@
 package jvm.engine;
 
 import jvm.JVMType;
+import jvm.Utils;
 import jvm.heap.*;
-import jvm.lang.KlassCastException;
+import jvm.lang.RuntimeExceptionJVM;
+import jvm.lang.ClassCastExceptionJVM;
+import jvm.lang.NullPointerExceptionJVM;
 import jvm.parser.Method;
 import jvm.parser.Klass;
 import jvm.parser.ConstantPoolEntry;
@@ -188,13 +191,10 @@ public final class ExecutionEngine {
                         String castKlassName = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
                         Klass klass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
                         if (!checkCast(klass, castKlassName)) {
-                            throw new KlassCastException("\n"
-                                    + klass.getKlassName().replace("/", ".")
-                                    + " can not cast to "
-                                    + castKlassName.replace("/", ".")
-                                    + "\n"
-                                    + "\n"
-                                    + getStackTrace(null, false));
+                            throw new ClassCastExceptionJVM(
+                                    klass.getKlassName().replace("/", ".")
+                                            + " cannot be cast to "
+                                            + castKlassName.replace("/", "."));
                         }
                         stack.push(setRefValueType(objectRef));
                         break;
@@ -439,12 +439,12 @@ public final class ExecutionEngine {
                         break;
                     case INVOKEVIRTUAL:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        int klassIndex = heap.getInstanceObject(
-                                        getPureValue(
-                                                checkValueType(
-                                                        stack.getObjectRefBeforeInvoke(
-                                                                getArgSize(klassName, cpLookup)), JVMType.A, op)))
-                                .getKlassIndex();
+                        reference = stack.getObjectRefBeforeInvoke(getArgSize(klassName, cpLookup));
+                        objectRef = getPureValue(checkValueType(reference, JVMType.A, op));
+                        if (objectRef == NULL) {
+                            throw new NullPointerExceptionJVM();
+                        }
+                        int klassIndex = heap.getInstanceObject(objectRef).getKlassIndex();
                         int virtualMethodIndex = getVirtualMethodIndex(klassName, cpLookup, klassIndex); // todo restore to resolution
                         methodIndex = heap.getInstanceKlass(klassIndex).getMethodIndex(virtualMethodIndex);
 
@@ -720,8 +720,20 @@ public final class ExecutionEngine {
                         System.err.println(getStackTrace(op, true));
                         System.exit(1);
                 }
-            } catch (RuntimeException e) {
-                throw e;
+            } catch (RuntimeExceptionJVM e) {
+                if (false) {
+                    System.out.println(Utils.changeJVMKlassNameToSystemKlassName(e.toString()) + "\n" + getStackTrace(op, false));
+                    System.exit(-1);
+                } else {
+                    if (e instanceof ClassCastExceptionJVM) {
+                        throw new ClassCastExceptionJVM(e.getLocalizedMessage() + "\n" + getStackTrace(op, false));
+                    } else if (e instanceof NullPointerExceptionJVM) {
+                        throw new NullPointerExceptionJVM("\n" + getStackTrace(op, false));
+                    }
+                    throw e;
+                }
+//            } catch (RuntimeException e) {
+//                throw e;
             } catch (Exception e) {
                 throw new RuntimeException("\n" + getStackTrace(op, false) + "\n\n" + e);
             }
@@ -733,7 +745,7 @@ public final class ExecutionEngine {
         StringBuilder stackTrace = new StringBuilder();
         for (int i = stackMethodPointer; i >= 0; i--) {
             Method method = stackMethod[i];
-            stackTrace.append("at ")
+            stackTrace.append("\tat ")
                     .append(method.getClassName())
                     .append(".")
                     .append(method.getNameAndType())
