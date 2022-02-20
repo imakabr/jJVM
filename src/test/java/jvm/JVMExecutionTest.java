@@ -26,9 +26,9 @@ public class JVMExecutionTest {
     public void simpleStaticFieldsInstanceKlassTest() throws NoSuchFieldException, IllegalAccessException {
         String fName = "jvm/examples/SimpleStatic";
 
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(fName);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(fName);
 
         InstanceKlass simpleStaticFieldsInstanceKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName(fName, false));
         InstanceObject object = heap.getInstanceObject(simpleStaticFieldsInstanceKlass.getObjectRef());
@@ -49,9 +49,9 @@ public class JVMExecutionTest {
     @Test
     public void complexStaticFieldsInstanceKlassTest() {
         String fName = "jvm/examples/ComplexStatic";
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(fName);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(fName);
 
         int complexStaticFieldsInstanceKlassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(fName, false);
         InstanceKlass complexStaticFieldsInstanceKlass = heap.getInstanceKlass(complexStaticFieldsInstanceKlassIndex);
@@ -78,13 +78,13 @@ public class JVMExecutionTest {
         // check NEW, INVOKESPECIAL, PUTFIELD
         String fName = "jvm/examples/SimpleObject";
 
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(fName);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(fName);
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m:()V");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long result = main.getEngine().invoke(method);
+        long result = virtualMachine.getEngine().invoke(method);
 
         InstanceObject simpleClassObject = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
 
@@ -124,9 +124,9 @@ public class JVMExecutionTest {
     public void complexStaticFieldInheritanceTest() {
         String fName = "jvm/examples/ChildChildStatic";
 
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(fName);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(fName);
 
         InstanceKlass parentStaticKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName("jvm/examples/ParentStatic", false));
         assertEquals(0, parentStaticKlass.getIndexByFieldName("a:I"));
@@ -148,13 +148,13 @@ public class JVMExecutionTest {
     public void complexObjectFieldInheritanceTest() {
         String fName = "jvm/examples/ChildChildObject";
 
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(fName);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(fName);
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ChildChildObject.m:()V");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long result = main.getEngine().invoke(method);
+        long result = virtualMachine.getEngine().invoke(method);
 
         InstanceObject object = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
 
@@ -216,13 +216,13 @@ public class JVMExecutionTest {
     public void createObjectGetHashCode() {
         String fName = "jvm/examples/SimpleObject";
 
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(fName);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(fName);
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.createObjectGetHashCode:()I");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long result = main.getEngine().invoke(method);
+        long result = virtualMachine.getEngine().invoke(method);
         InstanceObject object = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
         assertEquals(Objects.hashCode(object), result);
     }
@@ -520,14 +520,15 @@ public class JVMExecutionTest {
         checkException(".checkOutOfMemoryError:()V", OutOfMemoryErrorJVM.class, "Should throw OutOfMemoryError");
     }
 
-    public void checkException(@Nonnull String methodName, @Nonnull Class<? extends RuntimeExceptionJVM> klass, @Nonnull String message) {
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(INSTRUCTION);
+    private void checkException(@Nonnull String methodName, @Nonnull Class<? extends RuntimeExceptionJVM> klass, @Nonnull String message) {
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(INSTRUCTION);
 
         int methodIndex = heap.getMethodRepo().getIndexByName(INSTRUCTION + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        assertThrows(message, klass, () -> main.getEngine().invoke(method));
+        virtualMachine.getEngine().setExceptionDebugMode(true);
+        assertThrows(message, klass, () -> virtualMachine.getEngine().invoke(method));
     }
 
     private void checkMethodInInstructionClass(@Nonnull String methodName, long expected) {
@@ -547,12 +548,12 @@ public class JVMExecutionTest {
     }
 
     private void checkMethod(@Nonnull String className, @Nonnull String methodName, long expected) {
-        Main main = new Main(500, 50, 10000);
-        Heap heap = main.getHeap();
-        main.getKlassLoader().loadKlass(className);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(className);
         int methodIndex = heap.getMethodRepo().getIndexByName(className + "." + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long actual = main.getEngine().invoke(method);
+        long actual = virtualMachine.getEngine().invoke(method);
         assertEquals(expected, actual);
     }
 

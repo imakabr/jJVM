@@ -20,13 +20,13 @@ public class ShapesTest {
     }
 
     private void checkMethod(@Nonnull String methodName, long expected) {
-        Main main = new Main(10000, 50, 10000);
-        main.getKlassLoader().loadKlass(klass);
-        Heap heap = main.getHeap();
+        VirtualMachine virtualMachine = new VirtualMachine(10000, 50, 10000);
+        virtualMachine.getKlassLoader().loadKlass(klass);
+        Heap heap = virtualMachine.getHeap();
 
         int methodIndex = heap.getMethodRepo().getIndexByName(klass + "." + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long actual = main.getEngine().invoke(method);
+        long actual = virtualMachine.getEngine().invoke(method);
         assertEquals(expected, actual);
     }
 }

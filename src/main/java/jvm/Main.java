@@ -1,52 +1,19 @@
 package jvm;
 
-import jvm.engine.ExecutionEngine;
-import jvm.engine.StackFrame;
-import jvm.garbage_collector.GarbageCollector;
-import jvm.garbage_collector.MarkAndSweep;
 import jvm.heap.Heap;
-import jvm.heap.KlassLoader;
+import jvm.parser.Method;
 
 public class Main {
 
-    private final Heap heap;
-    private final ExecutionEngine engine;
-    private final StackFrame stackFrame;
-    private final GarbageCollector collector;
-    private final KlassLoader klassLoader;
-
-    public Main(int instancesSize, int klassesSize, int stackSize) {
-        this.stackFrame = new StackFrame(stackSize);
-        this.collector = new MarkAndSweep(stackFrame);
-        this.heap = new Heap(collector, instancesSize, klassesSize);
-        this.collector.setHeap(heap);
-        this.engine = new ExecutionEngine(heap, stackFrame);
-        this.klassLoader = heap.getKlassLoader();
-    }
-
-    public Main() {
-        this(500, 50, 10000);
-    }
-
-    public Heap getHeap() {
-        return heap;
-    }
-
-    public KlassLoader getKlassLoader() {
-        return klassLoader;
-    }
-
-    public ExecutionEngine getEngine() {
-        return engine;
-    }
+    public static String entryPoint = ".main:([Ljava/lang/String;)V";
 
     public static void main(String[] args) {
+        VirtualMachine virtualMachine = new VirtualMachine();
+        virtualMachine.getKlassLoader().loadKlass(args[0]);
+        Heap heap = virtualMachine.getHeap();
 
+        int methodIndex = heap.getMethodRepo().getIndexByName(args[0] + entryPoint);
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long actual = virtualMachine.getEngine().invoke(method);
     }
 }
-
-
-
-
-
-

@@ -1,7 +1,7 @@
 package jvm.garbage_collector;
 
 import jvm.JVMType;
-import jvm.Main;
+import jvm.VirtualMachine;
 import jvm.engine.StackFrame;
 import jvm.heap.Heap;
 import jvm.parser.Method;
@@ -16,13 +16,13 @@ public class MarkAndSweepTest {
 
     @Test
     public void markAndSweepTest() {
-        Main main = new Main(20, 4, 100);
-        main.getKlassLoader().loadKlass(klass);
-        Heap heap = main.getHeap();
+        VirtualMachine virtualMachine = new VirtualMachine(20, 4, 100);
+        virtualMachine.getKlassLoader().loadKlass(klass);
+        Heap heap = virtualMachine.getHeap();
         int systemObjectSize = heap.getInstanceObjectSize();
         int methodIndex = heap.getMethodRepo().getIndexByName(klass + ".createObjects:()Ljava/lang/Object;");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        int reference = (int) main.getEngine().invoke(method); // Should create 9 objects on the heap (1 - instance class, 8 - instance objects)
+        int reference = (int) virtualMachine.getEngine().invoke(method); // Should create 9 objects on the heap (1 - instance class, 8 - instance objects)
 
         assertEquals(systemObjectSize + 9, heap.getInstanceObjectSize());
 

@@ -51,6 +51,9 @@ public final class ExecutionEngine {
     private final Method[] stackMethod;
     int stackMethodPointer = 0;
 
+    // VM Options
+    private boolean exceptionDebugMode;
+
     private static final Map<Integer, Object> nativeObjects = new HashMap<>();
 
     public ExecutionEngine(@Nonnull Heap heap, @Nonnull StackFrame stackFrame) {
@@ -718,10 +721,7 @@ public final class ExecutionEngine {
                         System.exit(1);
                 }
             } catch (RuntimeExceptionJVM e) {
-                if (false) {
-                    System.out.println(Utils.changeJVMKlassNameToSystemKlassName(e.toString()) + "\n" + getStackTrace(op, false));
-                    System.exit(-1);
-                } else {
+                if (exceptionDebugMode) {
                     if (e instanceof ClassCastExceptionJVM) {
                         throw new ClassCastExceptionJVM(e.getLocalizedMessage() + "\n" + getStackTrace(op, false));
                     } else if (e instanceof NullPointerExceptionJVM) {
@@ -731,6 +731,9 @@ public final class ExecutionEngine {
                     } else {
                         throw e;
                     }
+                } else {
+                    System.out.println(Utils.changeJVMKlassNameToSystemKlassName(e.toString()) + "\n" + getStackTrace(op, false));
+                    System.exit(-1);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("\n" + getStackTrace(op, false) + "\n\n" + e);
@@ -1079,6 +1082,8 @@ public final class ExecutionEngine {
         return new InstanceObject(heap, JVMType.A.name(), count, klassIndex);
     }
 
-
+    public void setExceptionDebugMode(boolean exceptionDebugMode) {
+        this.exceptionDebugMode = exceptionDebugMode;
+    }
 }
 

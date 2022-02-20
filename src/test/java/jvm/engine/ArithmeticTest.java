@@ -1,7 +1,6 @@
 package jvm.engine;
 
-import jvm.Main;
-import jvm.heap.Heap;
+import jvm.VirtualMachine;
 import jvm.parser.Method;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -16,7 +15,7 @@ public class ArithmeticTest {
 
     @BeforeClass
     public static void setup() {
-        engine = new Main(500, 50, 10000).getEngine();
+        engine = new VirtualMachine(500, 50, 10000).getEngine();
     }
 
     @Test
