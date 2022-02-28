@@ -82,11 +82,11 @@ public class Utils {
         return JVMType.valueOf(type).ordinal();
     }
 
-    private static int getPureValue(long value) {
+    public static int getPureValue(long value) {
         return (int) value;
     }
 
-    private static int getValueType(long value) {
+    public static int getValueType(long value) {
         int type = (int) (value >> 32);
         return type >>> 31 == 1 ? ~type : type; // if 'type >>> 31 == 1' (negative sign) type was inverted
     }

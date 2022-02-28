@@ -19,9 +19,9 @@ public class Heap {
     @Nonnull
     private final GarbageCollector collector;
 
-    private int klassIndex;
+    private volatile int klassIndex;
     private int objectIndex = 0;
-    private int instanceObjectSize;
+    private volatile int instanceObjectSize;
 
     public Heap(@Nonnull GarbageCollector collector, int instancesSize, int klassesSize) {
         this.collector = collector;
@@ -73,6 +73,10 @@ public class Heap {
     public int setInstanceKlass(InstanceKlass klass) {
         instanceKlasses[klassIndex] = klass;
         return klassIndex++;
+    }
+
+    public int getInstanceKlassSize() {
+        return klassIndex;
     }
 
     public int setInstanceObject(InstanceObject object) {

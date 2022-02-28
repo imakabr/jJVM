@@ -7,6 +7,9 @@ import org.junit.Test;
 
 import javax.annotation.Nonnull;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 import static org.junit.Assert.assertEquals;
 
 public class ShapesTest {
@@ -23,6 +26,7 @@ public class ShapesTest {
         VirtualMachine virtualMachine = new VirtualMachine(10000, 50, 10000);
         virtualMachine.getKlassLoader().loadKlass(klass);
         Heap heap = virtualMachine.getHeap();
+        virtualMachine.runHeapMonitor(new HashSet<>(Arrays.asList("java/lang/String", "java/lang/StringBuilder")));
 
         int methodIndex = heap.getMethodRepo().getIndexByName(klass + "." + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);

@@ -6,6 +6,10 @@ import jvm.garbage_collector.GarbageCollector;
 import jvm.garbage_collector.MarkAndSweep;
 import jvm.heap.Heap;
 import jvm.heap.KlassLoader;
+import jvm.monitor.HeapMonitor;
+
+import javax.annotation.Nonnull;
+import java.util.Set;
 
 public class VirtualMachine {
 
@@ -24,8 +28,16 @@ public class VirtualMachine {
         this.klassLoader = heap.getKlassLoader();
     }
 
+    public static void main(String[] args) {
+        new VirtualMachine();
+    }
+
     public VirtualMachine() {
         this(500, 50, 10000);
+    }
+
+    public void runHeapMonitor(@Nonnull Set<String> classNames) {
+        new HeapMonitor(heap, classNames).run();
     }
 
     public Heap getHeap() {
