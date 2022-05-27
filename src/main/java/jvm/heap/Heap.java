@@ -4,6 +4,7 @@ import jvm.garbage_collector.GarbageCollector;
 import jvm.lang.OutOfMemoryErrorJVM;
 
 import javax.annotation.Nonnull;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Heap {
     @Nonnull
@@ -19,9 +20,9 @@ public class Heap {
     @Nonnull
     private final GarbageCollector collector;
 
-    private volatile int klassIndex;
+    private final AtomicInteger klassIndex = new AtomicInteger();
     private int objectIndex = 0;
-    private volatile int instanceObjectSize;
+    private final AtomicInteger instanceObjectSize = new AtomicInteger();
 
     public Heap(@Nonnull GarbageCollector collector, int instancesSize, int klassesSize) {
         this.collector = collector;
@@ -71,12 +72,12 @@ public class Heap {
     }
 
     public int setInstanceKlass(InstanceKlass klass) {
-        instanceKlasses[klassIndex] = klass;
-        return klassIndex++;
+        instanceKlasses[klassIndex.get()] = klass;
+        return klassIndex.getAndIncrement();
     }
 
     public int getInstanceKlassSize() {
-        return klassIndex;
+        return klassIndex.get();
     }
 
     public int setInstanceObject(InstanceObject object) {
@@ -95,11 +96,11 @@ public class Heap {
     }
 
     private void incrementInstanceObjectSize() {
-        instanceObjectSize++;
+        instanceObjectSize.incrementAndGet();
         if (collector.isInProgress()) {
             checkCapacity();
         } else {
-            if (instanceObjectSize > instanceObjects.length / 10 * 7) {
+            if (instanceObjectSize.get() > instanceObjects.length / 10 * 7) {
                 collector.run();
                 checkCapacity();
             }
@@ -107,14 +108,14 @@ public class Heap {
     }
 
     private void checkCapacity() {
-        if (instanceObjectSize > instanceObjects.length) {
+        if (instanceObjectSize.get() >= instanceObjects.length) {
             throw new OutOfMemoryErrorJVM("Java heap space");
         }
     }
 
     public void decrementInstanceObjectSize() {
-        instanceObjectSize--;
-        if (instanceObjectSize < 0) {
+        instanceObjectSize.decrementAndGet();
+        if (instanceObjectSize.get() < 0) {
             throw new RuntimeException("size of instance objects can not be negative");
         }
     }
@@ -134,6 +135,6 @@ public class Heap {
     }
 
     public int getInstanceObjectSize() {
-        return instanceObjectSize;
+        return instanceObjectSize.get();
     }
 }
