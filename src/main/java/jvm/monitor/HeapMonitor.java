@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import static jvm.Utils.getPureValue;
+
 public class HeapMonitor {
 
     public static final String WITHOUT_GROUP = "withoutGroup";
@@ -57,7 +59,6 @@ public class HeapMonitor {
             new Thread(() -> PApplet.main("jvm.monitor.Sketch")).start();
             InstanceObject[] objects = heap.getInstanceObjects();
             InstanceKlass[] klasses = heap.getInstanceKlasses();
-            ReferenceTable refTable = heap.getReferenceTable();
             for (; ; ) {
                 Map<String, Integer> instanceKlasses = new HashMap<>(); // class name -> instance klass index
                 Map<Integer, Integer> objectCounts = new HashMap<>(); // instance klass index -> count
@@ -71,10 +72,10 @@ public class HeapMonitor {
                     }
                 }
                 int objectSize = heap.getInstanceObjectSize();
+                Map<Integer, Integer> innerArrays = new HashMap<>(); // object reference -> instance klass index
                 for (int i = 0; i < objectSize; i++) {
                     InstanceObject object = objects[i];
                     if (object != null && objectCounts.containsKey(object.getKlassIndex())) {
-                        int count = 1;
                         for (String fieldName : object.getFieldNames()) {
                             if (fieldName.contains("[")) {
                                 String type = fieldName.substring(fieldName.lastIndexOf("[") + 1);
@@ -87,14 +88,16 @@ public class HeapMonitor {
                                     case "S":
                                     case "I":
                                     case "J":
-                                        count++;
+                                        int objRef = getPureValue(object.getValue(object.getIndexByFieldName(fieldName)));
+                                        innerArrays.put(objRef, object.getKlassIndex());
                                 }
                             }
                         }
-                        int finalCount = count;
-                        objectCounts.computeIfPresent(object.getKlassIndex(), (key, value) -> value + finalCount);
+                        objectCounts.computeIfPresent(object.getKlassIndex(), (key, value) -> value + 1);
                     }
                 }
+
+                countInnerArrays(innerArrays, objectCounts, heap.getReferenceTable(), objects);
 
                 List<String> names = new ArrayList<>();
                 List<Integer> data = new ArrayList<>();
@@ -135,6 +138,27 @@ public class HeapMonitor {
             }
 
         }).start();
+    }
+
+    private void countInnerArrays(@Nonnull Map<Integer, Integer> innerArrays,
+                                  @Nonnull Map<Integer, Integer> objectCounts,
+                                  @Nonnull ReferenceTable refTable,
+                                  @Nonnull InstanceObject[] objects) {
+        ArrayDeque<Integer> queue = new ArrayDeque<>(innerArrays.keySet());
+        while (!queue.isEmpty()) {
+            int objRef = queue.pop();
+            int objIndex = refTable.getInstanceObjectIndex(objRef);
+            InstanceObject innerObj = objIndex != -1 ? objects[objIndex] : null;
+            if (innerObj != null && innerObj.isArray()) {
+                objectCounts.computeIfPresent(innerArrays.get(objRef), (key, value) -> value + 1);
+                if (innerObj.getArrayType() == JVMType.A) {
+                    for (long value : innerObj.getFieldValues()) {
+                        queue.add(getPureValue(value));
+                        innerArrays.put(getPureValue(value), innerArrays.get(objRef));
+                    }
+                }
+            }
+        }
     }
 
 }
