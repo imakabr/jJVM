@@ -70,33 +70,26 @@ public class HeapMonitor {
                         objectCounts.computeIfAbsent(klassIndex, key -> 0);
                     }
                 }
-                Set<Integer> innerObjects = new HashSet<>();
                 int objectSize = heap.getInstanceObjectSize();
                 for (int i = 0; i < objectSize; i++) {
                     InstanceObject object = objects[i];
                     if (object != null && objectCounts.containsKey(object.getKlassIndex())) {
                         int count = 1;
-                        for (int j = 0; j < object.size(); j++) {
-                            //---------------------------------------------------------
-                            // todo type checking with indexByFieldName. if the type is an array (other than an array of references),
-                            //  it should increment the counter and add the reference to innerObjects
-                            long value = object.getValue(j);
-                            if (Utils.getValueType(value) == JVMType.A.ordinal()) {
-                                int objRef = Utils.getPureValue(value);
-                                int objIndex = refTable.getInstanceObjectIndex(objRef);
-                                InstanceObject innerObj = objIndex != -1 ? objects[objIndex] : null;
-                                if (innerObj != null && innerObj.isArray() && !innerObjects.contains(objRef)) {
-                                    if (innerObj.size() == 0) {
+                        for (String fieldName : object.getFieldNames()) {
+                            if (fieldName.contains("[")) {
+                                String type = fieldName.substring(fieldName.lastIndexOf("[") + 1);
+                                switch (type) {
+                                    case "Z":
+                                    case "C":
+                                    case "F":
+                                    case "D":
+                                    case "B":
+                                    case "S":
+                                    case "I":
+                                    case "J":
                                         count++;
-                                        innerObjects.add(objRef);
-                                    } else if (innerObj.size() != 0 // check that the inner array contains no references
-                                            && Utils.getValueType(innerObj.getValue(0)) != JVMType.A.ordinal()) {
-                                        innerObjects.add(objRef);
-                                        count++;
-                                    }
                                 }
                             }
-                            //---------------------------------------------------------------
                         }
                         int finalCount = count;
                         objectCounts.computeIfPresent(object.getKlassIndex(), (key, value) -> value + finalCount);

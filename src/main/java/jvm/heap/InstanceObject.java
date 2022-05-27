@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class InstanceObject {
     private final long[] fieldValues;
@@ -44,6 +45,10 @@ public class InstanceObject {
         for (int index = 0; index < size; index++) {
             setDefaultValue(index, getValueType(type));
         }
+    }
+
+    public Set<String> getFieldNames() {
+        return indexByFieldName.keySet();
     }
 
     public long[] getFieldValues() {
