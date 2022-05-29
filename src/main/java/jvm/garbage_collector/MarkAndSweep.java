@@ -64,7 +64,7 @@ public class MarkAndSweep implements GarbageCollector {
                 int objIndex = refTable.getInstanceObjectIndex(objRef);
                 if (objIndex != -1 && objects[objIndex] != null && !aliveObjects.contains(objRef)) {
                     InstanceObject object = objects[objIndex];
-                    int klassIndex = object.getKlassIndex();
+                    int klassIndex = !object.isArray() ? object.getKlassIndex() : -1;
                     if (klassIndex != -1) {
                         InstanceKlass klass = heap.getInstanceKlass(klassIndex);
                         Method method = heap.getMethodRepo().getMethod(
