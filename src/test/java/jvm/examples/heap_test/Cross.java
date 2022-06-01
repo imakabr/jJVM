@@ -22,7 +22,7 @@ public class Cross extends Shape {
 
     @Override
     protected void finalize() throws Throwable {
-        print(y + " " + x + " cleared");
+        clear(y + " " + x);
         inHeap[y][x] = false;
     }
 }

@@ -39,13 +39,21 @@ public class Shape {
         sendMessage(str);
     }
 
+    protected void clear(String m) throws IOException {
+        String message = m + " cleared";
+        System.out.println(message);
+        service.sendFinalize(message);
+        if (!service.receiveFinalize().equals("next")) {
+            System.out.println("something wrong");
+            System.exit(-1);
+        }
+    }
+
     private void sendMessage(String message) throws IOException {
-//        synchronized (service) {
             service.send(message);
             if (!service.receive().equals("next")) {
                 System.out.println("something wrong");
                 System.exit(-1);
             }
-//        }
     }
 }

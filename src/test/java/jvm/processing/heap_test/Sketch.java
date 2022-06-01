@@ -13,7 +13,9 @@ public class Sketch extends PApplet {
     private final int port = 10003;
 
     Shape[][] shapes = new Shape[count][count];
-    ShapeManager manager = new ShapeManager(this, new SocketReader(this, port));
+    ShapeManager manager = new ShapeManager(this,
+            new SocketReader(this, port),
+            new SocketReader(this, port + 1));
 
     public void settings() {
         size(800, 800);
