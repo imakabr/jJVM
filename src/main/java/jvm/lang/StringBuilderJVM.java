@@ -25,6 +25,10 @@ public class StringBuilderJVM {
     }
 
     public StringBuilderJVM append(String str) {
+        if (str == null) {
+            append("null");
+            return this;
+        }
         char[] buf = str.toCharArray();
         int length = str.length();
         checkCapacity(length);
