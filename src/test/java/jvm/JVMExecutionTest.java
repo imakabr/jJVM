@@ -30,7 +30,8 @@ public class JVMExecutionTest {
         Heap heap = virtualMachine.getHeap();
         virtualMachine.getKlassLoader().loadKlass(fName);
 
-        InstanceKlass simpleStaticFieldsInstanceKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName(fName, false));
+        InstanceKlass simpleStaticFieldsInstanceKlass = heap.getInstanceKlass(
+                Objects.requireNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(fName, false)));
         InstanceObject object = heap.getInstanceObject(simpleStaticFieldsInstanceKlass.getObjectRef());
         int fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("b:I");
         assertEquals(0, fieldValueIndex);
@@ -53,7 +54,8 @@ public class JVMExecutionTest {
         Heap heap = virtualMachine.getHeap();
         virtualMachine.getKlassLoader().loadKlass(fName);
 
-        int complexStaticFieldsInstanceKlassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(fName, false);
+        int complexStaticFieldsInstanceKlassIndex = Objects.requireNonNull(
+                heap.getKlassLoader().getInstanceKlassIndexByName(fName, false));
         InstanceKlass complexStaticFieldsInstanceKlass = heap.getInstanceKlass(complexStaticFieldsInstanceKlassIndex);
         InstanceObject object = heap.getInstanceObject(complexStaticFieldsInstanceKlass.getObjectRef());
         int fieldValueIndex = complexStaticFieldsInstanceKlass.getIndexByFieldName("a:I");
@@ -134,16 +136,19 @@ public class JVMExecutionTest {
         Heap heap = virtualMachine.getHeap();
         virtualMachine.getKlassLoader().loadKlass(fName);
 
-        InstanceKlass parentStaticKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName("jvm/examples/ParentStatic", false));
+        InstanceKlass parentStaticKlass = heap.getInstanceKlass(Objects.requireNonNull(
+                heap.getKlassLoader().getInstanceKlassIndexByName("jvm/examples/ParentStatic", false)));
         assertEquals(0, parentStaticKlass.getIndexByFieldName("a:I"));
         assertThrows(NullPointerException.class, () -> parentStaticKlass.getIndexByFieldName("b:I"));
 
-        InstanceKlass childStaticKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName("jvm/examples/ChildStatic", false));
+        InstanceKlass childStaticKlass = heap.getInstanceKlass(Objects.requireNonNull(
+                heap.getKlassLoader().getInstanceKlassIndexByName("jvm/examples/ChildStatic", false)));
         assertEquals(0, childStaticKlass.getIndexByFieldName("a:I"));
         assertEquals(1, childStaticKlass.getIndexByFieldName("b:I"));
         assertThrows(NullPointerException.class, () -> childStaticKlass.getIndexByFieldName("c:I"));
 
-        InstanceKlass childChildStaticKlass = heap.getInstanceKlass(heap.getKlassLoader().getInstanceKlassIndexByName(fName, false));
+        InstanceKlass childChildStaticKlass = heap.getInstanceKlass(Objects.requireNonNull(
+                heap.getKlassLoader().getInstanceKlassIndexByName(fName, false)));
         assertEquals(0, childChildStaticKlass.getIndexByFieldName("a:I"));
         assertEquals(1, childChildStaticKlass.getIndexByFieldName("b:I"));
         assertEquals(2, childChildStaticKlass.getIndexByFieldName("c:I"));
