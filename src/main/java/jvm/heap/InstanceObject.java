@@ -117,7 +117,13 @@ public class InstanceObject {
     }
 
     private void checkType(long firstValue, long secondValue) {
-        if (getValueType(firstValue) != getValueType(secondValue)) {
+        int first = getValueType(firstValue);
+        int second = getValueType(secondValue);
+        if (first == JVMType.I.ordinal() && second == JVMType.Z.ordinal() ||
+                first == JVMType.Z.ordinal() && second == JVMType.I.ordinal()) {
+            return;
+        }
+        if (first != second ) {
             throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(firstValue)] + " is not equal " + JVMType.values()[getValueType(secondValue)]);
         }
     }
@@ -127,7 +133,7 @@ public class InstanceObject {
     }
 
     public void setValue(int index, long value) {
-        checkType(value, fieldValues[index]);
+        checkType(fieldValues[index], value);
         fieldValues[index] = value;
     }
 

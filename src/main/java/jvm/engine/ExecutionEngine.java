@@ -883,6 +883,11 @@ public final class ExecutionEngine {
     }
 
     private long checkValueType(long value, @Nonnull JVMType type, Opcode opcode) {
+        if (type.equals(JVMType.I) || type.equals(JVMType.Z)) {
+            if (getValueType(value) == JVMType.I.ordinal() || getValueType(value) == JVMType.Z.ordinal()) {
+                return value;
+            }
+        }
         if (getValueType(value) != type.ordinal()) {
             throw new RuntimeException("Wrong types: "
                     + JVMType.values()[getValueType(value)]
