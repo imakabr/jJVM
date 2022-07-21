@@ -3,10 +3,7 @@ package jvm.engine;
 import jvm.JVMType;
 import jvm.Utils;
 import jvm.heap.*;
-import jvm.lang.OutOfMemoryErrorJVM;
-import jvm.lang.RuntimeExceptionJVM;
-import jvm.lang.ClassCastExceptionJVM;
-import jvm.lang.NullPointerExceptionJVM;
+import jvm.lang.*;
 import jvm.parser.Method;
 import jvm.parser.Klass;
 import jvm.parser.ConstantPoolEntry;
@@ -728,6 +725,8 @@ public final class ExecutionEngine {
                         throw new NullPointerExceptionJVM("\n" + getStackTrace(op, false));
                     } else if (e instanceof OutOfMemoryErrorJVM) {
                         throw new OutOfMemoryErrorJVM("\n" + getStackTrace(op, false));
+                    } else if (e instanceof ClassNotFoundExceptionJVM) {
+                        throw new ClassNotFoundExceptionJVM(e.getLocalizedMessage() + "\n" + getStackTrace(op, false));
                     } else {
                         throw e;
                     }
@@ -965,11 +964,19 @@ public final class ExecutionEngine {
     }
 
     private int getInstanceKlassIndex(@Nonnull String fullName) {
-        return heap.getKlassLoader().getInstanceKlassIndexByName(getKlassName(fullName), true);
+        String klassName = getKlassName(fullName);
+        return indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName);
     }
 
     private int getInstanceKlassIndexByKlassName(@Nonnull String klassName) {
-        return heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
+        return indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName);
+    }
+
+    private int indexNonNull(@Nullable Integer index, @Nonnull String name) {
+        if (index == null) {
+            throw new ClassNotFoundExceptionJVM("Class " + name + " is not found");
+        }
+        return index;
     }
 
     private String getKlassFieldName(String sourceKlassName, int cpLookup) {
@@ -1054,7 +1061,7 @@ public final class ExecutionEngine {
             fields.addAll(klasses.get(i).getObjectFieldNames());
         }
 
-        return new InstanceObject(heap, fields, heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true));
+        return new InstanceObject(heap, fields, indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName));
     }
 
 
@@ -1062,7 +1069,7 @@ public final class ExecutionEngine {
         int klassIndex = -1;
         if (type.startsWith("L")) {
             String klassName = type.substring(1, type.length() - 1);
-            klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true);
+            klassIndex = indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName);
         }
         return heap.getObjectRef(new InstanceObject(heap, type, count, klassIndex));
     }
@@ -1074,7 +1081,7 @@ public final class ExecutionEngine {
         if (destKlass == null) {
             throw new RuntimeException("Class is not found");
         }
-        int klassIndex = heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, true);
+        int klassIndex = indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, true), destKlassName);
         return heap.getObjectRef(allocateArrayOfRef(count, klassIndex));
     }
 

@@ -2,6 +2,7 @@ package jvm.heap;
 
 import jvm.parser.Klass;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 
 public class InstanceKlass {
@@ -18,15 +19,12 @@ public class InstanceKlass {
     private final Klass cpKlass;
     private final String name;
 
-    public InstanceKlass(List<String> fields, int objectReference, Klass cpKlass) {
+    public InstanceKlass(@Nonnull Map<String, Integer> indexByFieldName, int objectReference, @Nonnull Klass cpKlass) {
         this.name = cpKlass.getKlassName();
         this.objectReference = objectReference;
         this.cpKlass = cpKlass;
         this.indexByVirtualMethodName = new HashMap<>();
-        this.indexByFieldName = new HashMap<>();
-        for (int fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
-            indexByFieldName.put(fields.get(fieldIndex), fieldIndex);
-        }
+        this.indexByFieldName = indexByFieldName;
     }
 
     public Map<String, Integer> getVirtualMethods() {
@@ -35,6 +33,11 @@ public class InstanceKlass {
             result.put(entry.getKey(), virtualMethodTable[entry.getValue()]);
         }
         return result;
+    }
+
+    @Nonnull
+    public Map<String, Integer> getIndexByFieldName() {
+        return indexByFieldName;
     }
 
     public String getName() {

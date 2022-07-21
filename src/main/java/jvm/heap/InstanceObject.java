@@ -3,14 +3,11 @@ package jvm.heap;
 import jvm.JVMType;
 import jvm.Utils;
 import jvm.lang.NullPointerExceptionJVM;
-import jvm.lang.RuntimeExceptionJVM;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class InstanceObject {
     private final long[] fieldValues;
@@ -23,16 +20,53 @@ public class InstanceObject {
     private final Heap heap;
 
     public InstanceObject(@Nonnull Heap heap, List<String> fields, int klassIndex) {
-        this.heap = heap;
-        this.fieldValues = new long[fields.size()];
-        this.indexByFieldName = new HashMap<>();
-        this.klassIndex = klassIndex;
-        this.array = false;
-        for (int fieldIndex = 0; fieldIndex < fieldValues.length; fieldIndex++) {
-            String field = fields.get(fieldIndex);
-            setDefaultValue(fieldIndex, getValueType(field));
-            indexByFieldName.put(field, fieldIndex);
+        this(null, null, heap, fields, klassIndex);
+    }
+
+    public InstanceObject(@Nullable InstanceObject objectFromStaticContent,
+                          @Nullable String staticContentKlassName,
+                          @Nonnull Heap heap,
+                          @Nonnull List<String> fields,
+                          int klassIndex) {
+        if (staticContentKlassName == null) {
+            this.heap = heap;
+            this.fieldValues = new long[fields.size()];
+            this.indexByFieldName = new HashMap<>();
+            this.klassIndex = klassIndex;
+            this.array = false;
+            for (int fieldIndex = 0; fieldIndex < fieldValues.length; fieldIndex++) {
+                String field = fields.get(fieldIndex);
+                setDefaultValue(fieldIndex, getValueType(field));
+                indexByFieldName.put(field, fieldIndex);
+            }
+        } else {
+            // a chain of inherited classes for storing data in static fields contain a single InstanceObject
+            this.heap = heap;
+            this.indexByFieldName = new HashMap<>(objectFromStaticContent != null ? objectFromStaticContent.indexByFieldName : Collections.emptyMap());
+            this.klassIndex = -1;
+            int count = fields.size();
+            this.fieldValues = new long[objectFromStaticContent != null ? objectFromStaticContent.fieldValues.length + count : fields.size()];
+            this.array = false;
+            if (objectFromStaticContent != null) {
+                System.arraycopy(objectFromStaticContent.fieldValues, 0, this.fieldValues, 0, objectFromStaticContent.fieldValues.length);
+            }
+            for (String newField : fields) {
+                int index = fieldValues.length - count;
+                indexByFieldName.put(staticContentKlassName + "." + newField, index);
+                setDefaultValue(index, getValueType(newField));
+                count--;
+            }
         }
+    }
+
+    @Nonnull
+    public Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull String klassName, @Nullable InstanceKlass parentKlass) {
+        Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getIndexByFieldName() : Collections.emptyMap());
+        result.putAll(indexByFieldName.keySet()
+                .stream()
+                .filter(klassNameField -> klassNameField.contains(klassName))
+                .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), indexByFieldName::get)));
+        return result;
     }
 
     public InstanceObject(@Nonnull Heap heap, String type, int size, int klassIndex) {
@@ -124,7 +158,7 @@ public class InstanceObject {
 
     @Override
     public String toString() {
-        String type = array ? "Array" : klassIndex == -1 ? "Object | Fields : " : heap.getInstanceKlass(klassIndex).getName() + " | Fields : " ;
+        String type = array ? "Array" : klassIndex == -1 ? "Object | Fields : " : heap.getInstanceKlass(klassIndex).getName() + " | Fields : ";
         type = array && arrayType != JVMType.C ? type + " | Values : " : type;
         String fields = Utils.toString(fieldValues, fieldValues.length);
         String str = arrayType == JVMType.C ? " | String : " + Utils.toStringFromCharArray(fieldValues) : "";

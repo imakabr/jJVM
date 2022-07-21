@@ -33,4 +33,23 @@ class StaticB extends StaticA {
     }
 }
 
+class StaticC extends StaticA {
+    public static int c = 3;
+    public static int test() {
+        return StaticA.a + StaticC.a + c + StaticD.a + StaticD.d + StaticE.e + StaticE.a;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(test());
+    }
+}
+
+class StaticD extends StaticB {
+    public static int d = 8;
+}
+
+class StaticE extends StaticD {
+    public static int e = 7;
+}
+
 

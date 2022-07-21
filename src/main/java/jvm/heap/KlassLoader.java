@@ -32,12 +32,16 @@ public class KlassLoader {
     private final Map<String, Integer> indexByName; // index to Heap.instanceKlasses
     @Nonnull
     private final Map<String, Klass> loadedKlasses;
+
+    @Nonnull
+    private final Set<String> preparedKlasses;
     @Nonnull
     private final Heap heap;
 
     KlassLoader(@Nonnull Heap heap) {
         this.indexByName = new HashMap<>();
         this.loadedKlasses = new HashMap<>();
+        this.preparedKlasses = new HashSet<>();
         this.heap = heap;
     }
 
@@ -59,10 +63,13 @@ public class KlassLoader {
     @Nullable
     public Integer getInstanceKlassIndexByName(String name, boolean loadIfAbsent) {
         Integer index = indexByName.get(name);
-        if (index == null && loadIfAbsent) {
+        if (index != null) {
+            return index;
+        } else if (loadIfAbsent) {
             loadKlass(changeSystemKlassNameToJVMKlassName(name));
+            return indexByName.get(name);
         }
-        return indexByName.get(name);
+        return null;
     }
 
     public void setConstantPoolKlassByName(String name, Klass cpKlass) {
@@ -99,7 +106,7 @@ public class KlassLoader {
     private List<Method> prepareCurrentAndInheritedKlasses(Klass constantPoolKlass) {
         List<Klass> klasses = new ArrayList<>();
         Klass current = constantPoolKlass;
-        while (!JAVA_LANG_OBJECT.equals(current.getParent())) {
+        while (!JAVA_LANG_OBJECT.equals(current.getParent()) && !preparedKlasses.contains(current.getParent())) {
             klasses.add(getLoadedKlassByName(current.getKlassName()));
             current = getLoadedKlassByName(current.getParent());
         }
@@ -107,6 +114,7 @@ public class KlassLoader {
         List<Method> clinitMethods = new ArrayList<>();
         for (int i = klasses.size() - 1; i >= 0; i--) {
             Method method = prepareKlass(klasses.get(i));
+            preparedKlasses.add(klasses.get(i).getKlassName());
             if (method != null) {
                 clinitMethods.add(method);
             }
@@ -114,20 +122,21 @@ public class KlassLoader {
         return clinitMethods;
     }
 
-    private Method prepareKlass(Klass constantPoolKlass) {
+    @Nullable
+    private Method prepareKlass(@Nonnull Klass constantPoolKlass) {
         Integer parentKlassIndex = getInstanceKlassIndexByName(constantPoolKlass.getParent(), false);
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
-        List<String> allFields = new ArrayList<>();
-        allFields.addAll(parentKlass != null ? parentKlass.getOrderedFieldNames() : Collections.emptyList());
-        allFields.addAll(constantPoolKlass.getStaticFieldNames());
-        InstanceObject object = new InstanceObject(heap, allFields, -1);
+        InstanceObject object = new InstanceObject(parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) ?
+                heap.getInstanceObject(parentKlass.getObjectRef()) : null,
+                constantPoolKlass.getKlassName(),
+                heap, constantPoolKlass.getStaticFieldNames(), -1);
         int objectRef = heap.changeObject(parentKlass != null
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
                 ? parentKlass.getObjectRef() : -1, object);
-        InstanceKlass instanceKlass = new InstanceKlass(allFields, objectRef, constantPoolKlass);
-        int klassIndex = heap.setInstanceKlass(instanceKlass);
-        setIndexByName(constantPoolKlass.getKlassName(), klassIndex);
-        object.setKlassIndex(klassIndex);
+
+        InstanceKlass instanceKlass = new InstanceKlass(
+                object.getIndexByFieldNameFromStaticContent(constantPoolKlass.getKlassName(), parentKlass), objectRef, constantPoolKlass);
+        setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 
         Map<String, Integer> allStaticMethods = new HashMap<>(
                 parentKlass != null ? parentKlass.getAllIndexesByMethodName() : Collections.emptyMap());

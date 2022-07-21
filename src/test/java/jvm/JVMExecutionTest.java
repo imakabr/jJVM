@@ -82,6 +82,12 @@ public class JVMExecutionTest {
     }
 
     @Test
+    public void complexStaticCMethodTest() {
+        String fName = "jvm/examples/StaticC";
+        checkMethod(fName, "test:()I", 48);
+    }
+
+    @Test
     public void simpleFieldInstanceObjectTest() {
         // check NEW, INVOKESPECIAL, PUTFIELD
         String fName = "jvm/examples/SimpleObject";
