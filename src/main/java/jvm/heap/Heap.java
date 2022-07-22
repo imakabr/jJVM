@@ -4,7 +4,9 @@ import jvm.garbage_collector.GarbageCollector;
 import jvm.lang.OutOfMemoryErrorJVM;
 
 import javax.annotation.Nonnull;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 public class Heap {
     @Nonnull
@@ -23,6 +25,9 @@ public class Heap {
     private final AtomicInteger klassIndex = new AtomicInteger();
     private int objectIndex = 0;
     private final AtomicInteger instanceObjectSize = new AtomicInteger();
+    @Nonnull
+    private final Map<String, Integer> stringCache; // str -> objRef
+    private boolean disabledCacheString = false;
 
     public Heap(@Nonnull GarbageCollector collector, int instancesSize, int klassesSize) {
         this.collector = collector;
@@ -32,6 +37,25 @@ public class Heap {
         this.methodRepo = new MethodRepo();
         this.klassLoader = new KlassLoader(this);
         this.klassLoader.initSystemKlasses();
+        this.stringCache = new HashMap<>();
+    }
+
+    public int getStringFromCache(@Nonnull String str,
+                                  @Nonnull Function<String, InstanceObject> newStringObj) {
+        return stringCache.computeIfAbsent(str, s -> getObjectRef(newStringObj.apply(s)));
+    }
+
+    @Nonnull
+    public Collection<Integer> getStringObjRef() {
+        return stringCache.values();
+    }
+
+    public void disableCacheString() {
+        this.disabledCacheString = true;
+    }
+
+    public boolean isDisabledCacheString() {
+        return disabledCacheString;
     }
 
     public int getObjectRef(@Nonnull InstanceObject object) {

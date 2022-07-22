@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
+import java.util.function.Function;
 
 import static jvm.engine.Opcode.*;
 import static jvm.heap.KlassLoader.*;
@@ -701,8 +702,7 @@ public final class ExecutionEngine {
                                 stack.push(setIntValueType((Integer) entry.getNum()));
                                 break;
                             case STRING:
-                                String str = entry.getStr();
-                                createStringInstance(stack, str.toCharArray());
+                                createStringInstance(stack, entry.getStr());
                                 break;
                         }
                         break;
@@ -776,7 +776,7 @@ public final class ExecutionEngine {
             String result = heap.getInstanceKlass(object1.getKlassIndex()).getName().replace('/', '.')
                     + "@"
                     + Integer.toHexString(objectRef);
-            createStringInstance(stack, result.toCharArray());
+            createStringInstance(stack, result);
         } else if (STRING_PRINTLN.equals(methodName)) {
             int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
             System.out.println(getString(stringObjectRef, stackMethod, pointer, opcode));
@@ -844,7 +844,7 @@ public final class ExecutionEngine {
             BufferedReader bufferedReader = (BufferedReader) nativeObjects.get(bufferedReaderObjRef);
             try {
                 String message = bufferedReader.readLine();
-                createStringInstance(stack, message.toCharArray());
+                createStringInstance(stack, message);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -1026,15 +1026,19 @@ public final class ExecutionEngine {
         return method.getArgSize();
     }
 
-    private void createStringInstance(@Nonnull StackFrame stack, @Nonnull char[] str) {
-        InstanceObject stringObj = allocateInstanceObject(STRING);
-        stack.push(setRefValueType(getInstanceObjectReference(stringObj)));
-        int charArrayRef = allocateArray(JVMType.C.name(), str.length);
-        InstanceObject charArrayObj = heap.getInstanceObject(charArrayRef);
-        for (int i = 0; i < str.length; i++) {
-            charArrayObj.setValue(i, setCharValueType(str[i]));
-        }
-        stringObj.setValue(stringObj.getIndexByFieldName("value:[C"), setRefValueType(charArrayRef));
+    private void createStringInstance(@Nonnull StackFrame stack, @Nonnull String str) {
+        Function<String, InstanceObject> createStringObj = newString -> {
+            InstanceObject stringObj = allocateInstanceObject(STRING);
+            int charArrayRef = allocateArray(JVMType.C.name(), newString.length());
+            InstanceObject charArrayObj = heap.getInstanceObject(charArrayRef);
+            for (int i = 0; i < newString.length(); i++) {
+                charArrayObj.setValue(i, setCharValueType(newString.charAt(i)));
+            }
+            stringObj.setValue(stringObj.getIndexByFieldName("value:[C"), setRefValueType(charArrayRef));
+            return stringObj;
+        };
+        stack.push(setRefValueType(heap.isDisabledCacheString() ?
+                getInstanceObjectReference(createStringObj.apply(str)) : heap.getStringFromCache(str, createStringObj)));
     }
 
     private int allocateInstanceObjectAndGetReference(String sourceKlassName, int cpIndex) {

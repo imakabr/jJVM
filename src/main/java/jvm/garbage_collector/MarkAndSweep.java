@@ -39,7 +39,7 @@ public class MarkAndSweep implements GarbageCollector {
         if (heap != null) {
             inProgress = true;
             HashSet<Integer> aliveObjects = new HashSet<>();
-            LinkedList<Integer> queue = new LinkedList<>();
+            Queue<Integer> queue = new ArrayDeque<>();
 
             collectObjectsFromInstanceKlassess(queue);
             findAliveObjects(queue, aliveObjects);
@@ -47,11 +47,18 @@ public class MarkAndSweep implements GarbageCollector {
             collectObjectsFromStackFrame(queue);
             findAliveObjects(queue, aliveObjects);
 
+            collectObjectsFromStringCache(queue);
+            findAliveObjects(queue, aliveObjects);
+
             removeDeadObjectsFromHeap(aliveObjects);
 
 //            System.out.println("GC completed " + count++);
             inProgress = false;
         }
+    }
+
+    private void collectObjectsFromStringCache(@Nonnull Queue<Integer> queue) {
+        queue.addAll(Objects.requireNonNull(heap).getStringObjRef());
     }
 
     private void removeDeadObjectsFromHeap(@Nonnull Set<Integer> aliveObjects) {
@@ -88,7 +95,7 @@ public class MarkAndSweep implements GarbageCollector {
         }
     }
 
-    private void collectObjectsFromStackFrame(@Nonnull LinkedList<Integer> queue) {
+    private void collectObjectsFromStackFrame(@Nonnull Queue<Integer> queue) {
         long[] stack = stackFrame.getStack();
         int stackSize = stackFrame.getSize();
         for (int i = 0; i <= stackSize; i++) {
@@ -99,7 +106,7 @@ public class MarkAndSweep implements GarbageCollector {
         }
     }
 
-    private void collectObjectsFromInstanceKlassess(@Nonnull LinkedList<Integer> queue) {
+    private void collectObjectsFromInstanceKlassess(@Nonnull Queue<Integer> queue) {
         if (heap != null) {
             for (InstanceKlass klass : heap.getInstanceKlasses()) {
                 if (klass == null) {
@@ -118,11 +125,11 @@ public class MarkAndSweep implements GarbageCollector {
         return inProgress;
     }
 
-    private void findAliveObjects(@Nonnull LinkedList<Integer> queue, @Nonnull HashSet<Integer> visitedObjects) {
+    private void findAliveObjects(@Nonnull Queue<Integer> queue, @Nonnull Set<Integer> visitedObjects) {
         if (heap != null) {
             ReferenceTable refTable = heap.getReferenceTable();
             while (!queue.isEmpty()) {
-                int objectRef = queue.pop();
+                int objectRef = queue.poll();
                 if (!visitedObjects.contains(objectRef)) {
                     int objectIndex = refTable.getInstanceObjectIndex(objectRef);
                     if (objectIndex != -1) {
