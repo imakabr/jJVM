@@ -36,25 +36,18 @@ public class MarkAndSweep implements GarbageCollector {
 
     @Override
     public void run() {
-        if (heap != null) {
             inProgress = true;
             HashSet<Integer> aliveObjects = new HashSet<>();
             Queue<Integer> queue = new ArrayDeque<>();
 
             collectObjectsFromInstanceKlassess(queue);
-            findAliveObjects(queue, aliveObjects);
-
             collectObjectsFromStackFrame(queue);
-            findAliveObjects(queue, aliveObjects);
-
             collectObjectsFromStringCache(queue);
+
             findAliveObjects(queue, aliveObjects);
-
             removeDeadObjectsFromHeap(aliveObjects);
-
 //            System.out.println("GC completed " + count++);
             inProgress = false;
-        }
     }
 
     private void collectObjectsFromStringCache(@Nonnull Queue<Integer> queue) {
