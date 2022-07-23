@@ -26,7 +26,7 @@ public class Heap {
     private int objectIndex = 0;
     private final AtomicInteger instanceObjectSize = new AtomicInteger();
     @Nonnull
-    private final Map<String, Integer> stringCache; // str -> objRef
+    private final Map<String, Integer> poolOfStrings; // str -> objRef
     private boolean disabledCacheString = false;
 
     public Heap(@Nonnull GarbageCollector collector, int instancesSize, int klassesSize) {
@@ -37,17 +37,17 @@ public class Heap {
         this.methodRepo = new MethodRepo();
         this.klassLoader = new KlassLoader(this);
         this.klassLoader.initSystemKlasses();
-        this.stringCache = new HashMap<>();
+        this.poolOfStrings = new HashMap<>();
     }
 
     public int getStringObjRef(@Nonnull String str,
                                @Nonnull Function<String, Integer> newStringObj) {
-        return disabledCacheString ? newStringObj.apply(str) : stringCache.computeIfAbsent(str, newStringObj);
+        return disabledCacheString ? newStringObj.apply(str) : poolOfStrings.computeIfAbsent(str, newStringObj);
     }
 
     @Nonnull
-    public Collection<Integer> getStringObjRef() {
-        return stringCache.values();
+    public Collection<Integer> getStringObjRefs() {
+        return poolOfStrings.values();
     }
 
     public void disableCacheString() {

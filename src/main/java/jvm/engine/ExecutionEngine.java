@@ -39,6 +39,7 @@ public final class ExecutionEngine {
     private final static String PRINT_WRITER_PRINTLN = "java/io/PrintWriter.println:(Ljava/lang/String;)V";
     private final static String READ_LINE = "java/io/BufferedReader.readLine:()Ljava/lang/String;";
     private final static String RANDOM_NEXT_INT = "java/util/Random.nextInt:(I)I";
+    private final static String STRING_INTERN = "java/lang/String.intern:()Ljava/lang/String;";
 
     private final Opcode[] table = new Opcode[256];
     @Nonnull
@@ -767,92 +768,125 @@ public final class ExecutionEngine {
 
     private void invokeNativeMethod(@Nonnull StackFrame stack, @Nonnull Method method, @Nonnull Method[] stackMethod, int pointer, Opcode opcode) {
         String methodName = method.getClassName() + "." + method.getNameAndType();
-        if (HASHCODE.equals(methodName)) {
-            InstanceObject object1 = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, opcode)));
-            stack.push(setIntValueType(Objects.hashCode(object1)));
-        } else if (TO_STRING.equals(methodName)) {
-            int objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            InstanceObject object1 = heap.getInstanceObject(objectRef);
-            String result = heap.getInstanceKlass(object1.getKlassIndex()).getName().replace('/', '.')
-                    + "@"
-                    + Integer.toHexString(objectRef);
-            createStringInstance(stack, result);
-        } else if (STRING_PRINTLN.equals(methodName)) {
-            int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            System.out.println(getString(stringObjectRef, stackMethod, pointer, opcode));
-            stack.pop();
-        } else if (STRING_PRINT.equals(methodName)) {
-            int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            System.out.print(getString(stringObjectRef, stackMethod, pointer, opcode));
-            stack.pop();
-        } else if (CHAR_PRINT.equals(methodName)) {
-            System.out.print((char) getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
-            stack.pop();
-        } else if (CHAR_PRINTLN.equals(methodName)) {
-            System.out.println((char) getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
-            stack.pop();
-        } else if (INT_PRINT.equals(methodName)) {
-            System.out.print(getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
-            stack.pop();
-        } else if (INT_PRINTLN.equals(methodName)) {
-            System.out.println(getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
-            stack.pop();
-        } else if (INIT_SOCKET.equals(methodName)) {
-            int socketObjRef = getPureValue(checkValueType(stack.getLocalVar(0), JVMType.A, opcode));
-            int stringObjRef = getPureValue(checkValueType(stack.getLocalVar(1), JVMType.A, opcode));
-            int port = getPureValue(checkValueType(stack.getLocalVar(2), JVMType.I, opcode));
-            String ipAddress = getString(stringObjRef, stackMethod, pointer, opcode);
-            try {
-                nativeObjects.put(socketObjRef, new Socket(ipAddress, port));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        switch (methodName) {
+            case HASHCODE: {
+                InstanceObject object1 = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, opcode)));
+                stack.push(setIntValueType(Objects.hashCode(object1)));
+                break;
             }
-        } else if (GET_INPUT_STREAM.equals(methodName) || GET_OUTPUT_STREAM.equals(methodName)) {
-            int streamObjRef = allocateInstanceObjectAndGetReference(INPUT_STREAM);
-            int socketObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            stack.push(setRefValueType(streamObjRef));
-            Socket socket = (Socket) nativeObjects.get(socketObjRef);
-            try {
-                nativeObjects.put(streamObjRef, GET_INPUT_STREAM.equals(methodName) ? socket.getInputStream() : socket.getOutputStream());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            case TO_STRING: {
+                int objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                InstanceObject object1 = heap.getInstanceObject(objectRef);
+                String result = heap.getInstanceKlass(object1.getKlassIndex()).getName().replace('/', '.')
+                        + "@"
+                        + Integer.toHexString(objectRef);
+                createStringInstance(stack, result);
+                break;
             }
-        } else if (INIT_INPUT_STREAM_READER.equals(methodName)) {
-            int inputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            InputStream inputStream = (InputStream) nativeObjects.get(inputStreamObjRef);
-            nativeObjects.put(inputStreamReaderObjRef, new InputStreamReader(inputStream));
-        } else if (INIT_BUFFERED_READER.equals(methodName)) {
-            int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            Reader inputStreamReader = (Reader) nativeObjects.get(inputStreamReaderObjRef);
-            nativeObjects.put(bufferedReaderObjRef, new BufferedReader(inputStreamReader));
-        } else if (INIT_PRINT_WRITER.equals(methodName)) {
-            int bool = getPureValue(checkValueType(stack.pop(), JVMType.I, opcode));
-            int outputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            OutputStream outputStream = (OutputStream) nativeObjects.get(outputStreamObjRef);
-            nativeObjects.put(printWriterObjRef, new PrintWriter(outputStream, bool == 1));
-        } else if (PRINT_WRITER_PRINTLN.equals(methodName)) {
-            int stringObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            String message = getString(stringObjRef, stackMethod, pointer, opcode);
-            int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            PrintWriter printWriter = (PrintWriter) nativeObjects.get(printWriterObjRef);
-            printWriter.println(message);
-        } else if (READ_LINE.equals(methodName)) {
-            int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            BufferedReader bufferedReader = (BufferedReader) nativeObjects.get(bufferedReaderObjRef);
-            try {
-                String message = bufferedReader.readLine();
-                createStringInstance(stack, message);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            case STRING_PRINTLN: {
+                int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                System.out.println(getString(stringObjectRef, stackMethod, pointer, opcode));
+                stack.pop();
+                break;
             }
-        } else if (RANDOM_NEXT_INT.equals(methodName)) {
-            int bound = getPureValue(checkValueType(stack.pop(), JVMType.I, opcode));
-            int randomObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
-            stack.push(setIntValueType(new Random().nextInt(bound)));
-
+            case STRING_PRINT: {
+                int stringObjectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                System.out.print(getString(stringObjectRef, stackMethod, pointer, opcode));
+                stack.pop();
+                break;
+            }
+            case CHAR_PRINT:
+                System.out.print((char) getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
+                stack.pop();
+                break;
+            case CHAR_PRINTLN:
+                System.out.println((char) getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
+                stack.pop();
+                break;
+            case INT_PRINT:
+                System.out.print(getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
+                stack.pop();
+                break;
+            case INT_PRINTLN:
+                System.out.println(getPureValue(checkValueType(stack.pop(), JVMType.I, opcode)));
+                stack.pop();
+                break;
+            case INIT_SOCKET: {
+                int socketObjRef = getPureValue(checkValueType(stack.getLocalVar(0), JVMType.A, opcode));
+                int stringObjRef = getPureValue(checkValueType(stack.getLocalVar(1), JVMType.A, opcode));
+                int port = getPureValue(checkValueType(stack.getLocalVar(2), JVMType.I, opcode));
+                String ipAddress = getString(stringObjRef, stackMethod, pointer, opcode);
+                try {
+                    nativeObjects.put(socketObjRef, new Socket(ipAddress, port));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            }
+            case GET_INPUT_STREAM:
+            case GET_OUTPUT_STREAM: {
+                int streamObjRef = allocateInstanceObjectAndGetReference(INPUT_STREAM);
+                int socketObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                stack.push(setRefValueType(streamObjRef));
+                Socket socket = (Socket) nativeObjects.get(socketObjRef);
+                try {
+                    nativeObjects.put(streamObjRef, GET_INPUT_STREAM.equals(methodName) ? socket.getInputStream() : socket.getOutputStream());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            }
+            case INIT_INPUT_STREAM_READER: {
+                int inputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                InputStream inputStream = (InputStream) nativeObjects.get(inputStreamObjRef);
+                nativeObjects.put(inputStreamReaderObjRef, new InputStreamReader(inputStream));
+                break;
+            }
+            case INIT_BUFFERED_READER: {
+                int inputStreamReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                Reader inputStreamReader = (Reader) nativeObjects.get(inputStreamReaderObjRef);
+                nativeObjects.put(bufferedReaderObjRef, new BufferedReader(inputStreamReader));
+                break;
+            }
+            case INIT_PRINT_WRITER: {
+                int bool = getPureValue(checkValueType(stack.pop(), JVMType.I, opcode));
+                int outputStreamObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                OutputStream outputStream = (OutputStream) nativeObjects.get(outputStreamObjRef);
+                nativeObjects.put(printWriterObjRef, new PrintWriter(outputStream, bool == 1));
+                break;
+            }
+            case PRINT_WRITER_PRINTLN: {
+                int stringObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                String message = getString(stringObjRef, stackMethod, pointer, opcode);
+                int printWriterObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                PrintWriter printWriter = (PrintWriter) nativeObjects.get(printWriterObjRef);
+                printWriter.println(message);
+                break;
+            }
+            case READ_LINE: {
+                int bufferedReaderObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                BufferedReader bufferedReader = (BufferedReader) nativeObjects.get(bufferedReaderObjRef);
+                try {
+                    String message = bufferedReader.readLine();
+                    createStringInstance(stack, message);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            }
+            case RANDOM_NEXT_INT:
+                int bound = getPureValue(checkValueType(stack.pop(), JVMType.I, opcode));
+                int randomObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                stack.push(setIntValueType(new Random().nextInt(bound)));
+                break;
+            case STRING_INTERN:
+                int stringObjRef = getPureValue(checkValueType(stack.pop(), JVMType.A, opcode));
+                String str = getString(stringObjRef, stackMethod, pointer, opcode);
+                createStringInstance(stack, str);
+                break;
         }
     }
 
@@ -1022,6 +1056,9 @@ public final class ExecutionEngine {
                 break;
             }
             cpKlass = heap.getInstanceKlass(getInstanceKlassIndexByKlassName(cpKlass.getParent())).getCpKlass();
+        }
+        if (method == null) {
+            throw new VirtualMachineErrorJVM("method " + getMethodName(fullName) + " is not found");
         }
         return method.getArgSize();
     }

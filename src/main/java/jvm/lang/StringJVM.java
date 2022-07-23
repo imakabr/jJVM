@@ -127,4 +127,6 @@ public class StringJVM {
         return this;
     }
 
+    public native String intern();
+
 }

@@ -51,7 +51,7 @@ public class MarkAndSweep implements GarbageCollector {
     }
 
     private void collectObjectsFromStringCache(@Nonnull Queue<Integer> queue) {
-        queue.addAll(Objects.requireNonNull(heap).getStringObjRef());
+        queue.addAll(Objects.requireNonNull(heap).getStringObjRefs());
     }
 
     private void removeDeadObjectsFromHeap(@Nonnull Set<Integer> aliveObjects) {
