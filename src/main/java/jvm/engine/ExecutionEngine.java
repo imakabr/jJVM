@@ -1027,7 +1027,7 @@ public final class ExecutionEngine {
     }
 
     private void createStringInstance(@Nonnull StackFrame stack, @Nonnull String str) {
-        Function<String, InstanceObject> createStringObj = newString -> {
+        Function<String, Integer> createStringObj = newString -> {
             InstanceObject stringObj = allocateInstanceObject(STRING);
             int charArrayRef = allocateArray(JVMType.C.name(), newString.length());
             InstanceObject charArrayObj = heap.getInstanceObject(charArrayRef);
@@ -1035,10 +1035,9 @@ public final class ExecutionEngine {
                 charArrayObj.setValue(i, setCharValueType(newString.charAt(i)));
             }
             stringObj.setValue(stringObj.getIndexByFieldName("value:[C"), setRefValueType(charArrayRef));
-            return stringObj;
+            return getInstanceObjectReference(stringObj);
         };
-        stack.push(setRefValueType(heap.isDisabledCacheString() ?
-                getInstanceObjectReference(createStringObj.apply(str)) : heap.getStringFromCache(str, createStringObj)));
+        stack.push(setRefValueType(heap.getStringObjRef(str, createStringObj)));
     }
 
     private int allocateInstanceObjectAndGetReference(String sourceKlassName, int cpIndex) {

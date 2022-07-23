@@ -40,9 +40,9 @@ public class Heap {
         this.stringCache = new HashMap<>();
     }
 
-    public int getStringFromCache(@Nonnull String str,
-                                  @Nonnull Function<String, InstanceObject> newStringObj) {
-        return stringCache.computeIfAbsent(str, s -> getObjectRef(newStringObj.apply(s)));
+    public int getStringObjRef(@Nonnull String str,
+                               @Nonnull Function<String, Integer> newStringObj) {
+        return disabledCacheString ? newStringObj.apply(str) : stringCache.computeIfAbsent(str, newStringObj);
     }
 
     @Nonnull
