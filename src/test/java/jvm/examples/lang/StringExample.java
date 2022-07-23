@@ -189,4 +189,10 @@ public class StringExample {
         return 1;
     }
 
+    public boolean checkStringWithInternEqual() {
+        String expected = "Hello world!";
+        String actual = new String("Hello world!").intern();
+        return expected == actual;
+    }
+
 }

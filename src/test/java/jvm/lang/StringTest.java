@@ -113,6 +113,11 @@ public class StringTest {
         checkMethod("checkObjectToString:()I", 0);
     }
 
+    @Test
+    public void checkStringWithInternEqual() {
+        checkMethod("checkStringWithInternEqual:()Z", 1);
+    }
+
 
     private void checkMethod(@Nonnull String methodName, long expected) {
         VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
