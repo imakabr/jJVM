@@ -5,7 +5,7 @@ import processing.core.PVector;
 
 import javax.annotation.Nonnull;
 
-class Particle {
+public class Particle {
     private final PVector position;
     private final PVector velocity;
     private final PVector acceleration;
@@ -39,7 +39,6 @@ class Particle {
     public Particle(@Nonnull Sketch pApplet, PVector position, PVector velocityRangeX, PVector velocityRangeY, PVector accelerationRangeX, PVector accelerationRangeY, float lifespan, int lifespanStep, Color color, PVector size) {
         this(pApplet, position, velocityRangeX, velocityRangeY, accelerationRangeX, accelerationRangeY, lifespan, lifespanStep, color, size, false);
     }
-
 
     public void run() {
         update();

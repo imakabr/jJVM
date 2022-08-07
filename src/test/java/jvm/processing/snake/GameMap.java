@@ -2,13 +2,13 @@ package jvm.processing.snake;
 
 import processing.core.PImage;
 
-class Map {
+class GameMap {
     PImage image;
     int[][] map;
     int height;
     int width;
 
-    Map(int height, int width, String imageName) {
+    GameMap(int height, int width, String imageName) {
 //    image = loadImage(imageName);
         this.height = height;
         this.width = width;

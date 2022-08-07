@@ -17,6 +17,31 @@ class ParticleSystemBuilder {
     private Color[] color;
     private PVector[] size;
     private PImage image;
+    private final Color[][] colors = new Color[][]{
+            { //green
+                    new Color(0, 202, 0),
+                    new Color(0, 170, 0),
+                    new Color(0, 230, 0),
+                    new Color(0, 140, 0),
+                    new Color(0, 100, 0)},
+            { //blue
+                    new Color(72, 100, 230),
+                    new Color(0, 0, 255),
+                    new Color(0, 0, 255),
+                    new Color(72, 100, 230),
+                    new Color(0, 0, 255)},
+            { //red
+                    new Color(136, 0, 21),
+                    new Color(237, 28, 36),
+                    new Color(239, 48, 57),
+                    new Color(237, 28, 36),
+                    new Color(255, 0, 0)},
+            { //purple
+                    new Color(157, 21, 166),
+                    new Color(115, 14, 122),
+                    new Color(238, 22, 252),
+                    new Color(192, 24, 203),
+                    new Color(157, 21, 166)}};
     @Nonnull
     private final Sketch pApplet;
 
@@ -103,13 +128,13 @@ class ParticleSystemBuilder {
         return build();
     }
 
-    ParticleSystem bloods(PVector position) {
+    ParticleSystem bloods(PVector position, int number) {
         position(position);
         velocity(new PVector(-0.3f, 0.3f), new PVector(-0.5f, 5));
         acceleration(new PVector(-0.2f, 0.2f), new PVector(-0.1f, 1.5f));
         lifespan(250);
         lifespanStep(8);
-        color2(new Color[]{new Color(0, 202, 0), new Color(0, 170, 0), new Color(0, 230, 0), new Color(0, 140, 0), new Color(0, 100, 0)});
+        color2(colors[number]);
         sizeP(new PVector[]{new PVector(3, 3), new PVector(1, 1), new PVector(1, 1), new PVector(1, 1)});
         return build();
     }

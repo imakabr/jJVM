@@ -11,4 +11,13 @@ class Point {
         this.x = x;
         this.y = y;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Point) {
+            Point point = (Point) obj;
+            return this.x == point.x && this.y == point.y;
+        }
+        return false;
+    }
 }

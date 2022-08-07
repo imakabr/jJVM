@@ -10,7 +10,7 @@ public class Main {
     }
 
     public void main() throws IOException {
-        NetworkService service = new NetworkService(port);
+        NetworkManager service = new NetworkManager(port);
         service.sendMessage("ready");
         String[] messages = service.getMessage().split(" ");
         new Player(new Grid(Integer.parseInt(messages[1]) / 10, Integer.parseInt(messages[0]) / 10), service).run();

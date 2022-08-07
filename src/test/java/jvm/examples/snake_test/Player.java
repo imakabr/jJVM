@@ -6,23 +6,23 @@ import java.util.*;
 public class Player {
 
     private final Grid grid;
-    private final NetworkService service;
+    private final NetworkManager networkManager;
     private String direct;
 
-    public Player(Grid grid, NetworkService service) {
+    public Player(Grid grid, NetworkManager networkManager) {
         this.grid = grid;
-        this.service = service;
+        this.networkManager = networkManager;
     }
 
     public void run() throws IOException {
         for (; ; ) {
-            String[] coordinates = service.getMessage().split("\\|");
+            String[] coordinates = networkManager.getMessage().split("\\|");
             Node start = parseApple(coordinates);
             Node end = parseHead(coordinates);
             grid.setWalls(parseWalls(coordinates));
             HashMap<Node, Node> path = getPath(start, end, grid);
             String direction = getDirection(end, path.get(end));
-            service.sendMessage(direction);
+            networkManager.sendMessage(direction);
         }
     }
 

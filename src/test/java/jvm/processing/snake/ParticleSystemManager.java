@@ -3,7 +3,7 @@ package jvm.processing.snake;
 import java.util.ArrayList;
 import java.util.List;
 
-class ParticleSystemManage {
+class ParticleSystemManager {
 
     private final List<ParticleSystem> particleSystems = new ArrayList<>();
 
