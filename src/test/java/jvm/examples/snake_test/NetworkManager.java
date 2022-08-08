@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import static jvm.examples.snake_test.Main.parseInt;
+
 public class NetworkManager {
 
     private final BufferedReader startIn;
@@ -25,7 +27,7 @@ public class NetworkManager {
 
     private int getPlayPort() throws IOException {
         startOut.println("init");
-        int playPort = Integer.parseInt(startIn.readLine());
+        int playPort = parseInt(startIn.readLine());
         startIn.close();
         startOut.close();
         return playPort;

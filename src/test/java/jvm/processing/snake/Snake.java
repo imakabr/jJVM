@@ -35,7 +35,8 @@ public class Snake {
     private boolean ready;
     private final int number;
 
-    public Snake(@Nonnull Sketch pApplet, @Nonnull SnakeManager snakeManager, int number, @Nonnull String bodyImg, @Nonnull String headStraightImg, @Nonnull String headAsideImg) {
+    public Snake(@Nonnull Sketch pApplet, @Nonnull SnakeManager snakeManager, int number,
+                 @Nonnull String bodyImg, @Nonnull String headStraightImg, @Nonnull String headAsideImg) {
         this.pApplet = pApplet;
         this.snakeManager = snakeManager;
         this.number = number;

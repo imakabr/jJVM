@@ -96,7 +96,7 @@ public class SnakeManager {
                     .append(" ")
                     .append(points[i].y);
             if (i != points.length - 1 || lastSign) {
-                builder.append("|");
+                builder.append(",");
             }
         }
     }
@@ -105,7 +105,7 @@ public class SnakeManager {
         builder.append(point.x)
                 .append(" ")
                 .append(point.y)
-                .append("|");
+                .append(",");
     }
 
 }

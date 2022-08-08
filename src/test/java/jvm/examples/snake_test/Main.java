@@ -13,7 +13,22 @@ public class Main {
         NetworkManager service = new NetworkManager(port);
         service.sendMessage("ready");
         String[] messages = service.getMessage().split(" ");
-        new Player(new Grid(Integer.parseInt(messages[1]) / 10, Integer.parseInt(messages[0]) / 10), service).run();
+        new Player(new Grid(parseInt(messages[1]) / 10, parseInt(messages[0]) / 10), service).run();
+    }
+
+    public static int parseInt(String str) {
+        int number = 0;
+        for (int i = 0; i < str.length(); i++) {
+            number = number * 10 + parseChar(str.charAt(i));
+        }
+        return number;
+    }
+
+    private static int parseChar(char value) {
+        if (value >= '0' && value <= '9') {
+            return 9 - ('9' - value);
+        }
+        return -6666666;
     }
 }
 

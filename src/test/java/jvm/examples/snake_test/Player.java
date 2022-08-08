@@ -3,6 +3,8 @@ package jvm.examples.snake_test;
 import java.io.IOException;
 import java.util.*;
 
+import static jvm.examples.snake_test.Main.parseInt;
+
 public class Player {
 
     private final Grid grid;
@@ -16,7 +18,7 @@ public class Player {
 
     public void run() throws IOException {
         for (; ; ) {
-            String[] coordinates = networkManager.getMessage().split("\\|");
+            String[] coordinates = networkManager.getMessage().split(",");
             Node start = parseApple(coordinates);
             Node end = parseHead(coordinates);
             grid.setWalls(parseWalls(coordinates));
@@ -36,7 +38,7 @@ public class Player {
 
     private Node parseNode(String message) {
         String[] coordinate = message.split(" ");
-        return new Node(Integer.parseInt(coordinate[1]) / 10, Integer.parseInt(coordinate[0]) / 10);
+        return new Node(parseInt(coordinate[1]) / 10, parseInt(coordinate[0]) / 10);
     }
 
     private Set<Node> parseWalls(String[] messages) {
