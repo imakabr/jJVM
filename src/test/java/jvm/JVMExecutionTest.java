@@ -537,6 +537,24 @@ public class JVMExecutionTest {
         checkException(".checkOutOfMemoryError:()V", OutOfMemoryErrorJVM.class, "Should throw OutOfMemoryError");
     }
 
+    @Test
+    public void checkINSTANCEOF() {
+        // check INSTANCEOF
+        checkMethodInInstructionClass("checkINSTANCEOF:()I", 1);
+    }
+
+    @Test
+    public void checkINSTANCEOFWithNull() {
+        // check INSTANCEOF
+        checkMethodInInstructionClass("checkINSTANCEOFWithNull:()I", 0);
+    }
+
+    @Test
+    public void checkINSTANCEOFWithInheritedClass() {
+        // check INSTANCEOF
+        checkMethodInInstructionClass("checkINSTANCEOFWithInheritedClass:()I", 1);
+    }
+
     private void checkException(@Nonnull String methodName, @Nonnull Class<? extends RuntimeExceptionJVM> klass, @Nonnull String message) {
         VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
         Heap heap = virtualMachine.getHeap();

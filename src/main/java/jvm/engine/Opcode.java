@@ -39,6 +39,7 @@ public enum Opcode {
     I2C(0x92),
     IADD(0x60),
     IAND(0x7e),
+    INSTANCEOF(0xc1),
     ISHL(0x78),
     ISHR(0x7a),
     IUSHR(0x7c),

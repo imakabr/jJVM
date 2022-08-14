@@ -210,6 +210,18 @@ public final class ExecutionEngine {
                     case IAND:
                         stack.push(setIntValueType(getPureValue(stack.pop()) & getPureValue(stack.pop())));
                         break;
+                    case INSTANCEOF:
+                        cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                        String className = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
+                        objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, op));
+                        if (objectRef == NULL) {
+                            stack.push(setIntValueType(0));
+                            break;
+                        }
+                        object = heap.getInstanceObject(objectRef);
+                        Klass currentKlass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
+                        stack.push(checkCast(currentKlass, className) ? setIntValueType(1) : setIntValueType(0));
+                        break;
                     case ISHL:
                         first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));

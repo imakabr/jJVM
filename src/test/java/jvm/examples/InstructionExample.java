@@ -314,4 +314,28 @@ public class InstructionExample {
         }
     }
 
+    public int checkINSTANCEOF() {
+        SimpleObject object = new SimpleObject();
+        if (object instanceof SimpleObject) {
+            return 1;
+        }
+        return 0;
+    }
+
+    public int checkINSTANCEOFWithNull() {
+        SimpleObject object = null;
+        if (object instanceof SimpleObject) {
+            return 1;
+        }
+        return 0;
+    }
+
+    public int checkINSTANCEOFWithInheritedClass() {
+        Object object = new ChildChildObject();
+        if (object instanceof ParentObject) {
+            return 1;
+        }
+        return 0;
+    }
+
 }
