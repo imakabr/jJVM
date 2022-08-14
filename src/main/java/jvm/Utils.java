@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Paths;
 
@@ -14,7 +15,11 @@ public class Utils {
         File classFile;
         byte[] buffer;
         try {
-            classFile = Paths.get(ClassLoader.getSystemResource(fName + ".class").toURI()).toFile();
+            URL klass = ClassLoader.getSystemResource(fName + ".class");
+            if (klass == null) {
+                throw new URISyntaxException(fName, "is not found");
+            }
+            classFile = Paths.get(klass.toURI()).toFile();
         } catch (URISyntaxException | FileSystemNotFoundException e) {
             throw new RuntimeException("No such class file - " + fName);
         }

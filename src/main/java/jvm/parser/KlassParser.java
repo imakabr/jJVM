@@ -254,6 +254,11 @@ public final class KlassParser {
             for (int i = 0; i < number_of_exceptions; i++) {
                 exception_index_table[i] = read2Bytes();
             }
+
+        } else if ("Signature".equals(s)) {
+            String attribute_name = getConstantPoolEntry(read2Bytes()).getStr();
+            int attribute_length = read4Bytes();
+            String signature = getConstantPoolEntry(read2Bytes()).getStr();
         } else {
             throw new IllegalArgumentException("Must be code");
         }
