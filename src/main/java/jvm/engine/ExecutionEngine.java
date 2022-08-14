@@ -192,14 +192,26 @@ public final class ExecutionEngine {
                         objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, op));
                         object = heap.getInstanceObject(objectRef);
                         String castKlassName = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
-                        Klass klass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
-                        if (!checkCast(klass, castKlassName)) {
-                            throw new ClassCastExceptionJVM(
-                                    klass.getKlassName().replace("/", ".")
-                                            + " cannot be cast to "
-                                            + castKlassName.replace("/", "."));
+                        if (object.isArray()) {
+                            if (castKlassName.equals(object.getArrayType())) {
+                                stack.push(setRefValueType(objectRef));
+                            } else {
+                                throw new ClassCastExceptionJVM(
+                                        Objects.requireNonNull(object.getArrayType()).replace("/", ".")
+                                                + " cannot be cast to "
+                                                + castKlassName.replace("/", "."));
+                            }
+                        } else {
+                            Klass klass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
+                            if (checkCast(klass, castKlassName)) {
+                                stack.push(setRefValueType(objectRef));
+                            } else {
+                                throw new ClassCastExceptionJVM(
+                                        klass.getKlassName().replace("/", ".")
+                                                + " cannot be cast to "
+                                                + castKlassName.replace("/", "."));
+                            }
                         }
-                        stack.push(setRefValueType(objectRef));
                         break;
                     case GOTO:
                         programCounter += (byteCode[programCounter] << 8) + (byteCode[programCounter + 1] & 0xff) - 1;
@@ -219,8 +231,15 @@ public final class ExecutionEngine {
                             break;
                         }
                         object = heap.getInstanceObject(objectRef);
-                        Klass currentKlass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
-                        stack.push(checkCast(currentKlass, className) ? setIntValueType(1) : setIntValueType(0));
+                        boolean instanceOf;
+                        if (object.isArray()) {
+                            instanceOf = className.equals(object.getArrayType());
+                        } else {
+                            Klass currentKlass = heap.getKlassLoader().getLoadedKlassByName(
+                                    heap.getInstanceKlass(object.getKlassIndex()).getName());
+                            instanceOf = checkCast(currentKlass, className);
+                        }
+                        stack.push(instanceOf ? setIntValueType(1) : setIntValueType(0));
                         break;
                     case ISHL:
                         first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
@@ -541,7 +560,7 @@ public final class ExecutionEngine {
                         T_INT	    10
                         T_LONG	    11
                         */
-                        stack.push(setRefValueType(allocateArray(
+                        stack.push(setRefValueType(allocateArray("[" + JVMType.values()[atype - 3].name(),
                                 JVMType.values()[atype - 3].name(),
                                 getPureValue(stack.pop()))));
                         break;
@@ -558,9 +577,10 @@ public final class ExecutionEngine {
                         for (int i = dimensions.length - 1; i >= 0; i--) {
                             dimensions[i] = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         }
-                        object = allocateArrayOfRef(dimensions[0], -1);
+                        String arrayType = getValueType(klassName, cpLookup);
+                        object = createArrayOfRef(arrayType, dimensions[0], -1);
                         stack.push(setRefValueType(heap.getObjectRef(object)));
-                        createMultiArray(1, dimensions, object, getValueType(klassName, cpLookup));
+                        createMultiArray(1, dimensions, object, arrayType);
                         break;
                     case ARRAYLENGTH:
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
@@ -635,7 +655,7 @@ public final class ExecutionEngine {
                         index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                         checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                        JVMType type = object.getArrayType();
+                        JVMType type = object.getValueType();
                         if (type == JVMType.Z || type == JVMType.B) {
                             object.setValue(index, setValueType(first, type));
                         } else {
@@ -917,13 +937,14 @@ public final class ExecutionEngine {
     }
 
     private void createMultiArray(int indexDim, int[] dimensions, InstanceObject object, String type) {
+        String arrayType = type.substring(type.indexOf('[') + 1);
         for (int i = 0; i < object.size(); i++) {
             if (indexDim == dimensions.length - 1) {
-                object.setValue(i, setRefValueType(allocateArray(type, dimensions[indexDim])));
+                object.setValue(i, setRefValueType(allocateArray(arrayType, arrayType.substring(1), dimensions[indexDim])));
             } else {
-                InstanceObject newObject = allocateArrayOfRef(dimensions[indexDim], -1);
+                InstanceObject newObject = createArrayOfRef(arrayType, dimensions[indexDim], -1);
                 object.setValue(i, setRefValueType(heap.getObjectRef(newObject)));
-                createMultiArray(indexDim + 1, dimensions, newObject, type);
+                createMultiArray(indexDim + 1, dimensions, newObject, arrayType);
             }
         }
     }
@@ -965,8 +986,7 @@ public final class ExecutionEngine {
 
     private String getValueType(String klassName, int cpLookup) {
         Klass sourceKlass = heap.getKlassLoader().getLoadedKlassByName(klassName);
-        String des = sourceKlass.getKlassNameByCPIndex((short) cpLookup);
-        return des.substring(des.lastIndexOf('[') + 1);
+        return sourceKlass.getKlassNameByCPIndex((short) cpLookup);
     }
 
     private long setIntValueType(int value) {
@@ -1078,7 +1098,7 @@ public final class ExecutionEngine {
     private void createStringInstance(@Nonnull StackFrame stack, @Nonnull String str) {
         Function<String, Integer> createStringObj = newString -> {
             InstanceObject stringObj = allocateInstanceObject(STRING);
-            int charArrayRef = allocateArray(JVMType.C.name(), newString.length());
+            int charArrayRef = allocateArray("[" + JVMType.C.name(), JVMType.C.name(), newString.length());
             InstanceObject charArrayObj = heap.getInstanceObject(charArrayRef);
             for (int i = 0; i < newString.length(); i++) {
                 charArrayObj.setValue(i, setCharValueType(newString.charAt(i)));
@@ -1122,13 +1142,13 @@ public final class ExecutionEngine {
     }
 
 
-    private int allocateArray(String type, int count) {
+    private int allocateArray(@Nonnull String arrayType, @Nonnull String valueType, int count) {
         int klassIndex = -1;
-        if (type.startsWith("L")) {
-            String klassName = type.substring(1, type.length() - 1);
+        if (arrayType.startsWith("[") && arrayType.endsWith(";")) {
+            String klassName = arrayType.substring(arrayType.indexOf('L') + 1, arrayType.length() - 1);
             klassIndex = indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName);
         }
-        return heap.getObjectRef(new InstanceObject(heap, type, count, klassIndex));
+        return heap.getObjectRef(new InstanceObject(heap, arrayType, valueType, count, klassIndex));
     }
 
     private int allocateArrayOfRef(String sourceKlassName, int cpIndex, int count) {
@@ -1139,11 +1159,11 @@ public final class ExecutionEngine {
             throw new RuntimeException("Class is not found");
         }
         int klassIndex = indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(destKlassName, true), destKlassName);
-        return heap.getObjectRef(allocateArrayOfRef(count, klassIndex));
+        return heap.getObjectRef(createArrayOfRef("[L" + destKlassName + ";", count, klassIndex));
     }
 
-    private InstanceObject allocateArrayOfRef(int count, int klassIndex) {
-        return new InstanceObject(heap, JVMType.A.name(), count, klassIndex);
+    private InstanceObject createArrayOfRef(String arrayType, int count, int klassIndex) {
+        return new InstanceObject(heap, arrayType, JVMType.A.name(), count, klassIndex);
     }
 
     public void setExceptionDebugMode(boolean exceptionDebugMode) {

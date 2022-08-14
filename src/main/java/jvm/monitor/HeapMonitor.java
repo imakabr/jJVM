@@ -1,7 +1,6 @@
 package jvm.monitor;
 
 import jvm.JVMType;
-import jvm.Utils;
 import jvm.heap.Heap;
 import jvm.heap.InstanceKlass;
 import jvm.heap.InstanceObject;
@@ -151,7 +150,7 @@ public class HeapMonitor {
             InstanceObject innerObj = objIndex != -1 ? objects[objIndex] : null;
             if (innerObj != null && innerObj.isArray()) {
                 objectCounts.computeIfPresent(innerArrays.get(objRef), (key, value) -> value + 1);
-                if (innerObj.getArrayType() == JVMType.A) {
+                if (innerObj.getValueType() == JVMType.A) {
                     for (long value : innerObj.getFieldValues()) {
                         queue.add(getPureValue(value));
                         innerArrays.put(getPureValue(value), innerArrays.get(objRef));

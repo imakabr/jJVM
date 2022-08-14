@@ -15,7 +15,9 @@ public class InstanceObject {
     private int klassIndex;
     private final boolean array;
     @Nullable
-    private JVMType arrayType;
+    private String arrayType;
+    @Nullable
+    private JVMType valueType;
     @Nonnull
     private final Heap heap;
 
@@ -69,15 +71,16 @@ public class InstanceObject {
         return result;
     }
 
-    public InstanceObject(@Nonnull Heap heap, String type, int size, int klassIndex) {
+    public InstanceObject(@Nonnull Heap heap, @Nonnull String arrayType, @Nonnull String valueType, int size, int klassIndex) {
         this.heap = heap;
         this.fieldValues = new long[size];
         this.indexByFieldName = new HashMap<>();
         this.klassIndex = klassIndex;
         this.array = true;
-        this.arrayType = getValueType(type);
+        this.valueType = getValueType(valueType);
+        this.arrayType = arrayType;
         for (int index = 0; index < size; index++) {
-            setDefaultValue(index, getValueType(type));
+            setDefaultValue(index, getValueType(valueType));
         }
     }
 
@@ -158,16 +161,21 @@ public class InstanceObject {
     }
 
     @Nullable
-    public JVMType getArrayType() {
+    public JVMType getValueType() {
+        return valueType;
+    }
+
+    @Nullable
+    public String getArrayType() {
         return arrayType;
     }
 
     @Override
     public String toString() {
         String type = array ? "Array" : klassIndex == -1 ? "Object | Fields : " : heap.getInstanceKlass(klassIndex).getName() + " | Fields : ";
-        type = array && arrayType != JVMType.C ? type + " | Values : " : type;
+        type = array && valueType != JVMType.C ? type + " | Values : " : type;
         String fields = Utils.toString(fieldValues, fieldValues.length);
-        String str = arrayType == JVMType.C ? " | String : " + Utils.toStringFromCharArray(fieldValues) : "";
+        String str = valueType == JVMType.C ? " | String : " + Utils.toStringFromCharArray(fieldValues) : "";
         return type + (!str.isEmpty() ? str : (fields.isEmpty() ? "absence" : fields));
     }
 }

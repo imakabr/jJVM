@@ -338,4 +338,57 @@ public class InstructionExample {
         return 0;
     }
 
+    public int checkCastArray() {
+        Object[] object = new Integer[4];
+        if (object instanceof Integer[]) {
+            Integer[] integers = (Integer[]) object;
+            return 1;
+        }
+        return 1;
+    }
+
+    public int checkCastMultiArray() {
+        Object[][] object = new Integer[4][4];
+        if (object instanceof Integer[][]) {
+            Integer[][] integers = (Integer[][]) object;
+            return 1;
+        }
+        return 0;
+    }
+
+    public int checkCastMultiArray2() {
+        Object[][][] object = new Integer[4][4][4];
+        if (object[0] instanceof Integer[][]) {
+            Integer[][] integers = (Integer[][]) object[0];
+            return 1;
+        }
+        return 0;
+    }
+
+    public int checkCastMultiArray3() {
+        Object[][][][] object = new Integer[1][1][1][1];
+        if (object[0][0] instanceof Integer[][]) {
+            Integer[][] integers = (Integer[][]) object[0][0];
+            return 1;
+        }
+        return 0;
+    }
+
+    public int checkCastMultiArray4() {
+        Object[][] object = new Integer[1][1];
+        if (object[0] instanceof String[]) {
+            return 1;
+        }
+        return 0;
+    }
+
+    public int checkCastMultiArray5() {
+        Object[][] object = new Integer[1][1];
+        object[0][0] = 1;
+        if (object[0][0] instanceof Integer) {
+            return 1;
+        }
+        return 0;
+    }
+
 }

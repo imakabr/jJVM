@@ -555,6 +555,42 @@ public class JVMExecutionTest {
         checkMethodInInstructionClass("checkINSTANCEOFWithInheritedClass:()I", 1);
     }
 
+    @Test
+    public void checkCheckCastArray() {
+        // check INSTANCEOF CHECKCAST
+        checkMethodInInstructionClass("checkCastArray:()I", 1);
+    }
+
+    @Test
+    public void checkCheckCastMultiArray() {
+        // check INSTANCEOF CHECKCAST
+        checkMethodInInstructionClass("checkCastMultiArray:()I", 1);
+    }
+
+    @Test
+    public void checkCheckCastMultiArray2() {
+        // check INSTANCEOF CHECKCAST
+        checkMethodInInstructionClass("checkCastMultiArray2:()I", 1);
+    }
+
+    @Test
+    public void checkCheckCastMultiArray3() {
+        // check INSTANCEOF CHECKCAST
+        checkMethodInInstructionClass("checkCastMultiArray3:()I", 1);
+    }
+
+    @Test
+    public void checkCheckCastMultiArray4() {
+        // check INSTANCEOF CHECKCAST
+        checkMethodInInstructionClass("checkCastMultiArray4:()I", 0);
+    }
+
+    @Test
+    public void checkCheckCastMultiArray5() {
+        // check INSTANCEOF CHECKCAST
+        checkMethodInInstructionClass("checkCastMultiArray5:()I", 1);
+    }
+
     private void checkException(@Nonnull String methodName, @Nonnull Class<? extends RuntimeExceptionJVM> klass, @Nonnull String message) {
         VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
         Heap heap = virtualMachine.getHeap();
