@@ -92,15 +92,20 @@ public class StringJVM {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null) return false;
-        String string = (String) o;
-        char[] array = string.toCharArray();
-        if (value.length != array.length) return false;
-        for (int i = 0; i < value.length; i++) {
-            if (value[i] != array[i]) {
+        if (o instanceof String) {
+            String string = (String) o;
+            char[] array = string.toCharArray();
+            if (value.length != array.length) {
                 return false;
             }
+            for (int i = 0; i < value.length; i++) {
+                if (value[i] != array[i]) {
+                    return false;
+                }
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 
     public char charAt(int index) {
