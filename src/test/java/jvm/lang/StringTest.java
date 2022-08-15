@@ -118,6 +118,11 @@ public class StringTest {
         checkMethod("checkStringWithInternEqual:()Z", 1);
     }
 
+    @Test
+    public void checkSplit() {
+        checkMethod("checkSplit:()Z", 1);
+    }
+
 
     private void checkMethod(@Nonnull String methodName, long expected) {
         VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);

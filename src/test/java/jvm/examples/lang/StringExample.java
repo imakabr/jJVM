@@ -195,4 +195,20 @@ public class StringExample {
         return expected == actual;
     }
 
+    public boolean checkSplit() {
+        String example = "1 2 3 4 5";
+        String[] expected = new String[]{"1", "2", "3", "4", "5"};
+        String[] actual = example.split(" ");
+        for (int i = 0; i < expected.length; i++) {
+            if (!expected[i].equals(actual[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(new StringExample().checkSplit());
+    }
+
 }

@@ -1,5 +1,7 @@
 package jvm.lang;
 
+import java.util.ArrayList;
+
 public class StringJVM {
 
     private char[] value;
@@ -18,6 +20,14 @@ public class StringJVM {
     public StringJVM(char[] value) {
         this.value = new char[value.length];
         arrayCopy(value, this.value);
+    }
+
+    public StringJVM(char[] value, int offset, int count) {
+        char[] newValue = new char[count];
+        for (int i = 0; i < count; i++) {
+            newValue[i] = value[i + offset];
+        }
+        this.value = newValue;
     }
 
     private void arrayCopy(char[] source, char[] dest) {
@@ -133,5 +143,71 @@ public class StringJVM {
     }
 
     public native String intern();
+
+    public StringJVM[] split(String regex) {
+        char ch;
+        if (regex.length() == 1 &&
+                ".$|()[{^?*+\\".indexOf(ch = regex.charAt(0), 0) == -1) {
+            int off = 0;
+            int next = 0;
+            ArrayList<StringJVM> list = new ArrayList<>();
+            while ((next = indexOf(ch, off)) != -1) {
+                list.add(substring(off, next));
+                off = next + 1;
+            }
+            // If no match was found, return this
+            if (off == 0)
+                return new StringJVM[]{this};
+
+            // Add remaining segment
+            list.add(substring(off, value.length));
+
+            // Construct result
+            int resultSize = list.size();
+            while (resultSize > 0 && list.get(resultSize - 1).length() == 0) {
+                resultSize--;
+            }
+
+            StringJVM[] result = new StringJVM[resultSize];
+            for (int i = 0; i < resultSize; i++) {
+                result[i] = list.get(i);
+            }
+            return result;
+        } else {
+            throw new RuntimeExceptionJVM("regex " + regex + " does not support");
+        }
+    }
+
+    public StringJVM substring(int beginIndex, int endIndex) {
+        if (beginIndex < 0) {
+            throw new IndexOutOfBoundsExceptionJVM("Begin index = " + beginIndex);
+        }
+        if (endIndex > value.length) {
+            throw new IndexOutOfBoundsExceptionJVM("End index = " + endIndex);
+        }
+        int subLen = endIndex - beginIndex;
+        if (subLen < 0) {
+            throw new StringIndexOutOfBoundsException("Sub length = " + subLen);
+        }
+        return ((beginIndex == 0) && (endIndex == value.length)) ? this
+                : new StringJVM(value, beginIndex, subLen);
+    }
+
+    public int indexOf(int ch, int fromIndex) {
+        final int max = value.length;
+        if (fromIndex < 0) {
+            fromIndex = 0;
+        } else if (fromIndex >= max) {
+            return -1;
+        }
+
+        final char[] value = this.value;
+        for (int i = fromIndex; i < max; i++) {
+            if (value[i] == ch) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
 }
