@@ -256,9 +256,9 @@ public final class KlassParser {
             }
 
         } else if ("Signature".equals(s)) {
-            String attribute_name = getConstantPoolEntry(read2Bytes()).getStr();
-            int attribute_length = read4Bytes();
-            String signature = getConstantPoolEntry(read2Bytes()).getStr();
+//            String attribute_name = getConstantPoolEntry(read2Bytes()).getStr();
+//            int attribute_length = read4Bytes();
+//            String signature = getConstantPoolEntry(read2Bytes()).getStr();
         } else {
             throw new IllegalArgumentException("Must be code");
         }
