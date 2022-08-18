@@ -28,8 +28,8 @@ public class NetworkManager {
     private int getPlayPort() throws IOException {
         startOut.println("init");
         int playPort = parseInt(startIn.readLine());
-        startIn.close();
-        startOut.close();
+//        startIn.close();
+//        startOut.close();
         return playPort;
     }
 

@@ -1,20 +1,19 @@
 package jvm.examples.snake_test;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.HashSet;
 
 public class Grid {
     private final int rows;
     private final int columns;
-    private Set<Node> walls;
+    private HashSet<Node> walls;
 
     public Grid(int rows, int columns) {
         this.rows = rows;
         this.columns = columns;
     }
 
-    public void setWalls(Set<Node> walls) {
+    public void setWalls(HashSet<Node> walls) {
         this.walls = walls;
     }
 
@@ -25,9 +24,9 @@ public class Grid {
                 new Node(node.row, node.column - 1)};
     }
 
-    public List<Node> getNeighbors(Node node) {
+    public ArrayList<Node> getNeighbors(Node node) {
         Node[] neighbors = getClosestNodes(node);
-        List<Node> result = new ArrayList<>();
+        ArrayList<Node> result = new ArrayList<>();
         for (Node actualNode : neighbors) {
             if (inBounds(actualNode) && !walls.contains(actualNode)) {
                 result.add(actualNode);

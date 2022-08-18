@@ -108,12 +108,14 @@ public class StringBuilderJVM {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null) return false;
-        StringBuilderJVM that = (StringBuilderJVM) o;
-        char[] thatValue = that.value;
-        if (count != that.count) return false;
-        for (int i = 0; i < count; i++) {
-            if (value[i] != thatValue[i]) {
-                return false;
+        if (o instanceof StringBuilderJVM) {
+            StringBuilderJVM that = (StringBuilderJVM) o;
+            char[] thatValue = that.value;
+            if (count != that.count) return false;
+            for (int i = 0; i < count; i++) {
+                if (value[i] != thatValue[i]) {
+                    return false;
+                }
             }
         }
         return true;

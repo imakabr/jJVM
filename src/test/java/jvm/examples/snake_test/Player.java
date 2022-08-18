@@ -41,8 +41,8 @@ public class Player {
         return new Node(parseInt(coordinate[1]) / 10, parseInt(coordinate[0]) / 10);
     }
 
-    private Set<Node> parseWalls(String[] messages) {
-        Set<Node> set = new HashSet<>();
+    private HashSet<Node> parseWalls(String[] messages) {
+        HashSet<Node> set = new HashSet<>();
         for (int i = 2; i < messages.length; i++) {
             set.add(parseNode(messages[i]));
         }
@@ -51,14 +51,16 @@ public class Player {
 
     private HashMap<Node, Node> getPath(Node start, Node end, Grid grid) {
         HashMap<Node, Node> cameFrom = new HashMap<>();
-        Queue<Node> queue = new ArrayDeque<>();
+        ArrayDeque<Node> queue = new ArrayDeque<>();
         queue.add(start);
         while (!queue.isEmpty()) {
             Node current = queue.poll();
             if (current.equals(end)) {
                 return cameFrom;
             }
-            for (Node neighbor : grid.getNeighbors(current)) {
+            ArrayList<Node> neighbors = grid.getNeighbors(current);
+            for (int i = 0; i < neighbors.size(); i++) {
+                Node neighbor = neighbors.get(i);
                 if (cameFrom.get(neighbor) == null) {
                     cameFrom.put(neighbor, current);
                     queue.add(neighbor);

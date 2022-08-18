@@ -21,8 +21,8 @@ public class IntegerJVM {
     }
 
     public boolean equals(Object obj) {
-        if (obj instanceof Integer) {
-            return value == (Integer) obj;
+        if (obj instanceof IntegerJVM) {
+            return value == ((IntegerJVM) obj).value;
         }
         return false;
     }

@@ -102,8 +102,8 @@ public class StringJVM {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null) return false;
-        if (o instanceof String) {
-            String string = (String) o;
+        if (o instanceof StringJVM) {
+            StringJVM string = (StringJVM) o;
             char[] array = string.toCharArray();
             if (value.length != array.length) {
                 return false;

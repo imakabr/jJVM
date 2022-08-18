@@ -5,6 +5,7 @@ import java.util.Objects;
 class Node {
     int row;
     int column;
+    private int hashCode;
 
     Node(int row, int column) {
         this.row = row;
@@ -16,13 +17,22 @@ class Node {
         if (node1 == null) {
             return false;
         }
-        Node node = (Node) node1;
-        return this.row == node.row && this.column == node.column;
+        if (node1 instanceof Node) {
+            Node node = (Node) node1;
+            return this.row == node.row && this.column == node.column;
+        }
+        return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.row, this.column);
+        if (hashCode == 0) {
+            int result = 1;
+            result = 31 * result + row;
+            result = 31 * result + column;
+            hashCode = result;
+        }
+        return hashCode;
     }
 
     @Override
