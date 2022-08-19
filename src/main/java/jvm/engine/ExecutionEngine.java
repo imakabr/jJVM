@@ -190,26 +190,30 @@ public final class ExecutionEngine {
                     case CHECKCAST:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                         objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, op));
-                        object = heap.getInstanceObject(objectRef);
-                        String castKlassName = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
-                        if (object.isArray()) {
-                            if (castKlassName.equals(object.getArrayType())) {
-                                stack.push(setRefValueType(objectRef));
-                            } else {
-                                throw new ClassCastExceptionJVM(
-                                        Objects.requireNonNull(object.getArrayType()).replace("/", ".")
-                                                + " cannot be cast to "
-                                                + castKlassName.replace("/", "."));
-                            }
+                        if (objectRef == NULL) {
+                            stack.push(setRefValueType(NULL));
                         } else {
-                            Klass klass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
-                            if (checkCast(klass, castKlassName)) {
-                                stack.push(setRefValueType(objectRef));
+                            object = heap.getInstanceObject(objectRef);
+                            String castKlassName = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
+                            if (object.isArray()) {
+                                if (castKlassName.equals(object.getArrayType())) {
+                                    stack.push(setRefValueType(objectRef));
+                                } else {
+                                    throw new ClassCastExceptionJVM(
+                                            Objects.requireNonNull(object.getArrayType()).replace("/", ".")
+                                                    + " cannot be cast to "
+                                                    + castKlassName.replace("/", "."));
+                                }
                             } else {
-                                throw new ClassCastExceptionJVM(
-                                        klass.getKlassName().replace("/", ".")
-                                                + " cannot be cast to "
-                                                + castKlassName.replace("/", "."));
+                                Klass klass = heap.getKlassLoader().getLoadedKlassByName(heap.getInstanceKlass(object.getKlassIndex()).getName());
+                                if (checkCast(klass, castKlassName)) {
+                                    stack.push(setRefValueType(objectRef));
+                                } else {
+                                    throw new ClassCastExceptionJVM(
+                                            klass.getKlassName().replace("/", ".")
+                                                    + " cannot be cast to "
+                                                    + castKlassName.replace("/", "."));
+                                }
                             }
                         }
                         break;

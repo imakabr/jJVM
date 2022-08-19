@@ -18,6 +18,15 @@ public class InstructionExample {
         return simpleObject.a;
     }
 
+    public boolean checkNullCastMethod() {
+        String s = (String) getNull();
+        return s == null;
+    }
+
+    private Object getNull() {
+        return null;
+    }
+
     public int checkComplexCastMethod() {
         ChildChildObject object = new ChildChildObject();
         ParentObject simpleObject = (ParentObject) object;

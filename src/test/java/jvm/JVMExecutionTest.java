@@ -329,6 +329,12 @@ public class JVMExecutionTest {
     }
 
     @Test
+    public void checkNullCastMethod() {
+        // check CHECKCAST
+        checkMethodInInstructionClass("checkNullCastMethod:()Z", 1);
+    }
+
+    @Test
     public void checkComplexCastMethod() {
         // check CHECKCAST
         checkMethodInInstructionClass("checkComplexCastMethod:()I", 11);
