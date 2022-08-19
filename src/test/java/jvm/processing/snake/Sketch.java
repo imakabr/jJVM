@@ -15,7 +15,7 @@ public class Sketch extends PApplet {
     public void setup() {
         noStroke();
         background(0);
-        frameRate(30);
+        frameRate(15);
         Apple apple = new Apple(this, "jvm.processing.snake/apple.png");
         SocketManager socketManager = new SocketManager(this, 10005);
         SnakeManager snakeManager = new SnakeManager(apple, socketManager, screenWidth, screenHeight);

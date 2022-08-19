@@ -144,6 +144,7 @@ public class Snake {
 
         if (ateFood(x, y)) {
             apple.destroy();
+            apple.create();
             currentSize++;
             sizeRecord = Math.max(currentSize, sizeRecord);
         } else {

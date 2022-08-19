@@ -41,6 +41,8 @@ public class SnakeManager {
                     snake.move(direction);
                     snake.draw();
                     socketManager.sendMessage(getLocationData(snake), snake);
+                } else {
+                    snake.draw();
                 }
             }
         }
@@ -80,12 +82,13 @@ public class SnakeManager {
         setLocationPoint(builder, apple.getPoint());
         setLocationPoint(builder, Objects.requireNonNull(snake.getHead()));
         setLocationPoints(builder, snake.getBody(), true);
-        for (Snake currentSnake : snakes) {
+        for (int i = 0; i < snakes.size(); i++) {
+            Snake currentSnake = snakes.get(i);
             if (snake.getNumber() == currentSnake.getNumber() || currentSnake.isNotReady()) {
                 continue;
             }
             setLocationPoint(builder, Objects.requireNonNull(currentSnake.getHead()));
-            setLocationPoints(builder, currentSnake.getBody(), false);
+            setLocationPoints(builder, currentSnake.getBody(), i != snakes.size() - 1);
         }
         return builder.toString();
     }
