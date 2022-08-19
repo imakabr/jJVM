@@ -21,11 +21,19 @@ public class SnakeTest {
     }
 
     private void checkMethod(@Nonnull String methodName) {
-        VirtualMachine virtualMachine = new VirtualMachine(200000, 500, 10000);
+        VirtualMachine virtualMachine = new VirtualMachine(200000, 50, 10000);
         virtualMachine.getKlassLoader().loadKlass(klass);
         Heap heap = virtualMachine.getHeap();
-        virtualMachine.runHeapMonitor(new HashSet<>(Arrays.asList("java/lang/String", "java/lang/StringBuilder",
-                "jvm/examples/snake_test/Node")));
+        virtualMachine.runHeapMonitor(new HashSet<>(Arrays.asList("java/lang/String",
+                "java/lang/StringBuilder",
+                "jvm/examples/snake_test/Node",
+                "Collections { " +
+                        "java/util/HashMap, " +
+                        "jvm/util/HashMapNode, " +
+                        "java/util/HashSet, " +
+                        "java/util/ArrayList, " +
+                        "java/util/ArrayDeque, " +
+                        "}")));
 
         int methodIndex = heap.getMethodRepo().getIndexByName(klass + "." + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
