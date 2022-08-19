@@ -24,6 +24,11 @@ public class StringBuilderJVM {
         }
     }
 
+    public StringBuilderJVM append(Object obj) {
+        append(obj.toString());
+        return this;
+    }
+
     public StringBuilderJVM append(String str) {
         if (str == null) {
             append("null");
