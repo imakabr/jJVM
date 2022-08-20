@@ -72,7 +72,7 @@ public class HeapMonitor {
                 }
                 int objectSize = heap.getInstanceObjectSize();
                 Map<Integer, Integer> innerArrays = new HashMap<>(); // object reference -> instance klass index
-                for (int i = 0; i < objectSize; i++) {
+                for (int i = 0; i < objects.length; i++) {
                     InstanceObject object = objects[i];
                     if (object != null && objectCounts.containsKey(object.getKlassIndex())) {
                         for (String fieldName : object.getFieldNames()) {
