@@ -13,7 +13,6 @@ import javax.annotation.Nullable;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
-import java.util.function.Function;
 
 import static jvm.engine.Opcode.*;
 import static jvm.heap.KlassLoader.*;
@@ -1100,17 +1099,31 @@ public final class ExecutionEngine {
     }
 
     private void createStringInstance(@Nonnull StackFrame stack, @Nonnull String str, boolean toPoolOfStrings) {
-        Function<String, Integer> createStringObj = newString -> {
-            InstanceObject stringObj = allocateInstanceObject(STRING);
-            int charArrayRef = allocateArray("[" + JVMType.C.name(), JVMType.C.name(), newString.length());
-            InstanceObject charArrayObj = heap.getInstanceObject(charArrayRef);
-            for (int i = 0; i < newString.length(); i++) {
-                charArrayObj.setValue(i, setCharValueType(newString.charAt(i)));
+        Integer objRef;
+        if (heap.isEnabledCacheString()) {
+            objRef = heap.getStringRefFromPool(str);
+            if (objRef != null) {
+                stack.push(setRefValueType(objRef));
+                return;
             }
-            stringObj.setValue(stringObj.getIndexByFieldName("value:[C"), setRefValueType(charArrayRef));
-            return getInstanceObjectReference(stringObj);
-        };
-        stack.push(setRefValueType(heap.getStringObjRef(str, createStringObj, toPoolOfStrings)));
+        }
+        /*----------------------------------*/
+        // before second allocation, we have to push the first object reference on the stack,
+        // or that first object can be cleared by GC
+        InstanceObject stringObj = allocateInstanceObject(STRING);
+        objRef = getInstanceObjectReference(stringObj);
+        stack.push(setRefValueType(objRef));
+        int charArrayRef = allocateArray("[" + JVMType.C.name(), JVMType.C.name(), str.length());
+        /*----------------------------------*/
+        InstanceObject charArrayObj = heap.getInstanceObject(charArrayRef);
+        for (int i = 0; i < str.length(); i++) {
+            charArrayObj.setValue(i, setCharValueType(str.charAt(i)));
+        }
+        stringObj.setValue(stringObj.getIndexByFieldName("value:[C"), setRefValueType(charArrayRef));
+
+        if (heap.isEnabledCacheString() && toPoolOfStrings) {
+            heap.putStringRefToPool(str, objRef, charArrayRef);
+        }
     }
 
     private int allocateInstanceObjectAndGetReference(String sourceKlassName, int cpIndex) {

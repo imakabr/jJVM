@@ -4,9 +4,9 @@ import jvm.garbage_collector.GarbageCollector;
 import jvm.lang.OutOfMemoryErrorJVM;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 public class Heap {
     @Nonnull
@@ -27,6 +27,8 @@ public class Heap {
     private final AtomicInteger instanceObjectSize = new AtomicInteger();
     @Nonnull
     private final Map<String, Integer> poolOfStrings; // str -> objRef
+    @Nonnull
+    private final Set<Integer> cachedStringRefs; // objRef from pool of Strings
     private boolean enabledCacheString = true;
 
     public Heap(@Nonnull GarbageCollector collector, int instancesSize, int klassesSize) {
@@ -38,18 +40,26 @@ public class Heap {
         this.klassLoader = new KlassLoader(this);
         this.klassLoader.initSystemKlasses();
         this.poolOfStrings = new HashMap<>();
+        this.cachedStringRefs = new HashSet<>();
     }
 
-    public int getStringObjRef(@Nonnull String str,
-                               @Nonnull Function<String, Integer> newStringObj,
-                               boolean toPoolOfStrings) {
-        return enabledCacheString && toPoolOfStrings ?
-                poolOfStrings.computeIfAbsent(str, newStringObj) : newStringObj.apply(str);
+    public boolean isCachedStringObjRef(int objRef) {
+        return cachedStringRefs.contains(objRef);
     }
 
-    @Nonnull
-    public Collection<Integer> getStringObjRefs() {
-        return poolOfStrings.values();
+    public boolean isEnabledCacheString() {
+        return enabledCacheString;
+    }
+
+    @Nullable
+    public Integer getStringRefFromPool(@Nonnull String str) {
+        return poolOfStrings.get(str);
+    }
+
+    public void putStringRefToPool(@Nonnull String str, int strRef, int charArrayRef) {
+        poolOfStrings.put(str, strRef);
+        cachedStringRefs.add(strRef);
+        cachedStringRefs.add(charArrayRef);
     }
 
     public void disableCacheString() {

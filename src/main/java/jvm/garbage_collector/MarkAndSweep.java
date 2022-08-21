@@ -36,22 +36,17 @@ public class MarkAndSweep implements GarbageCollector {
 
     @Override
     public void run() {
-            inProgress = true;
-            HashSet<Integer> aliveObjects = new HashSet<>();
-            Queue<Integer> queue = new ArrayDeque<>();
+        inProgress = true;
+        HashSet<Integer> aliveObjects = new HashSet<>();
+        Queue<Integer> queue = new ArrayDeque<>();
 
-            collectObjectsFromInstanceKlassess(queue);
-            collectObjectsFromStackFrame(queue);
-            collectObjectsFromStringCache(queue);
+        collectObjectsFromInstanceKlassess(queue);
+        collectObjectsFromStackFrame(queue);
 
-            findAliveObjects(queue, aliveObjects);
-            removeDeadObjectsFromHeap(aliveObjects);
+        findAliveObjects(queue, aliveObjects);
+        removeDeadObjectsFromHeap(aliveObjects);
 //            System.out.println("GC completed " + count++);
-            inProgress = false;
-    }
-
-    private void collectObjectsFromStringCache(@Nonnull Queue<Integer> queue) {
-        queue.addAll(Objects.requireNonNull(heap).getStringObjRefs());
+        inProgress = false;
     }
 
     private void removeDeadObjectsFromHeap(@Nonnull Set<Integer> aliveObjects) {
@@ -62,7 +57,9 @@ public class MarkAndSweep implements GarbageCollector {
             int objRef = startObjRef;
             for (int i = 0; i < objects.length; i++) {
                 int objIndex = refTable.getInstanceObjectIndex(objRef);
-                if (objIndex != -1 && objects[objIndex] != null && !aliveObjects.contains(objRef)) {
+                if (objIndex != -1 && objects[objIndex] != null && !aliveObjects.contains(objRef)
+                        && !heap.isCachedStringObjRef(objRef)) {
+
                     InstanceObject object = objects[objIndex];
                     int klassIndex = !object.isArray() ? object.getKlassIndex() : -1;
                     if (klassIndex != -1) {
