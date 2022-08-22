@@ -112,7 +112,7 @@ public class Heap {
         return klassIndex.get();
     }
 
-    public int setInstanceObject(InstanceObject object) {
+    private int setInstanceObject(InstanceObject object) {
         incrementInstanceObjectSize();
         while (instanceObjects[objectIndex] != null) {
             incrementObjectIndex();
