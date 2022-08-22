@@ -56,98 +56,115 @@ public class HeapMonitor {
     public void run() {
         new Thread(() -> {
             new Thread(() -> PApplet.main("jvm.monitor.Sketch")).start();
-            InstanceObject[] objects = heap.getInstanceObjects();
-            InstanceKlass[] klasses = heap.getInstanceKlasses();
             for (; ; ) {
                 Map<String, Integer> instanceKlasses = new HashMap<>(); // class name -> instance klass index
                 Map<Integer, Integer> objectCounts = new HashMap<>(); // instance klass index -> count
-                int klassesSize = heap.getInstanceKlassSize();
-                for (int klassIndex = 0; klassIndex < klassesSize; klassIndex++) {
-                    InstanceKlass klass = klasses[klassIndex];
-                    if (klass != null && classNames.contains(klass.getName())) {
-                        int finalKlassIndex = klassIndex;
-                        instanceKlasses.computeIfAbsent(klass.getName(), key -> finalKlassIndex);
-                        objectCounts.computeIfAbsent(klassIndex, key -> 0);
-                    }
-                }
-                int objectSize = heap.getInstanceObjectSize();
-                Map<Integer, Integer> innerArrays = new HashMap<>(); // object reference -> instance klass index
-                for (int i = 0; i < objects.length; i++) {
-                    InstanceObject object = objects[i];
-                    if (object != null && objectCounts.containsKey(object.getKlassIndex())) {
-                        for (String fieldName : object.getFieldNames()) {
-                            if (fieldName.contains("[")) {
-                                String type = fieldName.substring(fieldName.lastIndexOf("[") + 1);
-                                switch (type) {
-                                    case "Z":
-                                    case "C":
-                                    case "F":
-                                    case "D":
-                                    case "B":
-                                    case "S":
-                                    case "I":
-                                    case "J":
-                                        int objRef = getPureValue(object.getValue(object.getIndexByFieldName(fieldName)));
-                                        innerArrays.put(objRef, object.getKlassIndex());
-                                }
-                            }
-                        }
-                        objectCounts.computeIfPresent(object.getKlassIndex(), (key, value) -> value + 1);
-                    }
-                }
 
-                countInnerArrays(innerArrays, objectCounts, heap.getReferenceTable(), objects);
-
-                List<String> names = new ArrayList<>();
-                List<Integer> data = new ArrayList<>();
-                for (Map.Entry<String, Set<String>> entry : groups.entrySet()) {
-                    if (entry.getKey().equals(WITHOUT_GROUP)) {
-                        for (String name : entry.getValue()) {
-                            Integer klassIndex = instanceKlasses.get(name);
-                            if (klassIndex != null) {
-                                names.add(name);
-                                data.add(objectCounts.get(klassIndex));
-                            }
-                        }
-                    } else {
-                        int count = 0;
-                        for (String name : entry.getValue()) {
-                            Integer klassIndex = instanceKlasses.get(name);
-                            if (klassIndex != null) {
-                                count += objectCounts.get(klassIndex);
-                            }
-                        }
-                        names.add(entry.getKey());
-                        data.add(count);
-                    }
-                }
-                names.add("Other objects");
-                data.add(objectSize - objectCounts.values()
-                        .stream()
-                        .reduce(0, Integer::sum));
-                names.add("Empty space");
-                data.add(objects.length - objectSize);
-
-                try {
-                    queue.put(new Message(names, data, objects.length));
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
+                initKlasses(instanceKlasses, objectCounts);
+                countInstanceObjectsAndInnerArrays(objectCounts);
+                putMessage(objectCounts, instanceKlasses);
             }
 
         }).start();
     }
 
+    private void initKlasses(@Nonnull Map<String, Integer> instanceKlasses,
+                             @Nonnull Map<Integer, Integer> objectCounts) {
+        int klassesSize = heap.getInstanceKlassSize();
+        for (int klassIndex = 0; klassIndex < klassesSize; klassIndex++) {
+            InstanceKlass klass = heap.getInstanceKlass(klassIndex);
+            if (klass != null && classNames.contains(klass.getName())) {
+                instanceKlasses.putIfAbsent(klass.getName(), klassIndex);
+                objectCounts.putIfAbsent(klassIndex, 0);
+            }
+        }
+    }
+
+    private void putMessage(@Nonnull Map<Integer, Integer> objectCounts,
+                            @Nonnull Map<String, Integer> instanceKlasses) {
+        List<String> names = new ArrayList<>();
+        List<Integer> data = new ArrayList<>();
+
+        collectData(names, data, objectCounts, instanceKlasses);
+
+        try {
+            queue.put(new Message(names, data, heap.getInstanceObjectCapacity()));
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void countInstanceObjectsAndInnerArrays(@Nonnull Map<Integer, Integer> objectCounts) {
+        Map<Integer, Integer> innerArrays = new HashMap<>(); // object reference -> instance klass index
+        ReferenceTable refTable = heap.getReferenceTable();
+        for (int i = 0; i < refTable.size(); i++) {
+            int objectIndex = refTable.getInstanceObjectIndex(i);
+            InstanceObject object = objectIndex != -1 ? heap.getInstanceObject(i) : null;
+            if (object != null && objectCounts.containsKey(object.getKlassIndex())) {
+                for (String fieldName : object.getFieldNames()) {
+                    if (fieldName.contains("[")) {
+                        String type = fieldName.substring(fieldName.lastIndexOf("[") + 1);
+                        switch (type) {
+                            case "Z":
+                            case "C":
+                            case "F":
+                            case "D":
+                            case "B":
+                            case "S":
+                            case "I":
+                            case "J":
+                                int objRef = getPureValue(object.getValue(object.getIndexByFieldName(fieldName)));
+                                innerArrays.put(objRef, object.getKlassIndex());
+                        }
+                    }
+                }
+                objectCounts.computeIfPresent(object.getKlassIndex(), (key, value) -> value + 1);
+            }
+        }
+        countInnerArrays(innerArrays, objectCounts);
+    }
+
+    private void collectData(@Nonnull List<String> names,
+                             @Nonnull List<Integer> data,
+                             @Nonnull Map<Integer, Integer> objectCounts,
+                             @Nonnull Map<String, Integer> instanceKlasses) {
+        for (Map.Entry<String, Set<String>> entry : groups.entrySet()) {
+            if (entry.getKey().equals(WITHOUT_GROUP)) {
+                for (String name : entry.getValue()) {
+                    Integer klassIndex = instanceKlasses.get(name);
+                    if (klassIndex != null) {
+                        names.add(name);
+                        data.add(objectCounts.get(klassIndex));
+                    }
+                }
+            } else {
+                int count = 0;
+                for (String name : entry.getValue()) {
+                    Integer klassIndex = instanceKlasses.get(name);
+                    if (klassIndex != null) {
+                        count += objectCounts.get(klassIndex);
+                    }
+                }
+                names.add(entry.getKey());
+                data.add(count);
+            }
+        }
+        names.add("Other objects");
+        int objectSize = heap.getInstanceObjectSize();
+        data.add(objectSize - objectCounts.values()
+                .stream()
+                .reduce(0, Integer::sum));
+        names.add("Empty space");
+        data.add(heap.getInstanceObjectCapacity() - objectSize);
+    }
+
     private void countInnerArrays(@Nonnull Map<Integer, Integer> innerArrays,
-                                  @Nonnull Map<Integer, Integer> objectCounts,
-                                  @Nonnull ReferenceTable refTable,
-                                  @Nonnull InstanceObject[] objects) {
+                                  @Nonnull Map<Integer, Integer> objectCounts) {
         ArrayDeque<Integer> queue = new ArrayDeque<>(innerArrays.keySet());
         while (!queue.isEmpty()) {
             int objRef = queue.pop();
-            int objIndex = refTable.getInstanceObjectIndex(objRef);
-            InstanceObject innerObj = objIndex != -1 ? objects[objIndex] : null;
+            int objIndex = heap.getReferenceTable().getInstanceObjectIndex(objRef);
+            InstanceObject innerObj = objIndex != -1 ? heap.getInstanceObject(objRef) : null;
             if (innerObj != null && innerObj.isArray()) {
                 objectCounts.computeIfPresent(innerArrays.get(objRef), (key, value) -> value + 1);
                 if (innerObj.getValueType() == JVMType.A) {

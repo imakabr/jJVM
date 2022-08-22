@@ -160,16 +160,6 @@ public class Heap {
         return instanceKlasses[instKlassIndex];
     }
 
-    @Nonnull
-    public InstanceKlass[] getInstanceKlasses() {
-        return instanceKlasses;
-    }
-
-    @Nonnull
-    public InstanceObject[] getInstanceObjects() {
-        return instanceObjects;
-    }
-
     public int getInstanceObjectSize() {
         return instanceObjectSize.get();
     }
