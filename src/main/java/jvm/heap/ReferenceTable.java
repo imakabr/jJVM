@@ -33,4 +33,8 @@ public class ReferenceTable {
         instanceTable[objRef] = -1;
     }
 
+    public int size() {
+        return instanceTable.length;
+    }
+
 }

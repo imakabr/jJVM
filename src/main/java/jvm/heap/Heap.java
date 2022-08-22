@@ -88,6 +88,10 @@ public class Heap {
         return instanceObjects[objectIndex];
     }
 
+    public void clearInstanceObject(int objectIndex) {
+        instanceObjects[objectIndex] = null;
+    }
+
     @Nonnull
     public ReferenceTable getReferenceTable() {
         return refTable;
@@ -168,5 +172,9 @@ public class Heap {
 
     public int getInstanceObjectSize() {
         return instanceObjectSize.get();
+    }
+
+    public int getInstanceObjectCapacity() {
+        return instanceObjects.length;
     }
 }
