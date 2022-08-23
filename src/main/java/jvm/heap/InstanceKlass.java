@@ -56,14 +56,6 @@ public class InstanceKlass {
         this.indexByMethodName = indexByFieldName;
     }
 
-    public void setParentIndex(int parentIndex) {
-        this.parentIndex = parentIndex;
-    }
-
-    public int getParentIndex() {
-        return parentIndex;
-    }
-
     public int getObjectRef() {
         return objectReference;
     }
@@ -72,24 +64,12 @@ public class InstanceKlass {
         return cpKlass;
     }
 
-    public void setIndexByFieldName(String name, int index) {
-        indexByFieldName.put(name, index);
-    }
-
     public void setIndexByVirtualMethodName(String name, int index) {
         indexByVirtualMethodName.put(name, index);
     }
 
     public int getIndexByFieldName(String name) {
         return indexByFieldName.get(name);
-    }
-
-    public List<String> getOrderedFieldNames() {
-        String[] result = new String[indexByFieldName.size()];
-        for (Map.Entry<String, Integer> entry : indexByFieldName.entrySet()) {
-            result[entry.getValue()] = entry.getKey();
-        }
-        return Arrays.asList(result);
     }
 
     public final void setVirtualMethodTable(int[] virtualMethodTable) {

@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class InstanceObject {
     private final long[] fieldValues;
     private final Map<String, Integer> indexByFieldName;
-    private int klassIndex;
+    private final int klassIndex;
     private final boolean array;
     @Nullable
     private String arrayType;
@@ -61,16 +61,6 @@ public class InstanceObject {
         }
     }
 
-    @Nonnull
-    public Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull String klassName, @Nullable InstanceKlass parentKlass) {
-        Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getIndexByFieldName() : Collections.emptyMap());
-        result.putAll(indexByFieldName.keySet()
-                .stream()
-                .filter(klassNameField -> klassNameField.contains(klassName))
-                .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), indexByFieldName::get)));
-        return result;
-    }
-
     public InstanceObject(@Nonnull Heap heap, @Nonnull String arrayType, @Nonnull String valueType, int size, int klassIndex) {
         this.heap = heap;
         this.fieldValues = new long[size];
@@ -84,8 +74,18 @@ public class InstanceObject {
         }
     }
 
+    @Nonnull
+    public Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull String klassName, @Nullable InstanceKlass parentKlass) {
+        Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getIndexByFieldName() : Collections.emptyMap());
+        result.putAll(indexByFieldName.keySet()
+                .stream()
+                .filter(klassNameField -> klassNameField.contains(klassName))
+                .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), indexByFieldName::get)));
+        return Collections.unmodifiableMap(result);
+    }
+
     public Set<String> getFieldNames() {
-        return indexByFieldName.keySet();
+        return Collections.unmodifiableSet(indexByFieldName.keySet());
     }
 
     public long[] getFieldValues() {
@@ -131,10 +131,6 @@ public class InstanceObject {
         }
     }
 
-    public void setKlassIndex(int klassIndex) {
-        this.klassIndex = klassIndex;
-    }
-
     public void setValue(int index, long value) {
         checkType(fieldValues[index], value);
         fieldValues[index] = value;
@@ -142,10 +138,6 @@ public class InstanceObject {
 
     public long getValue(int fieldIndex) {
         return fieldValues[fieldIndex];
-    }
-
-    public void setIndexByFieldName(String name, int index) {
-        indexByFieldName.put(name, index);
     }
 
     public int getIndexByFieldName(String name) throws NullPointerExceptionJVM {

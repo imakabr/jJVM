@@ -5,6 +5,7 @@ import jvm.engine.StackFrame;
 import jvm.garbage_collector.GarbageCollector;
 import jvm.garbage_collector.MarkAndSweep;
 import jvm.heap.Heap;
+import jvm.heap.HeapImpl;
 import jvm.heap.KlassLoader;
 import jvm.monitor.HeapMonitor;
 
@@ -22,7 +23,7 @@ public class VirtualMachine {
     public VirtualMachine(int instancesSize, int klassesSize, int stackSize) {
         this.stackFrame = new StackFrame(stackSize);
         this.collector = new MarkAndSweep(stackFrame);
-        this.heap = new Heap(collector, instancesSize, klassesSize);
+        this.heap = new HeapImpl(collector, instancesSize, klassesSize);
         this.collector.setHeap(heap);
         this.engine = new ExecutionEngine(heap, stackFrame);
         this.klassLoader = heap.getKlassLoader();
