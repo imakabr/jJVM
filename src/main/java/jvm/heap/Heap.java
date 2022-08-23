@@ -34,12 +34,13 @@ public interface Heap {
     @Nonnull
     KlassLoader getKlassLoader();
 
-    int setInstanceKlass(InstanceKlass klass);
+    int setInstanceKlass(@Nonnull InstanceKlass klass);
 
     int getInstanceKlassSize();
 
     void decrementInstanceObjectSize();
 
+    @Nonnull
     InstanceKlass getInstanceKlass(int instKlassIndex);
 
     int getInstanceObjectSize() ;

@@ -73,7 +73,7 @@ public class HeapMonitor {
         int klassesSize = heap.getInstanceKlassSize();
         for (int klassIndex = 0; klassIndex < klassesSize; klassIndex++) {
             InstanceKlass klass = heap.getInstanceKlass(klassIndex);
-            if (klass != null && classNames.contains(klass.getName())) {
+            if (classNames.contains(klass.getName())) {
                 instanceKlasses.putIfAbsent(klass.getName(), klassIndex);
                 objectCounts.putIfAbsent(klassIndex, 0);
             }

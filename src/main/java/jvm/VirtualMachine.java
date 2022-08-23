@@ -27,6 +27,7 @@ public class VirtualMachine {
         this.collector.setHeap(heap);
         this.engine = new ExecutionEngine(heap, stackFrame);
         this.klassLoader = heap.getKlassLoader();
+        this.klassLoader.initSystemKlasses();
     }
 
     public static void main(String[] args) {
