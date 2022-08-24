@@ -16,7 +16,7 @@ public class MarkAndSweepTest {
 
     @Test
     public void markAndSweepTest() {
-        VirtualMachine virtualMachine = new VirtualMachine(20, 4, 100);
+        VirtualMachine virtualMachine = new VirtualMachine(20, 4, 100, false);
         virtualMachine.getKlassLoader().loadKlass(klass);
         Heap heap = virtualMachine.getHeap();
         int systemObjectSize = heap.getInstanceObjectSize();

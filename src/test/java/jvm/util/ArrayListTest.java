@@ -74,7 +74,7 @@ public class ArrayListTest {
     }
 
     private void checkMethod(@Nonnull String methodName, long expected) {
-        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000, false);
         Heap heap = virtualMachine.getHeap();
         virtualMachine.getKlassLoader().loadKlass(klass);
 

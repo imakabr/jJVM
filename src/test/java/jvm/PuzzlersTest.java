@@ -50,7 +50,7 @@ public class PuzzlersTest {
 
     public void checkMethod(@Nonnull String klass, @Nonnull String methodName, int expected) {
         String className = path + klass;
-        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000);
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000, false);
         Heap heap = virtualMachine.getHeap();
         virtualMachine.getKlassLoader().loadKlass(className);
         int methodIndex = heap.getMethodRepo().getIndexByName(className + "." + methodName);

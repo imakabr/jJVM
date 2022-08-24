@@ -15,7 +15,7 @@ public class ArithmeticTest {
 
     @BeforeClass
     public static void setup() {
-        engine = new VirtualMachine(500, 50, 10000).getEngine();
+        engine = new VirtualMachine(500, 50, 10000, false).getEngine();
     }
 
     @Test

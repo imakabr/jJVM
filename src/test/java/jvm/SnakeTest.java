@@ -21,7 +21,7 @@ public class SnakeTest {
     }
 
     private void checkMethod(@Nonnull String methodName) {
-        VirtualMachine virtualMachine = new VirtualMachine(200000, 50, 10000);
+        VirtualMachine virtualMachine = new VirtualMachine(200000, 50, 10000, true);
         virtualMachine.getKlassLoader().loadKlass(klass);
         Heap heap = virtualMachine.getHeap();
         virtualMachine.runHeapMonitor(new HashSet<>(Arrays.asList("java/lang/String",
