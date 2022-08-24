@@ -52,6 +52,12 @@ public abstract class AbstractHeap implements Heap {
         return getInstanceObjectInternal(objectIndex);
     }
 
+    @Nullable
+    @Override
+    public InstanceObject getInstanceObjectByObjInd(int objectIndex) {
+        return getInstanceObjectInternal(objectIndex);
+    }
+
     @Nonnull
     public ReferenceTable getReferenceTable() {
         return refTable;

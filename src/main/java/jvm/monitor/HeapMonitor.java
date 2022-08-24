@@ -99,7 +99,7 @@ public class HeapMonitor {
         ReferenceTable refTable = heap.getReferenceTable();
         for (int i = 0; i < refTable.size(); i++) {
             int objectIndex = refTable.getInstanceObjectIndex(i);
-            InstanceObject object = objectIndex != -1 ? heap.getInstanceObject(i) : null;
+            InstanceObject object = objectIndex != -1 ? heap.getInstanceObjectByObjInd(objectIndex) : null;
             if (object != null && objectCounts.containsKey(object.getKlassIndex())) {
                 for (String fieldName : object.getFieldNames()) {
                     if (fieldName.contains("[")) {
@@ -164,7 +164,7 @@ public class HeapMonitor {
         while (!queue.isEmpty()) {
             int objRef = queue.pop();
             int objIndex = heap.getReferenceTable().getInstanceObjectIndex(objRef);
-            InstanceObject innerObj = objIndex != -1 ? heap.getInstanceObject(objRef) : null;
+            InstanceObject innerObj = objIndex != -1 ? heap.getInstanceObjectByObjInd(objIndex) : null;
             if (innerObj != null && innerObj.isArray()) {
                 objectCounts.computeIfPresent(innerArrays.get(objRef), (key, value) -> value + 1);
                 if (innerObj.getValueType() == JVMType.A) {

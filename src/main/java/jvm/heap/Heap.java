@@ -23,6 +23,9 @@ public interface Heap {
     @Nonnull
     InstanceObject getInstanceObject(int objectRef);
 
+    @Nullable
+    InstanceObject getInstanceObjectByObjInd(int objectIndex);
+
     void clearInstanceObject(int objectIndex);
 
     @Nonnull
