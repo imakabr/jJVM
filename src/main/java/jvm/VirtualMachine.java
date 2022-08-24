@@ -4,10 +4,7 @@ import jvm.engine.ExecutionEngine;
 import jvm.engine.StackFrame;
 import jvm.garbage_collector.GarbageCollector;
 import jvm.garbage_collector.MarkAndSweep;
-import jvm.heap.Heap;
-import jvm.heap.HeapImpl;
-import jvm.heap.HeapVolImpl;
-import jvm.heap.KlassLoader;
+import jvm.heap.*;
 import jvm.monitor.HeapMonitor;
 
 import javax.annotation.Nonnull;
@@ -28,6 +25,7 @@ public class VirtualMachine {
         this.heapMonitor = heapMonitor;
         this.heap = heapMonitor ? new HeapVolImpl(collector, instancesSize, klassesSize) :
                 new HeapImpl(collector, instancesSize, klassesSize);
+        AbstractInstanceObject.setHeapMonitor(heapMonitor);
         this.collector.setHeap(heap);
         this.engine = new ExecutionEngine(heap, stackFrame);
         this.klassLoader = heap.getKlassLoader();
