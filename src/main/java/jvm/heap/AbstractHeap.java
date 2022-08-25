@@ -1,6 +1,8 @@
 package jvm.heap;
 
 import jvm.garbage_collector.GarbageCollector;
+import jvm.heap.api.Heap;
+import jvm.heap.api.InstanceObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -14,7 +16,7 @@ public abstract class AbstractHeap implements Heap {
     @Nonnull
     private final MethodRepo methodRepo;
     @Nonnull
-    final GarbageCollector collector;
+    public final GarbageCollector collector;
     @Nonnull
     private final Map<String, Integer> poolOfStrings; // str -> objRef
     @Nonnull
@@ -97,10 +99,10 @@ public abstract class AbstractHeap implements Heap {
     }
 
     @Nonnull
-    abstract InstanceObject getInstanceObjectInternal(int objectIndex);
+    protected abstract InstanceObject getInstanceObjectInternal(int objectIndex);
 
-    abstract int addInstanceObjectInternal(@Nonnull InstanceObject object);
+    protected abstract int addInstanceObjectInternal(@Nonnull InstanceObject object);
 
-    abstract void setInstanceObjectInternal(int objectIndex, @Nonnull InstanceObject object);
+    protected abstract void setInstanceObjectInternal(int objectIndex, @Nonnull InstanceObject object);
 
 }

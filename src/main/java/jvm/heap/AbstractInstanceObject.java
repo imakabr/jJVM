@@ -2,6 +2,10 @@ package jvm.heap;
 
 import jvm.JVMType;
 import jvm.Utils;
+import jvm.heap.api.Heap;
+import jvm.heap.api.InstanceKlass;
+import jvm.heap.api.InstanceObject;
+import jvm.heap.sequential.InstanceObjectImpl;
 import jvm.lang.NullPointerExceptionJVM;
 
 import javax.annotation.Nonnull;
@@ -79,12 +83,12 @@ public abstract class AbstractInstanceObject implements InstanceObject {
     }
 
     @Nonnull
-    JVMType getValueType(@Nonnull String field) {
+    public JVMType getValueType(@Nonnull String field) {
         String t = field.substring(field.indexOf(':') + 1);
         return t.startsWith("L") || t.startsWith("[") ? JVMType.valueOf("A") : JVMType.valueOf(t);
     }
 
-    long setValueType(int type) {
+    public long setValueType(int type) {
         return ((long) type << 32);
     }
 
@@ -93,7 +97,7 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         return type >>> 31 == 1 ? ~type : type; // if 'type >>> 31 == 1' (negative sign) type was inverted
     }
 
-    void checkType(long firstValue, long secondValue) {
+    public void checkType(long firstValue, long secondValue) {
         int first = getValueType(firstValue);
         int second = getValueType(secondValue);
         if (first == JVMType.I.ordinal() && second == JVMType.Z.ordinal() ||

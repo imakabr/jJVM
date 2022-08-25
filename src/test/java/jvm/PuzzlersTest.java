@@ -1,6 +1,6 @@
 package jvm;
 
-import jvm.heap.Heap;
+import jvm.heap.api.Heap;
 import jvm.parser.Method;
 import org.junit.Test;
 

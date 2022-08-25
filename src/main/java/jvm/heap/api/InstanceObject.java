@@ -1,4 +1,4 @@
-package jvm.heap;
+package jvm.heap.api;
 
 import jvm.JVMType;
 import jvm.lang.NullPointerExceptionJVM;

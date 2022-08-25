@@ -1,9 +1,9 @@
 package jvm.monitor;
 
 import jvm.JVMType;
-import jvm.heap.Heap;
-import jvm.heap.InstanceKlass;
-import jvm.heap.InstanceObject;
+import jvm.heap.api.Heap;
+import jvm.heap.api.InstanceKlass;
+import jvm.heap.api.InstanceObject;
 import jvm.heap.ReferenceTable;
 import processing.core.PApplet;
 

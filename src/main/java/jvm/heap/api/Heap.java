@@ -1,4 +1,6 @@
-package jvm.heap;
+package jvm.heap.api;
+
+import jvm.heap.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

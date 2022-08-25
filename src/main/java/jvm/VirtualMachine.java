@@ -5,6 +5,9 @@ import jvm.engine.StackFrame;
 import jvm.garbage_collector.GarbageCollector;
 import jvm.garbage_collector.MarkAndSweep;
 import jvm.heap.*;
+import jvm.heap.api.Heap;
+import jvm.heap.concurrent.HeapVolImpl;
+import jvm.heap.sequential.HeapImpl;
 import jvm.monitor.HeapMonitor;
 
 import javax.annotation.Nonnull;

@@ -1,13 +1,16 @@
-package jvm.heap;
+package jvm.heap.concurrent;
 
 import jvm.garbage_collector.GarbageCollector;
+import jvm.heap.AbstractHeap;
+import jvm.heap.api.InstanceKlass;
+import jvm.heap.api.InstanceObject;
 import jvm.lang.OutOfMemoryErrorJVM;
 
 import javax.annotation.Nonnull;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-public class HeapVolImpl extends AbstractHeap{
+public class HeapVolImpl extends AbstractHeap {
     @Nonnull
     private final AtomicReferenceArray<InstanceObject> instanceObjects;
     @Nonnull
@@ -31,7 +34,7 @@ public class HeapVolImpl extends AbstractHeap{
 
     @Nonnull
     @Override
-    InstanceObject getInstanceObjectInternal(int objectIndex) {
+    protected InstanceObject getInstanceObjectInternal(int objectIndex) {
         return instanceObjects.get(objectIndex);
     }
 
@@ -41,7 +44,7 @@ public class HeapVolImpl extends AbstractHeap{
     }
 
     @Override
-    int addInstanceObjectInternal(@Nonnull InstanceObject object) {
+    protected int addInstanceObjectInternal(@Nonnull InstanceObject object) {
         incrementInstanceObjectSize();
         while (instanceObjects.get(objectIndex) != null) {
             incrementObjectIndex();
@@ -53,7 +56,7 @@ public class HeapVolImpl extends AbstractHeap{
     }
 
     @Override
-    void setInstanceObjectInternal(int objectIndex, @Nonnull InstanceObject object) {
+    protected void setInstanceObjectInternal(int objectIndex, @Nonnull InstanceObject object) {
         instanceObjects.set(objectIndex, object);
     }
 

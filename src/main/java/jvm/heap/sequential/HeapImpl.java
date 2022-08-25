@@ -1,6 +1,9 @@
-package jvm.heap;
+package jvm.heap.sequential;
 
 import jvm.garbage_collector.GarbageCollector;
+import jvm.heap.AbstractHeap;
+import jvm.heap.api.InstanceKlass;
+import jvm.heap.api.InstanceObject;
 import jvm.lang.OutOfMemoryErrorJVM;
 
 import javax.annotation.Nonnull;
@@ -27,7 +30,7 @@ public class HeapImpl extends AbstractHeap {
 
     @Nonnull
     @Override
-    InstanceObject getInstanceObjectInternal(int objectIndex) {
+    public InstanceObject getInstanceObjectInternal(int objectIndex) {
         return instanceObjects[objectIndex];
     }
 
@@ -37,7 +40,7 @@ public class HeapImpl extends AbstractHeap {
     }
 
     @Override
-    int addInstanceObjectInternal(@Nonnull InstanceObject object) {
+    public int addInstanceObjectInternal(@Nonnull InstanceObject object) {
         incrementInstanceObjectSize();
         while (instanceObjects[objectIndex] != null) {
             incrementObjectIndex();
@@ -49,7 +52,7 @@ public class HeapImpl extends AbstractHeap {
     }
 
     @Override
-    void setInstanceObjectInternal(int objectIndex, @Nonnull InstanceObject object) {
+    protected void setInstanceObjectInternal(int objectIndex, @Nonnull InstanceObject object) {
         instanceObjects[objectIndex] = object;
     }
 

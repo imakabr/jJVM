@@ -3,7 +3,7 @@ package jvm.garbage_collector;
 import jvm.JVMType;
 import jvm.VirtualMachine;
 import jvm.engine.StackFrame;
-import jvm.heap.Heap;
+import jvm.heap.api.Heap;
 import jvm.parser.Method;
 import org.junit.Test;
 

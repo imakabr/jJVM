@@ -1,6 +1,9 @@
-package jvm.heap;
+package jvm.heap.sequential;
 
 import jvm.JVMType;
+import jvm.heap.AbstractInstanceObject;
+import jvm.heap.api.Heap;
+import jvm.heap.api.InstanceObject;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

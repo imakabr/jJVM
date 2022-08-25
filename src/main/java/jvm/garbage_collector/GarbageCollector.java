@@ -1,6 +1,6 @@
 package jvm.garbage_collector;
 
-import jvm.heap.Heap;
+import jvm.heap.api.Heap;
 
 import javax.annotation.Nonnull;
 

@@ -3,6 +3,10 @@ package jvm.heap;
 import jvm.engine.ExecutionEngine;
 import jvm.Utils;
 import jvm.engine.StackFrame;
+import jvm.heap.api.Heap;
+import jvm.heap.api.InstanceKlass;
+import jvm.heap.api.InstanceObject;
+import jvm.heap.sequential.InstanceKlassImpl;
 import jvm.lang.ObjectJVM;
 import jvm.parser.Method;
 import jvm.parser.Klass;
@@ -135,7 +139,7 @@ public class KlassLoader {
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
                 ? parentKlass.getObjectRef() : -1, object);
 
-        InstanceKlass instanceKlass = new InstanceKlass(
+        InstanceKlass instanceKlass = new InstanceKlassImpl(
                 object.getIndexByFieldNameFromStaticContent(constantPoolKlass.getKlassName(), parentKlass), objectRef, constantPoolKlass);
         setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 

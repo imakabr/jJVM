@@ -1,25 +1,33 @@
-package jvm.heap;
+package jvm.heap.sequential;
 
 import jvm.parser.Klass;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 
-public class InstanceKlass {
+import static java.util.Objects.requireNonNull;
+
+public class InstanceKlassImpl implements jvm.heap.api.InstanceKlass {
     private final int objectReference;
     //fields
+    @Nonnull
     private final Map<String, Integer> indexByFieldName;
     //methods
+    @Nullable
     private Map<String, Integer> indexByMethodName;
     //virtual method table
+    @Nullable
     private int[] virtualMethodTable;
+    @Nonnull
     private final Map<String, Integer> indexByVirtualMethodName;
 
-    private int parentIndex;
+    @Nonnull
     private final Klass cpKlass;
+    @Nonnull
     private final String name;
 
-    public InstanceKlass(@Nonnull Map<String, Integer> indexByFieldName, int objectReference, @Nonnull Klass cpKlass) {
+    public InstanceKlassImpl(@Nonnull Map<String, Integer> indexByFieldName, int objectReference, @Nonnull Klass cpKlass) {
         this.name = cpKlass.getKlassName();
         this.objectReference = objectReference;
         this.cpKlass = cpKlass;
@@ -27,10 +35,11 @@ public class InstanceKlass {
         this.indexByFieldName = indexByFieldName;
     }
 
+    @Nonnull
     public Map<String, Integer> getVirtualMethods() {
         Map<String, Integer> result = new HashMap<>();
         for (Map.Entry<String, Integer> entry : indexByVirtualMethodName.entrySet()) {
-            result.put(entry.getKey(), virtualMethodTable[entry.getValue()]);
+            result.put(entry.getKey(), requireNonNull(virtualMethodTable)[entry.getValue()]);
         }
         return result;
     }
@@ -40,19 +49,21 @@ public class InstanceKlass {
         return indexByFieldName;
     }
 
+    @Nonnull
     public String getName() {
         return name;
     }
 
-    public int getIndexByMethodName(String methodName) {
-        return indexByMethodName.get(methodName);
+    public int getIndexByMethodName(@Nonnull String methodName) {
+        return requireNonNull(indexByMethodName).get(methodName);
     }
 
+    @Nonnull
     public Map<String, Integer> getAllIndexesByMethodName() {
-        return indexByMethodName;
+        return requireNonNull(indexByMethodName);
     }
 
-    public void setAllIndexesByMethodName(Map<String, Integer> indexByFieldName) {
+    public void setAllIndexesByMethodName(@Nonnull Map<String, Integer> indexByFieldName) {
         this.indexByMethodName = indexByFieldName;
     }
 
@@ -60,27 +71,28 @@ public class InstanceKlass {
         return objectReference;
     }
 
+    @Nonnull
     public Klass getCpKlass() {
         return cpKlass;
     }
 
-    public void setIndexByVirtualMethodName(String name, int index) {
+    public void setIndexByVirtualMethodName(@Nonnull String name, int index) {
         indexByVirtualMethodName.put(name, index);
     }
 
-    public int getIndexByFieldName(String name) {
+    public int getIndexByFieldName(@Nonnull String name) {
         return indexByFieldName.get(name);
     }
 
-    public final void setVirtualMethodTable(int[] virtualMethodTable) {
+    public final void setVirtualMethodTable(@Nonnull int[] virtualMethodTable) {
         this.virtualMethodTable = virtualMethodTable;
     }
 
     public int getMethodIndex(int virtualMethodIndex) {
-        return virtualMethodTable[virtualMethodIndex];
+        return requireNonNull(virtualMethodTable)[virtualMethodIndex];
     }
 
-    public int getIndexByVirtualMethodName(String methodName) {
+    public int getIndexByVirtualMethodName(@Nonnull String methodName) {
         return indexByVirtualMethodName.get(methodName);
     }
 
