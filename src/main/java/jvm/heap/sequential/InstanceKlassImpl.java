@@ -9,16 +9,14 @@ import java.util.*;
 import static java.util.Objects.requireNonNull;
 
 public class InstanceKlassImpl implements jvm.heap.api.InstanceKlass {
+
     private final int objectReference;
-    //fields
     @Nonnull
-    private final Map<String, Integer> indexByFieldName;
-    //methods
+    private final Map<String, Integer> indexByFieldName; //fields
     @Nullable
-    private Map<String, Integer> indexByMethodName;
-    //virtual method table
+    private Map<String, Integer> indexByMethodName; //methods
     @Nullable
-    private int[] virtualMethodTable;
+    private int[] virtualMethodTable; //virtual method table
     @Nonnull
     private final Map<String, Integer> indexByVirtualMethodName;
 
