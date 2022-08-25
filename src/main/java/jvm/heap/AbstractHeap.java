@@ -4,6 +4,7 @@ import jvm.garbage_collector.GarbageCollector;
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceObject;
 import jvm.heap.api.ReferenceTable;
+import jvm.heap.concurrent.ReferenceTableVolImpl;
 import jvm.heap.sequential.ReferenceTableImpl;
 
 import javax.annotation.Nonnull;
@@ -25,9 +26,9 @@ public abstract class AbstractHeap implements Heap {
     private final Set<Integer> cachedStringRefs; // objRef from pool of Strings
     private boolean enabledCacheString = true;
 
-    public AbstractHeap(@Nonnull GarbageCollector collector, int instancesSize) {
+    public AbstractHeap(@Nonnull GarbageCollector collector, int instancesSize, boolean heapMonitor) {
         this.collector = collector;
-        this.refTable = new ReferenceTableImpl(instancesSize);
+        this.refTable = heapMonitor ? new ReferenceTableVolImpl(instancesSize) : new ReferenceTableImpl(instancesSize);
         this.methodRepo = new MethodRepo();
         this.poolOfStrings = new HashMap<>();
         this.cachedStringRefs = new HashSet<>();

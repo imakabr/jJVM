@@ -22,7 +22,7 @@ public class HeapVolImpl extends AbstractHeap {
     private int objectIndex = 0;
 
     public HeapVolImpl(@Nonnull GarbageCollector collector, int instancesSize, int klassesSize) {
-        super(collector, instancesSize);
+        super(collector, instancesSize, true);
         this.instanceObjects = new AtomicReferenceArray<>(instancesSize);
         this.instanceKlasses = new AtomicReferenceArray<>(klassesSize);
     }

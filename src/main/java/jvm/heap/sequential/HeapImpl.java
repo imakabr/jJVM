@@ -18,7 +18,7 @@ public class HeapImpl extends AbstractHeap {
     private int objectIndex;
 
     public HeapImpl(@Nonnull GarbageCollector collector, int instancesSize, int klassesSize) {
-        super(collector, instancesSize);
+        super(collector, instancesSize, false);
         this.instanceObjects = new InstanceObject[instancesSize];
         this.instanceKlasses = new InstanceKlass[klassesSize];
     }

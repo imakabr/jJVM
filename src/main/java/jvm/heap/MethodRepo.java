@@ -11,7 +11,7 @@ public class MethodRepo {
     private int count;
 
     public MethodRepo() {
-        this.methodTable = new Method[500];
+        this.methodTable = new Method[10000];
         this.indexByName = new HashMap<>();
     }
 
