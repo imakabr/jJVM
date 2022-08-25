@@ -3,6 +3,8 @@ package jvm.heap;
 import jvm.garbage_collector.GarbageCollector;
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceObject;
+import jvm.heap.api.ReferenceTable;
+import jvm.heap.sequential.ReferenceTableImpl;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -25,7 +27,7 @@ public abstract class AbstractHeap implements Heap {
 
     public AbstractHeap(@Nonnull GarbageCollector collector, int instancesSize) {
         this.collector = collector;
-        this.refTable = new ReferenceTable(instancesSize);
+        this.refTable = new ReferenceTableImpl(instancesSize);
         this.methodRepo = new MethodRepo();
         this.poolOfStrings = new HashMap<>();
         this.cachedStringRefs = new HashSet<>();

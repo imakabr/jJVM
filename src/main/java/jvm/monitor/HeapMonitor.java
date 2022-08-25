@@ -4,7 +4,7 @@ import jvm.JVMType;
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceKlass;
 import jvm.heap.api.InstanceObject;
-import jvm.heap.ReferenceTable;
+import jvm.heap.api.ReferenceTable;
 import processing.core.PApplet;
 
 import javax.annotation.Nonnull;

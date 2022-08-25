@@ -1,12 +1,15 @@
-package jvm.heap;
+package jvm.heap.sequential;
+
+import jvm.heap.api.ReferenceTable;
 
 import java.util.Arrays;
 
-public class ReferenceTable {
+public class ReferenceTableImpl implements ReferenceTable {
+
     private final int[] instanceTable;
     private int pointer;
 
-    public ReferenceTable(int size) {
+    public ReferenceTableImpl(int size) {
         this.instanceTable = new int[size];
         Arrays.fill(instanceTable, -1);
     }
