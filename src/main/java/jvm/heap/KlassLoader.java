@@ -18,7 +18,7 @@ import java.util.*;
 
 import static jvm.Utils.changeSystemKlassNameToJVMKlassName;
 import static jvm.Utils.changeJVMKlassNameToSystemKlassName;
-import static jvm.heap.AbstractInstanceObject.valueOf;
+import static jvm.heap.InstanceObjectFactory.getInstanceObject;
 
 public class KlassLoader {
 
@@ -131,7 +131,7 @@ public class KlassLoader {
     private Method prepareKlass(@Nonnull Klass constantPoolKlass) {
         Integer parentKlassIndex = getInstanceKlassIndexByName(constantPoolKlass.getParent(), false);
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
-        InstanceObject object = valueOf(parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) ?
+        InstanceObject object = InstanceObjectFactory.getInstanceObject(parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) ?
                 heap.getInstanceObject(parentKlass.getObjectRef()) : null,
                 constantPoolKlass.getKlassName(),
                 heap, constantPoolKlass.getStaticFieldNames(), -1);

@@ -23,7 +23,6 @@ public abstract class AbstractInstanceObject implements InstanceObject {
     private JVMType valueType;
     @Nonnull
     private final Heap heap;
-    private static boolean heapMonitor;
 
     public AbstractInstanceObject(@Nullable String staticContentKlassName, @Nonnull Heap heap, int klassIndex) {
         this.heap = heap;
@@ -37,34 +36,6 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         this.array = true;
         this.valueType = getValueType(valueType);
         this.arrayType = arrayType;
-    }
-
-
-    public static void setHeapMonitor(boolean heapMonitor) {
-        AbstractInstanceObject.heapMonitor = true;
-    }
-
-    @Nonnull
-    public static InstanceObject valueOf(@Nullable InstanceObject objectFromStaticContent,
-                                         @Nullable String staticContentKlassName,
-                                         @Nonnull Heap heap,
-                                         @Nonnull List<String> fields,
-                                         int klassIndex) {
-        return heapMonitor ? new InstanceObjectImpl(objectFromStaticContent, staticContentKlassName, heap, fields, klassIndex) : null;
-    }
-
-    @Nonnull
-    public static InstanceObject valueOf(@Nonnull Heap heap,
-                                         @Nonnull String arrayType,
-                                         @Nonnull String valueType,
-                                         int size,
-                                         int klassIndex) {
-        return heapMonitor ? new InstanceObjectImpl(heap, arrayType, valueType, size, klassIndex) : null;
-    }
-
-    @Nonnull
-    public static InstanceObject valueOf(@Nonnull Heap heap, @Nonnull List<String> fields, int klassIndex) {
-        return heapMonitor ? new InstanceObjectImpl(heap, fields, klassIndex) : null;
     }
 
     @Nonnull

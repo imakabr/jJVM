@@ -2,7 +2,6 @@ package jvm.engine;
 
 import jvm.JVMType;
 import jvm.Utils;
-import jvm.heap.*;
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceKlass;
 import jvm.heap.api.InstanceObject;
@@ -18,6 +17,7 @@ import java.net.Socket;
 import java.util.*;
 
 import static jvm.engine.Opcode.*;
+import static jvm.heap.InstanceObjectFactory.getInstanceObject;
 import static jvm.heap.KlassLoader.*;
 
 public final class ExecutionEngine {
@@ -1158,7 +1158,7 @@ public final class ExecutionEngine {
             fields.addAll(klasses.get(i).getObjectFieldNames());
         }
 
-        return AbstractInstanceObject.valueOf(heap, fields, indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName));
+        return getInstanceObject(heap, fields, indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName));
     }
 
 
@@ -1168,7 +1168,7 @@ public final class ExecutionEngine {
             String klassName = arrayType.substring(arrayType.indexOf('L') + 1, arrayType.length() - 1);
             klassIndex = indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName);
         }
-        return heap.getObjectRef(AbstractInstanceObject.valueOf(heap, arrayType, valueType, count, klassIndex));
+        return heap.getObjectRef(getInstanceObject(heap, arrayType, valueType, count, klassIndex));
     }
 
     private int allocateArrayOfRef(String sourceKlassName, int cpIndex, int count) {
@@ -1183,7 +1183,7 @@ public final class ExecutionEngine {
     }
 
     private InstanceObject createArrayOfRef(String arrayType, int count, int klassIndex) {
-        return AbstractInstanceObject.valueOf(heap, arrayType, JVMType.A.name(), count, klassIndex);
+        return getInstanceObject(heap, arrayType, JVMType.A.name(), count, klassIndex);
     }
 
     public void setExceptionDebugMode(boolean exceptionDebugMode) {
