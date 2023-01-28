@@ -2,6 +2,7 @@ package jvm.heap;
 
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceObject;
+import jvm.heap.concurrent.InstanceObjectVolImpl;
 import jvm.heap.sequential.InstanceObjectImpl;
 
 import javax.annotation.Nonnull;
@@ -13,7 +14,7 @@ public class InstanceObjectFactory {
     private static boolean heapMonitor;
 
     public static void setHeapMonitor(boolean heapMonitor) {
-        InstanceObjectFactory.heapMonitor = true;
+        InstanceObjectFactory.heapMonitor = heapMonitor;
     }
 
     @Nonnull
@@ -22,7 +23,8 @@ public class InstanceObjectFactory {
                                                    @Nonnull Heap heap,
                                                    @Nonnull List<String> fields,
                                                    int klassIndex) {
-        return heapMonitor ? new InstanceObjectImpl(objectFromStaticContent, staticContentKlassName, heap, fields, klassIndex) : null;
+        return heapMonitor ? new InstanceObjectVolImpl(objectFromStaticContent, staticContentKlassName, heap, fields, klassIndex)
+                : new InstanceObjectImpl(objectFromStaticContent, staticContentKlassName, heap, fields, klassIndex);
     }
 
     @Nonnull
@@ -31,11 +33,13 @@ public class InstanceObjectFactory {
                                                    @Nonnull String valueType,
                                                    int size,
                                                    int klassIndex) {
-        return heapMonitor ? new InstanceObjectImpl(heap, arrayType, valueType, size, klassIndex) : null;
+        return heapMonitor ? new InstanceObjectVolImpl(heap, arrayType, valueType, size, klassIndex)
+                : new InstanceObjectImpl(heap, arrayType, valueType, size, klassIndex);
     }
 
     @Nonnull
     public static InstanceObject getInstanceObject(@Nonnull Heap heap, @Nonnull List<String> fields, int klassIndex) {
-        return heapMonitor ? new InstanceObjectImpl(heap, fields, klassIndex) : null;
+        return heapMonitor ? new InstanceObjectVolImpl(heap, fields, klassIndex)
+                : new InstanceObjectImpl(heap, fields, klassIndex);
     }
 }
