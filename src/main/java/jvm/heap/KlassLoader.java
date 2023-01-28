@@ -6,7 +6,6 @@ import jvm.engine.StackFrame;
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceKlass;
 import jvm.heap.api.InstanceObject;
-import jvm.heap.sequential.InstanceKlassImpl;
 import jvm.lang.ObjectJVM;
 import jvm.parser.Method;
 import jvm.parser.Klass;
@@ -18,7 +17,8 @@ import java.util.*;
 
 import static jvm.Utils.changeSystemKlassNameToJVMKlassName;
 import static jvm.Utils.changeJVMKlassNameToSystemKlassName;
-import static jvm.heap.InstanceObjectFactory.getInstanceObject;
+import static jvm.heap.InstanceFactory.getInstanceKlass;
+import static jvm.heap.InstanceFactory.getInstanceObject;
 
 public class KlassLoader {
 
@@ -131,7 +131,7 @@ public class KlassLoader {
     private Method prepareKlass(@Nonnull Klass constantPoolKlass) {
         Integer parentKlassIndex = getInstanceKlassIndexByName(constantPoolKlass.getParent(), false);
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
-        InstanceObject object = InstanceObjectFactory.getInstanceObject(parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) ?
+        InstanceObject object = getInstanceObject(parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) ?
                 heap.getInstanceObject(parentKlass.getObjectRef()) : null,
                 constantPoolKlass.getKlassName(),
                 heap, constantPoolKlass.getStaticFieldNames(), -1);
@@ -139,7 +139,7 @@ public class KlassLoader {
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
                 ? parentKlass.getObjectRef() : -1, object);
 
-        InstanceKlass instanceKlass = new InstanceKlassImpl(
+        InstanceKlass instanceKlass = getInstanceKlass(
                 object.getIndexByFieldNameFromStaticContent(constantPoolKlass.getKlassName(), parentKlass), objectRef, constantPoolKlass);
         setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 

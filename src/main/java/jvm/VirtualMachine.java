@@ -28,7 +28,7 @@ public class VirtualMachine {
         this.heapMonitor = heapMonitor;
         this.heap = heapMonitor ? new HeapVolImpl(collector, instancesSize, klassesSize) :
                 new HeapImpl(collector, instancesSize, klassesSize);
-        InstanceObjectFactory.setHeapMonitor(heapMonitor);
+        InstanceFactory.setHeapMonitor(heapMonitor);
         this.collector.setHeap(heap);
         this.engine = new ExecutionEngine(heap, stackFrame);
         this.klassLoader = heap.getKlassLoader();

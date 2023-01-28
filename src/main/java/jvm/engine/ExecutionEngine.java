@@ -17,7 +17,7 @@ import java.net.Socket;
 import java.util.*;
 
 import static jvm.engine.Opcode.*;
-import static jvm.heap.InstanceObjectFactory.getInstanceObject;
+import static jvm.heap.InstanceFactory.getInstanceObject;
 import static jvm.heap.KlassLoader.*;
 
 public final class ExecutionEngine {
