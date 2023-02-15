@@ -55,6 +55,11 @@ public final class ExecutionEngine {
     // VM Options
     private boolean exceptionDebugMode;
 
+    private boolean symbolicRefResolution = true;
+    byte[] byteCode;
+    String klassName;
+    int programCounter;
+
     private static final Map<Integer, Object> nativeObjects = new HashMap<>();
 
     public ExecutionEngine(@Nonnull Heap heap, @Nonnull StackFrame stackFrame) {
@@ -68,12 +73,11 @@ public final class ExecutionEngine {
 
     public long invoke(@Nonnull Method firstMethod) {
 
-        int programCounter = 0;
+        programCounter = 0;
         stackMethod[0] = firstMethod;
-        byte[] byteCode = firstMethod.getBytecode();
-        String klassName = firstMethod.getClassName();
+        byteCode = firstMethod.getBytecode();
+        klassName = firstMethod.getClassName();
 
-        StackFrame stack = this.stack;
         stack.init(firstMethod.getVarSize(), firstMethod.getOperandSize());
         while (true) {
             byte b = byteCode[programCounter++];
@@ -173,22 +177,32 @@ public final class ExecutionEngine {
                     case GETFIELD:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup))); //todo restore index for resolving
+                        fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup)));
+                        if (symbolicRefResolution) {
+                            preserveDirectRefIndex(fieldValueIndex, GETFIELD_QUICK);
+                        }
+                        stack.push(object.getValue(fieldValueIndex));
+                        break;
+                    case GETFIELD_QUICK:
+                        fieldValueIndex = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                         stack.push(object.getValue(fieldValueIndex));
                         break;
                     case GETSTATIC:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        //---------------------------------------------------------------------------------
-
-                        // todo restore indexes for resolving
                         objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup))).getObjectRef();
                         fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, cpLookup));
-
-                        //---------------------------------------------------------------------------------
+                        if (symbolicRefResolution) {
+                            int index = stackMethod[stackMethodPointer].addDirectRef(objectRef, fieldValueIndex);
+                            preserveDirectRefIndex(index, GETSTATIC_QUICK);
+                        }
                         stack.push(heap.getInstanceObject(objectRef).getValue(fieldValueIndex)); // to do deal with type to JVMValue
-
                         break;
-                    //----------------------------------------------------------------------------------------------------------------------
+                    case GETSTATIC_QUICK:
+                        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+                        Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(index);
+                        stack.push(heap.getInstanceObject(directRef.getObjectRef()).getValue(directRef.getIndex()));
+                        break;
                     case CHECKCAST:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                         objectRef = getPureValue(checkValueType(stack.pop(), JVMType.A, op));
@@ -417,7 +431,7 @@ public final class ExecutionEngine {
                          * The const is an immediate signed byte. The local variable at index must contain an int.
                          * The value const is first sign-extended to an int, and then the local variable at index is incremented by that amount.
                          * */
-                        int index = byteCode[programCounter++];
+                        index = byteCode[programCounter++];
                         first = getPureValue(checkValueType(stack.getLocalVar(index), JVMType.I, op));
                         stack.setLocalVar(index, setIntValueType(first + byteCode[programCounter++]));
                         break;
@@ -1188,6 +1202,13 @@ public final class ExecutionEngine {
 
     public void setExceptionDebugMode(boolean exceptionDebugMode) {
         this.exceptionDebugMode = exceptionDebugMode;
+    }
+
+    private void preserveDirectRefIndex(int index, Opcode opcode) {
+        int counter = programCounter - 3;
+        byteCode[counter++] = opcode.b();
+        byteCode[counter++] = (byte) (index >> 8);
+        byteCode[counter] = (byte) index;
     }
 }
 

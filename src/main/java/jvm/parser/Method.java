@@ -6,6 +6,9 @@ import jvm.engine.Opcode;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static jvm.engine.Opcode.values;
 
 public class Method {
@@ -19,6 +22,7 @@ public class Method {
     private int maxLocal;
     private int argSize = -1;
     private String mnemonics;
+    private final List<DirectRef> directRefList;
 
     public int getOperandSize() {
         return maxStack;
@@ -41,6 +45,7 @@ public class Method {
         this.bytecode = buf;
         this.maxLocal = maxLocal;
         this.mnemonics = getMnemonics(buf);
+        this.directRefList = new ArrayList<>();
     }
 
     @Nonnull
@@ -161,6 +166,33 @@ public class Method {
     @Override
     public String toString() {
         return "Method{" + "className=" + className + ", nameAndType=" + nameAndType + ", bytecode=" + mnemonics + ", signature=" + signature + ", flags=" + flags + ", numParams=" + argSize + '}';
+    }
+
+    public int addDirectRef(int objectRef, int index) {
+        directRefList.add(new DirectRef(objectRef, index));
+        return directRefList.size() - 1;
+    }
+
+    public DirectRef getDirectRef(int index) {
+        return directRefList.get(index);
+    }
+
+    public static class DirectRef {
+        private final int instanceObjectRef;
+        private final int index;
+
+        public DirectRef(int instanceObjectRef, int index) {
+            this.instanceObjectRef = instanceObjectRef;
+            this.index = index;
+        }
+
+        public int getObjectRef() {
+            return instanceObjectRef;
+        }
+
+        public int getIndex() {
+            return index;
+        }
     }
 
 
