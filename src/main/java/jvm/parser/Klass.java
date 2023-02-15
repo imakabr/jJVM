@@ -1,5 +1,7 @@
 package jvm.parser;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,7 +26,7 @@ public final class Klass {
     public Klass() {
     }
 
-    public Klass(String name, String superClassName) {
+    public Klass(@Nonnull String name, @Nonnull String superClassName) {
         setKlassName(name);
         setSuperClassName(superClassName);
     }
@@ -33,27 +35,30 @@ public final class Klass {
         this.items = items;
     }
 
+    @Nonnull
     public ConstantPoolEntry getCPItem(int index) {
         return items[index];
     }
 
-    public void setKlassName(String name) {
+    public void setKlassName(@Nonnull String name) {
         this.name = name;
     }
 
+    @Nonnull
     public String getKlassName() {
         return name;
     }
 
-    public void setSuperClassName(String superClass) {
+    public void setSuperClassName(@Nonnull String superClass) {
         this.superClass = superClass;
     }
 
+    @Nonnull
     public String getParent() {
         return superClass;
     }
 
-    public void addMethod(Method m) {
+    public void addMethod(@Nonnull Method m) {
         methodByName.put(m.getNameAndType(), m);
     }
 
@@ -63,15 +68,16 @@ public final class Klass {
         }
     }
 
-    public void addCPMethodRef(short index, String methodName) {
+    public void addCPMethodRef(short index, @Nonnull String methodName) {
         methodNameByCPIndex.put(index, methodName);
     }
 
-    public void addCPKlassRef(short index, String methodName) {
+    public void addCPKlassRef(short index, @Nonnull String methodName) {
         klassNameByCPIndex.put(index, methodName);
     }
 
-    public Method getMethodByName(String nameAndType) {
+    @Nullable
+    public Method getMethodByName(@Nonnull String nameAndType) {
         return methodByName.get(nameAndType);
     }
 
@@ -87,10 +93,12 @@ public final class Klass {
         return staticFields.stream().map(Field::getName).collect(Collectors.toList());
     }
 
+    @Nonnull
     public String getMethodNameByCPIndex(short cpIndex) {
         return methodNameByCPIndex.get(cpIndex);
     }
 
+    @Nonnull
     public String getKlassNameByCPIndex(short cpIndex) {
         return klassNameByCPIndex.get(cpIndex);
     }
@@ -103,10 +111,11 @@ public final class Klass {
         }
     }
 
-    public void addCPFieldRef(short index, String name) {
+    public void addCPFieldRef(short index, @Nonnull String name) {
         fieldNameByCPIndex.put(index, name);
     }
 
+    @Nonnull
     public String getFieldByCPIndex(short cpIndex) {
         return fieldNameByCPIndex.get(cpIndex);
     }

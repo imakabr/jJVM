@@ -2,6 +2,7 @@ package jvm.parser;
 
 import jvm.JVMType;
 
+import javax.annotation.Nonnull;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -277,6 +278,7 @@ public final class KlassParser {
         return items[i - 1]; // CP is 1-based
     }
 
+    @Nonnull
     public String resolveAsString(int i) {
         final ConstantPoolEntry top = items[i - 1];
 

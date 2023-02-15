@@ -103,9 +103,10 @@ public class KlassLoader {
         byte[] klassData = Utils.getClassFileData(name);
         Klass constantPoolKlass = new KlassParser(klassData, name).getKlass();
         setConstantPoolKlassByName(constantPoolKlass.getKlassName(), constantPoolKlass);
-        if (!JAVA_LANG_OBJECT.equals(constantPoolKlass.getParent())) {
-            loadCurrentKlass(changeSystemKlassNameToJVMKlassName(constantPoolKlass.getParent()));
+        if (JAVA_LANG_OBJECT.equals(constantPoolKlass.getParent()) || loadedKlasses.containsKey(constantPoolKlass.getParent())) {
+            return;
         }
+        loadCurrentKlass(changeSystemKlassNameToJVMKlassName(constantPoolKlass.getParent()));
     }
 
     private List<Method> prepareCurrentAndInheritedKlasses(Klass constantPoolKlass) {

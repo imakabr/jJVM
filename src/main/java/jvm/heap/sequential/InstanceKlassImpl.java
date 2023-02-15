@@ -1,5 +1,6 @@
 package jvm.heap.sequential;
 
+import jvm.heap.api.InstanceKlass;
 import jvm.parser.Klass;
 
 import javax.annotation.Nonnull;
@@ -8,7 +9,7 @@ import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 
-public class InstanceKlassImpl implements jvm.heap.api.InstanceKlass {
+public class InstanceKlassImpl implements InstanceKlass {
 
     private final int objectReference;
     @Nonnull
