@@ -192,10 +192,7 @@ public final class ExecutionEngine {
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                         objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup))).getObjectRef();
                         fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, cpLookup));
-                        if (symbolicRefResolution) {
-                            int index = stackMethod[stackMethodPointer].addDirectRef(objectRef, fieldValueIndex);
-                            preserveDirectRefIndex(index, GETSTATIC_QUICK);
-                        }
+                        preserveDirectRefIndexIfNeeded(objectRef, fieldValueIndex, GETSTATIC_QUICK);
                         stack.push(heap.getInstanceObject(objectRef).getValue(fieldValueIndex)); // to do deal with type to JVMValue
                         break;
                     case GETSTATIC_QUICK:
@@ -469,16 +466,7 @@ public final class ExecutionEngine {
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                         methodIndex = getMethodIndex(klassName, cpLookup); // todo restore to resolution
                         method = heap.getMethodRepo().getMethod(methodIndex);
-                        if (!method.isNative()) {
-                            byteCode = method.getBytecode();
-                            klassName = method.getClassName();
-                            stackMethod[++stackMethodPointer] = method;
-                            stack.programCounter = programCounter;
-                            programCounter = 0;
-                            stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
-                        } else {
-                            invokeNativeMethod(stack, method, stackMethod, stackMethodPointer, op);
-                        }
+                        handleMethod(method, op);
                         break;
                     case INVOKESTATIC:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -492,29 +480,12 @@ public final class ExecutionEngine {
                         stack.initNewMethodStack(method.getArgSize(), method.getVarSize(), method.getOperandSize());
                         break;
                     case INVOKEVIRTUAL:
-                        cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        reference = stack.getObjectRefBeforeInvoke(getArgSize(klassName, cpLookup));
-                        objectRef = getPureValue(checkValueType(reference, JVMType.A, op));
-                        if (objectRef == NULL) {
-                            throw new NullPointerExceptionJVM();
-                        }
-                        int klassIndex = heap.getInstanceObject(objectRef).getKlassIndex();
-                        int virtualMethodIndex = getVirtualMethodIndex(klassName, cpLookup, klassIndex); // todo restore to resolution
-                        methodIndex = heap.getInstanceKlass(klassIndex).getMethodIndex(virtualMethodIndex);
-
-                        method = heap.getMethodRepo().getMethod(methodIndex);
-                        if (!method.isNative()) {
-                            byteCode = method.getBytecode();
-                            klassName = method.getClassName();
-                            stackMethod[++stackMethodPointer] = method;
-                            stack.programCounter = programCounter;
-                            programCounter = 0;
-                            stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
-                        } else {
-                            invokeNativeMethod(stack, method, stackMethod, stackMethodPointer, op);
-                        }
+                        invokeVirtual(false, op);
                         break;
                     //------------------------------------------------------------------------------------------------------------------------------------------
+                    case INVOKEVIRTUAL_QUICK:
+                        invokeVirtual(true, op);
+                        break;
                     case IOR:
                         first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
@@ -1210,5 +1181,64 @@ public final class ExecutionEngine {
         byteCode[counter++] = (byte) (index >> 8);
         byteCode[counter] = (byte) index;
     }
+
+    private void invokeVirtual(boolean quick, @Nonnull Opcode op) {
+        int index;
+        int argSize;
+        if (quick) {
+            int directRefIndex = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+            Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(directRefIndex);
+            index = directRef.getIndex();
+            argSize = directRef.getObjectRef();
+        } else {
+            index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+            argSize = getArgSize(klassName, index);
+        }
+        long reference = stack.getObjectRefBeforeInvoke(argSize);
+        int objectRef = getPureValue(checkValueType(reference, JVMType.A, op));
+        int klassIndex = heap.getInstanceObject(checkNotNull(objectRef)).getKlassIndex();
+        int virtualMethodIndex;
+        if (quick) {
+            virtualMethodIndex = index;
+        } else {
+            virtualMethodIndex = getVirtualMethodIndex(klassName, index, klassIndex);
+            preserveDirectRefIndexIfNeeded(argSize, virtualMethodIndex, INVOKEVIRTUAL_QUICK);
+        }
+        int methodIndex = heap.getInstanceKlass(klassIndex).getMethodIndex(virtualMethodIndex);
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        handleMethod(method, op);
+    }
+
+    private void preserveDirectRefIndexIfNeeded(int objectRef, int index, @Nonnull Opcode opcode) {
+        if (symbolicRefResolution) {
+            int directRefIndex = stackMethod[stackMethodPointer].addDirectRef(objectRef, index);
+            preserveDirectRefIndex(directRefIndex, opcode);
+        }
+    }
+
+    private void handleMethod(@Nonnull Method method, @Nonnull Opcode op) {
+        if (!method.isNative()) {
+            initNewMethod(method);
+        } else {
+            invokeNativeMethod(stack, method, stackMethod, stackMethodPointer, op);
+        }
+    }
+
+    private void initNewMethod(@Nonnull Method method) {
+        byteCode = method.getBytecode();
+        klassName = method.getClassName();
+        stackMethod[++stackMethodPointer] = method;
+        stack.programCounter = programCounter;
+        programCounter = 0;
+        stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
+    }
+
+    private int checkNotNull(int objectRef) {
+        if (objectRef == NULL) {
+            throw new NullPointerExceptionJVM();
+        }
+        return objectRef;
+    }
+
 }
 
