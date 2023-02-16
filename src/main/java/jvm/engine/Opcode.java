@@ -127,7 +127,7 @@ public enum Opcode {
 //    LDC_W_QUICK = 204;
 //    LDC2_W_QUICK = 205;
     GETFIELD_QUICK(0xce, 2),
-//    PUTFIELD_QUICK = 207;
+    PUTFIELD_QUICK(0xcf, 2),
 //    GETFIELD2_QUICK = 208;
 //    PUTFIELD2_QUICK = 209;
     GETSTATIC_QUICK(0xd2, 6),

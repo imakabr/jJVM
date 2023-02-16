@@ -178,10 +178,8 @@ public final class ExecutionEngine {
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
                         fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup)));
-                        if (symbolicRefResolution) {
-                            preserveDirectRefIndex(fieldValueIndex, GETFIELD_QUICK);
-                        }
                         stack.push(object.getValue(fieldValueIndex));
+                        preserveDirectRefIndexIfNeeded(fieldValueIndex, GETFIELD_QUICK);
                         break;
                     case GETFIELD_QUICK:
                         fieldValueIndex = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -676,12 +674,10 @@ public final class ExecutionEngine {
                         break;
                     //--------------------------------------------------------------------------------------------------------------------------------------
                     case PUTFIELD:
-                        cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-
-                        value = stack.pop();
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup))); //todo restore index for resolving
-                        object.setValue(fieldValueIndex, value);
+                        putField(false, op);
+                        break;
+                    case PUTFIELD_QUICK:
+                        putField(true, op);
                         break;
                     case PUTSTATIC:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -1209,10 +1205,30 @@ public final class ExecutionEngine {
         handleMethod(method, op);
     }
 
+    private void putField(boolean quick, @Nonnull Opcode op) {
+        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+        long value = stack.pop();
+        InstanceObject object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
+        int fieldValueIndex;
+        if (quick) {
+            fieldValueIndex = index;
+        } else {
+            fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, index)));
+            preserveDirectRefIndexIfNeeded(fieldValueIndex, PUTFIELD_QUICK);
+        }
+        object.setValue(fieldValueIndex, value);
+    }
+
     private void preserveDirectRefIndexIfNeeded(int objectRef, int index, @Nonnull Opcode opcode) {
         if (symbolicRefResolution) {
             int directRefIndex = stackMethod[stackMethodPointer].addDirectRef(objectRef, index);
             preserveDirectRefIndex(directRefIndex, opcode);
+        }
+    }
+
+    private void preserveDirectRefIndexIfNeeded(int index, @Nonnull Opcode opcode) {
+        if (symbolicRefResolution) {
+            preserveDirectRefIndex(index, opcode);
         }
     }
 
