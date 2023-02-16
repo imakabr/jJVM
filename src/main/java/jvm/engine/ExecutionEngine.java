@@ -16,6 +16,8 @@ import java.io.*;
 import java.net.Socket;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 import static jvm.engine.Opcode.*;
 import static jvm.heap.InstanceFactory.getInstanceObject;
@@ -299,122 +301,53 @@ public final class ExecutionEngine {
                         }, op);
                         break;
                     case IF_ACMPNE:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        if (getPureValue(checkValueType(stack.pop(), JVMType.A, op))
-                                != getPureValue(checkValueType(stack.pop(), JVMType.A, op))) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.A, op);
                         break;
                     case IF_ACMPEQ:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        if (getPureValue(checkValueType(stack.pop(), JVMType.A, op))
-                                == getPureValue(checkValueType(stack.pop(), JVMType.A, op))) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.A, op);
                         break;
                     case IF_ICMPEQ:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        if (getPureValue(checkValueType(stack.pop(), JVMType.I, op))
-                                == getPureValue(checkValueType(stack.pop(), JVMType.I, op))) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.I, op);
                         break;
                     case IF_ICMPNE:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        if (getPureValue(checkValueType(stack.pop(), JVMType.I, op))
-                                != getPureValue(checkValueType(stack.pop(), JVMType.I, op))) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.I, op);
                         break;
                     case IF_ICMPLT:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (second < first) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare((firstVal, secondVal) -> secondVal < firstVal, JVMType.I, op);
                         break;
                     case IF_ICMPGT:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (second > first) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare((firstVal, secondVal) -> secondVal > firstVal, JVMType.I, op);
                         break;
                     case IF_ICMPGE:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (second >= first) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare((firstVal, secondVal) -> secondVal >= firstVal, JVMType.I, op);
                         break;
                     case IF_ICMPLE:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (second <= first) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare((firstVal, secondVal) -> secondVal <= firstVal, JVMType.I, op);
                         break;
                     case IFEQ:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (first == 0) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare(val -> val == 0, JVMType.I, op);
                         break;
                     case IFGE:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (first >= 0) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare(val -> val >= 0, JVMType.I, op);
                         break;
                     case IFGT:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (first > 0) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare(val -> val > 0, JVMType.I, op);
                         break;
                     case IFLE:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (first <= 0) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare(val -> val <= 0, JVMType.I, op);
                         break;
                     case IFLT:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (first < 0) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare(val -> val < 0, JVMType.I, op);
                         break;
                     case IFNE:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (first != 0) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare(val -> val != 0, JVMType.I, op);
                         break;
-
-                    //---------------------------------------------------------------------------------------------------------------------------
                     case IFNONNULL:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        if (getPureValue(checkValueType(stack.pop(), JVMType.A, op)) != 0) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare(val -> val != 0, JVMType.A, op);
                         break;
                     case IFNULL:
-                        jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        if (getPureValue(checkValueType(stack.pop(), JVMType.A, op)) == 0) {
-                            programCounter += jumpTo - 3;
-                        }
+                        compare(val -> val == 0, JVMType.A, op);
                         break;
-                    //--------------------------------------------------------------------------------------------------------------------------------
                     case IINC:
                         /*
                          *The index is an unsigned byte that must be an index into the local variable array of the current frame.
@@ -473,7 +406,6 @@ public final class ExecutionEngine {
                     case INVOKEVIRTUAL:
                         invokeVirtual(false, op);
                         break;
-                    //------------------------------------------------------------------------------------------------------------------------------------------
                     case INVOKEVIRTUAL_QUICK:
                         invokeVirtual(true, op);
                         break;
@@ -512,16 +444,11 @@ public final class ExecutionEngine {
                         stack.setLocalVar(3, stack.pop());
                         break;
                     case ISUB:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        stack.push(setIntValueType(second - first));
+                        evaluate((firstVal, secondVal) -> secondVal - firstVal, op);
                         break;
-
-                    //--------------------------------------------------------------------------------------------------------------------------------------
                     case MONITORENTER:
                     case MONITOREXIT:
                         break;
-                    //--------------------------------------------------------------------------------------------------------------------------------------
                     case NEW:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                         stack.push(setRefValueType(allocateInstanceObjectAndGetReference(klassName, cpLookup)));
@@ -1212,6 +1139,23 @@ public final class ExecutionEngine {
         int first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
         int second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
         stack.push(setIntValueType(operation.apply(first, second)));
+    }
+
+    private void compare(@Nonnull Predicate<Integer> predicate, @Nonnull JVMType type, @Nonnull Opcode op) {
+        int jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+        int first = getPureValue(checkValueType(stack.pop(), type, op));
+        if (predicate.test(first)) {
+            programCounter += jumpTo - 3;
+        }
+    }
+
+    private void compare(@Nonnull BiPredicate<Integer, Integer> predicate, @Nonnull JVMType type, @Nonnull Opcode op) {
+        int jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+        int first = getPureValue(checkValueType(stack.pop(), type, op));
+        int second = getPureValue(checkValueType(stack.pop(), type, op));
+        if (predicate.test(first, second)) {
+            programCounter += jumpTo - 3;
+        }
     }
 
     private void preserveDirectRefIndexIfNeeded(int objectRef, int index, @Nonnull Opcode opcode) {
