@@ -15,6 +15,7 @@ import javax.annotation.Nullable;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
+import java.util.function.BiFunction;
 
 import static jvm.engine.Opcode.*;
 import static jvm.heap.InstanceFactory.getInstanceObject;
@@ -257,24 +258,16 @@ public final class ExecutionEngine {
                         stack.push(instanceOf ? setIntValueType(1) : setIntValueType(0));
                         break;
                     case ISHL:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        stack.push(setIntValueType(second << first));
+                        evaluate((firstVal, secondVal) -> secondVal << firstVal, op);
                         break;
                     case ISHR:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        stack.push(setIntValueType(second >> first));
+                        evaluate((firstVal, secondVal) -> secondVal >> firstVal, op);
                         break;
                     case IUSHR:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        stack.push(setIntValueType(second >>> first));
+                        evaluate((firstVal, secondVal) -> secondVal >>> firstVal, op);
                         break;
                     case IXOR:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        stack.push(setIntValueType(~second));
+                        evaluate((firstVal, secondVal) -> ~secondVal, op);
                         break;
                     case ICONST_0:
                         stack.push(setIntValueType(0));
@@ -298,10 +291,12 @@ public final class ExecutionEngine {
                         stack.push(setIntValueType(-1));
                         break;
                     case IDIV:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        if (first == 0) throw new ArithmeticException("cannot divide 0");
-                        stack.push(setIntValueType(second / first));
+                        evaluate((firstVal, secondVal) -> {
+                            if (firstVal == 0) {
+                                throw new ArithmeticException("cannot divide 0");
+                            }
+                            return secondVal / firstVal;
+                        }, op);
                         break;
                     case IF_ACMPNE:
                         jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -451,9 +446,7 @@ public final class ExecutionEngine {
                         stack.push(stack.getLocalVar(3));
                         break;
                     case IMUL:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        stack.push(setIntValueType(first * second));
+                        evaluate((firstVal, secondVal) -> firstVal * secondVal, op);
                         break;
                     case INEG:
                         first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
@@ -485,14 +478,10 @@ public final class ExecutionEngine {
                         invokeVirtual(true, op);
                         break;
                     case IOR:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        stack.push(setIntValueType(first | second));
+                        evaluate((firstVal, secondVal) -> firstVal | secondVal, op);
                         break;
                     case IREM:
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        stack.push(setIntValueType(second % first));
+                        evaluate((firstVal, secondVal) -> secondVal % firstVal, op);
                         break;
 //                    ----------------------------------------------------------------------------------------------------------------------------------
                     case IRETURN: //return type boolean, byte, short, char, or int.
@@ -1217,6 +1206,12 @@ public final class ExecutionEngine {
             preserveDirectRefIndexIfNeeded(fieldValueIndex, PUTFIELD_QUICK);
         }
         object.setValue(fieldValueIndex, value);
+    }
+
+    private void evaluate(@Nonnull BiFunction<Integer, Integer, Integer> operation, @Nonnull Opcode op) {
+        int first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+        int second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+        stack.push(setIntValueType(operation.apply(first, second)));
     }
 
     private void preserveDirectRefIndexIfNeeded(int objectRef, int index, @Nonnull Opcode opcode) {
