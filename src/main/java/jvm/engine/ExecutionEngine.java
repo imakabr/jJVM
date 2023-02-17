@@ -95,11 +95,9 @@ public final class ExecutionEngine {
                         + "\n"
                         + getStackTrace(null, true));
             }
-            int jumpTo;
 
             InstanceObject object;
             Method method;
-            long reference;
             long value;
             int first;
             int second;
@@ -115,24 +113,19 @@ public final class ExecutionEngine {
                         break;
                     case ALOAD:
                         // The objectref in the local variable at index is pushed onto the operand stack
-                        reference = stack.getLocalVar(byteCode[programCounter++]);
-                        stack.push(reference);
+                        load(byteCode[programCounter++]);
                         break;
                     case ALOAD_0:
-                        reference = stack.getLocalVar(0);
-                        stack.push(reference);
+                        load(0);
                         break;
                     case ALOAD_1:
-                        reference = stack.getLocalVar(1);
-                        stack.push(reference);
+                        load(1);
                         break;
                     case ALOAD_2:
-                        reference = stack.getLocalVar(2);
-                        stack.push(reference);
+                        load(2);
                         break;
                     case ALOAD_3:
-                        reference = stack.getLocalVar(3);
-                        stack.push(reference);
+                        load(3);
                         break;
                     case ARETURN:
                         if (stack.invokeCount == 0) {
@@ -146,24 +139,19 @@ public final class ExecutionEngine {
                         programCounter = stack.programCounter;
                         break;
                     case ASTORE:
-                        reference = checkValueType(stack.pop(), JVMType.A, op);
-                        stack.setLocalVar(byteCode[programCounter++], reference);
+                        store(byteCode[programCounter++], op);
                         break;
                     case ASTORE_0:
-                        reference = checkValueType(stack.pop(), JVMType.A, op);
-                        stack.setLocalVar(0, reference);
+                        store(0, op);
                         break;
                     case ASTORE_1:
-                        reference = checkValueType(stack.pop(), JVMType.A, op);
-                        stack.setLocalVar(1, reference);
+                        store(1, op);
                         break;
                     case ASTORE_2:
-                        reference = checkValueType(stack.pop(), JVMType.A, op);
-                        stack.setLocalVar(2, reference);
+                        store(2, op);
                         break;
                     case ASTORE_3:
-                        reference = checkValueType(stack.pop(), JVMType.A, op);
-                        stack.setLocalVar(3, reference);
+                        store(3, op);
                         break;
                     case BIPUSH:
                         //The immediate byte is sign-extended to an int value. That value is pushed onto the operand stack.
@@ -234,12 +222,6 @@ public final class ExecutionEngine {
                     case GOTO:
                         programCounter += (byteCode[programCounter] << 8) + (byteCode[programCounter + 1] & 0xff) - 1;
                         break;
-                    case IADD:
-                        stack.push(setIntValueType(getPureValue(stack.pop()) + getPureValue(stack.pop())));
-                        break;
-                    case IAND:
-                        stack.push(setIntValueType(getPureValue(stack.pop()) & getPureValue(stack.pop())));
-                        break;
                     case INSTANCEOF:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
                         String className = heap.getKlassLoader().getLoadedKlassByName(klassName).getKlassNameByCPIndex((short) cpLookup);
@@ -259,6 +241,12 @@ public final class ExecutionEngine {
                         }
                         stack.push(instanceOf ? setIntValueType(1) : setIntValueType(0));
                         break;
+                    case IADD:
+                        stack.push(setIntValueType(getPureValue(stack.pop()) + getPureValue(stack.pop())));
+                        break;
+                    case IAND:
+                        stack.push(setIntValueType(getPureValue(stack.pop()) & getPureValue(stack.pop())));
+                        break;
                     case ISHL:
                         evaluate((firstVal, secondVal) -> secondVal << firstVal, op);
                         break;
@@ -270,6 +258,26 @@ public final class ExecutionEngine {
                         break;
                     case IXOR:
                         evaluate((firstVal, secondVal) -> ~secondVal, op);
+                        break;
+                    case IDIV:
+                        evaluate((firstVal, secondVal) -> {
+                            if (firstVal == 0) {
+                                throw new ArithmeticException("cannot divide 0");
+                            }
+                            return secondVal / firstVal;
+                        }, op);
+                        break;
+                    case IMUL:
+                        evaluate((firstVal, secondVal) -> firstVal * secondVal, op);
+                        break;
+                    case ISUB:
+                        evaluate((firstVal, secondVal) -> secondVal - firstVal, op);
+                        break;
+                    case IOR:
+                        evaluate((firstVal, secondVal) -> firstVal | secondVal, op);
+                        break;
+                    case IREM:
+                        evaluate((firstVal, secondVal) -> secondVal % firstVal, op);
                         break;
                     case ICONST_0:
                         stack.push(setIntValueType(0));
@@ -291,14 +299,6 @@ public final class ExecutionEngine {
                         break;
                     case ICONST_M1:
                         stack.push(setIntValueType(-1));
-                        break;
-                    case IDIV:
-                        evaluate((firstVal, secondVal) -> {
-                            if (firstVal == 0) {
-                                throw new ArithmeticException("cannot divide 0");
-                            }
-                            return secondVal / firstVal;
-                        }, op);
                         break;
                     case IF_ACMPNE:
                         compare((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.A, op);
@@ -378,9 +378,6 @@ public final class ExecutionEngine {
                     case ILOAD_3:
                         stack.push(stack.getLocalVar(3));
                         break;
-                    case IMUL:
-                        evaluate((firstVal, secondVal) -> firstVal * secondVal, op);
-                        break;
                     case INEG:
                         first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         stack.push(setIntValueType(-first));
@@ -409,12 +406,6 @@ public final class ExecutionEngine {
                     case INVOKEVIRTUAL_QUICK:
                         invokeVirtual(true, op);
                         break;
-                    case IOR:
-                        evaluate((firstVal, secondVal) -> firstVal | secondVal, op);
-                        break;
-                    case IREM:
-                        evaluate((firstVal, secondVal) -> secondVal % firstVal, op);
-                        break;
 //                    ----------------------------------------------------------------------------------------------------------------------------------
                     case IRETURN: //return type boolean, byte, short, char, or int.
                         if (stack.invokeCount == 0) {
@@ -442,9 +433,6 @@ public final class ExecutionEngine {
                         break;
                     case ISTORE_3:
                         stack.setLocalVar(3, stack.pop());
-                        break;
-                    case ISUB:
-                        evaluate((firstVal, secondVal) -> secondVal - firstVal, op);
                         break;
                     case MONITORENTER:
                     case MONITOREXIT:
@@ -1156,6 +1144,16 @@ public final class ExecutionEngine {
         if (predicate.test(first, second)) {
             programCounter += jumpTo - 3;
         }
+    }
+
+    private void load(int index) {
+        long reference = stack.getLocalVar(index);
+        stack.push(reference);
+    }
+
+    private void store(int index, @Nonnull Opcode opcode) {
+        long reference = checkValueType(stack.pop(), JVMType.A, opcode);
+        stack.setLocalVar(index, reference);
     }
 
     private void preserveDirectRefIndexIfNeeded(int objectRef, int index, @Nonnull Opcode opcode) {
