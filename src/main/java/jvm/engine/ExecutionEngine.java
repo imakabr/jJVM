@@ -17,6 +17,7 @@ import java.net.Socket;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static jvm.engine.Opcode.*;
@@ -477,20 +478,14 @@ public final class ExecutionEngine {
                         break;
                     case ARRAYLENGTH:
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
+                        checkArrayObject(object, op);
                         stack.push(setIntValueType(object.size()));
                         break;
                     case AALOAD:
-                        index = getPureValue(stack.pop());
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                        stack.push(checkValueType(object.getValue(index), JVMType.A, op));
+                        loadFromArray(val -> checkValueType(val, JVMType.A, op), op);
                         break;
                     case IALOAD:
-                        index = getPureValue(stack.pop());
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                        stack.push(checkValueType(object.getValue(index), JVMType.I, op));
+                        loadFromArray(val -> checkValueType(val, JVMType.I, op), op);
                         break;
                     case BALOAD:
                         /*
@@ -498,10 +493,7 @@ public final class ExecutionEngine {
                          * The index must be of type int. Both arrayref and index are popped from the operand stack.
                          * The byte value in the component of the array at index is retrieved, sign-extended to an int value, and pushed onto the top of the operand stack.
                          */
-                        index = getPureValue(stack.pop());
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                        stack.push(setIntValueType(getPureValue(checkByteOrBooleanValueType(object.getValue(index)))));
+                        loadFromArray(val -> setIntValueType(getPureValue(checkByteOrBooleanValueType(val))), op);
                         break;
                     case CALOAD:
                         /*
@@ -509,10 +501,7 @@ public final class ExecutionEngine {
                          * The index must be of type int. Both arrayref and index are popped from the operand stack.
                          * The component of the array at index is retrieved and zero-extended to an int value. That value is pushed onto the operand stack.
                          */
-                        index = getPureValue(stack.pop());
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
-                        stack.push(setIntValueType(getPureValue(checkValueType(object.getValue(index), JVMType.C, op))));
+                        loadFromArray(val -> setIntValueType(getPureValue(checkValueType(val, JVMType.C, op))), op);
                         break;
                     case AASTORE:
                         /*
@@ -523,7 +512,7 @@ public final class ExecutionEngine {
                         value = checkValueType(stack.pop(), JVMType.A, op);
                         index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
+                        checkArrayObject(object, op);
                         object.setValue(index, value);
                         break;
                     case IASTORE:
@@ -535,7 +524,7 @@ public final class ExecutionEngine {
                         value = checkValueType(stack.pop(), JVMType.I, op);
                         index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
+                        checkArrayObject(object, op);
                         object.setValue(index, value);
                         break;
                     case BASTORE:
@@ -547,7 +536,7 @@ public final class ExecutionEngine {
                         first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
+                        checkArrayObject(object, op);
                         JVMType type = object.getValueType();
                         if (type == JVMType.Z || type == JVMType.B) {
                             object.setValue(index, setValueType(first, type));
@@ -564,7 +553,7 @@ public final class ExecutionEngine {
                         first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, stackMethod, stackMethodPointer, op);
+                        checkArrayObject(object, op);
                         object.setValue(index, setCharValueType(first));
                         break;
                     //--------------------------------------------------------------------------------------------------------------------------------------
@@ -864,7 +853,7 @@ public final class ExecutionEngine {
         throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(value)] + " is not equal " + "byte or boolean");
     }
 
-    private void checkArrayObject(@Nonnull InstanceObject object, @Nonnull Method[] stackMethod, int pointer, @Nullable Opcode opcode) {
+    private void checkArrayObject(@Nonnull InstanceObject object, @Nullable Opcode opcode) {
         if (!object.isArray()) {
             throw new RuntimeException("Object is not array\n" + getStackTrace(opcode, false));
         }
@@ -1154,6 +1143,13 @@ public final class ExecutionEngine {
     private void store(int index, @Nonnull Opcode opcode) {
         long reference = checkValueType(stack.pop(), JVMType.A, opcode);
         stack.setLocalVar(index, reference);
+    }
+
+    private void loadFromArray(@Nonnull Function<Long, Long> function, @Nonnull Opcode op) {
+        int index = getPureValue(stack.pop());
+        InstanceObject object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
+        checkArrayObject(object, op);
+        stack.push(function.apply(object.getValue(index)));
     }
 
     private void preserveDirectRefIndexIfNeeded(int objectRef, int index, @Nonnull Opcode opcode) {
