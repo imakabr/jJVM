@@ -60,9 +60,9 @@ public final class ExecutionEngine {
     private boolean exceptionDebugMode;
 
     private boolean symbolicRefResolution = true;
-    byte[] byteCode;
-    String klassName;
-    int programCounter;
+    private byte[] byteCode;
+    private String klassName;
+    private int programCounter;
 
     private static final Map<Integer, Object> nativeObjects = new HashMap<>();
 
@@ -81,8 +81,8 @@ public final class ExecutionEngine {
         stackMethod[0] = firstMethod;
         byteCode = firstMethod.getBytecode();
         klassName = firstMethod.getClassName();
-
         stack.init(firstMethod.getVarSize(), firstMethod.getOperandSize());
+
         while (true) {
             byte b = byteCode[programCounter++];
             Opcode op = table[b & 0xff];
@@ -99,9 +99,7 @@ public final class ExecutionEngine {
 
             InstanceObject object;
             Method method;
-            long value;
             int first;
-            int second;
             int cpLookup;
             int objectRef;
             int fieldValueIndex;
@@ -509,11 +507,7 @@ public final class ExecutionEngine {
                          * The index must be of type int and value must be of type reference. The arrayref, index, and value are popped from the operand stack.
                          * The reference value is stored as the component of the array at index.
                          */
-                        value = checkValueType(stack.pop(), JVMType.A, op);
-                        index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, op);
-                        object.setValue(index, value);
+                        storeToArray((val, obj) -> val, JVMType.A, op);
                         break;
                     case IASTORE:
                         /*
@@ -521,11 +515,7 @@ public final class ExecutionEngine {
                          * Both index and value must be of type int. The arrayref, index, and value are popped from the operand stack.
                          * The int value is stored as the component of the array indexed by index.
                          */
-                        value = checkValueType(stack.pop(), JVMType.I, op);
-                        index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, op);
-                        object.setValue(index, value);
+                        storeToArray((val, obj) -> val, JVMType.I, op);
                         break;
                     case BASTORE:
                         /*
@@ -533,16 +523,14 @@ public final class ExecutionEngine {
                          * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                          * The int value is truncated to a byte and stored as the component of the array indexed by index.
                          */
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, op);
-                        JVMType type = object.getValueType();
-                        if (type == JVMType.Z || type == JVMType.B) {
-                            object.setValue(index, setValueType(first, type));
-                        } else {
-                            throw new RuntimeException("Wrong type of array\n" + getStackTrace(op, false));
-                        }
+                        storeToArray((val, obj) -> {
+                            JVMType type = obj.getValueType();
+                            if (type == JVMType.Z || type == JVMType.B) {
+                                return setValueType(getPureValue(val), type);
+                            } else {
+                                throw new RuntimeException("Wrong type of array\n" + getStackTrace(op, false));
+                            }
+                        }, JVMType.I, op);
                         break;
                     case CASTORE:
                         /*
@@ -550,11 +538,7 @@ public final class ExecutionEngine {
                          * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                          * The int value is truncated to a char and stored as the component of the array indexed by index.
                          */
-                        first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        checkArrayObject(object, op);
-                        object.setValue(index, setCharValueType(first));
+                        storeToArray((val, obj) -> setCharValueType(getPureValue(val)), JVMType.I, op);
                         break;
                     //--------------------------------------------------------------------------------------------------------------------------------------
                     case NOP:
@@ -601,10 +585,10 @@ public final class ExecutionEngine {
                         stack.push(setIntValueType(((int) (byteCode[programCounter++]) << 8) + (byteCode[programCounter++] & 0xff)));
                         break;
                     case SWAP:
-                        first = (int) stack.pop();
-                        second = (int) stack.pop();
-                        stack.push(first);
-                        stack.push(second);
+                        long firstVal = stack.pop();
+                        long secondVal = stack.pop();
+                        stack.push(firstVal);
+                        stack.push(secondVal);
                         break;
                     //-------------------------------------------------------------------------------------------------------------------------------------
                     case LDC:
@@ -1150,6 +1134,14 @@ public final class ExecutionEngine {
         InstanceObject object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
         checkArrayObject(object, op);
         stack.push(function.apply(object.getValue(index)));
+    }
+
+    private void storeToArray(@Nonnull BiFunction<Long, InstanceObject, Long> function ,@Nonnull JVMType type, @Nonnull Opcode op) {
+        long value = checkValueType(stack.pop(), type, op);
+        int index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
+        InstanceObject object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
+        checkArrayObject(object, op);
+        object.setValue(index, function.apply(value, object));
     }
 
     private void preserveDirectRefIndexIfNeeded(int objectRef, int index, @Nonnull Opcode opcode) {
