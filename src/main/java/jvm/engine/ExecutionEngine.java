@@ -15,10 +15,7 @@ import javax.annotation.Nullable;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 import static jvm.engine.Opcode.*;
 import static jvm.heap.InstanceFactory.getInstanceObject;
@@ -163,18 +160,11 @@ public final class ExecutionEngine {
                     case DUP_X1:
                         stack.dupX1();
                         break;
-                    //------------------------------------------------------------------------------------------------------------------------
                     case GETFIELD:
-                        cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, cpLookup)));
-                        stack.push(object.getValue(fieldValueIndex));
-                        preserveDirectRefIndexIfNeeded(fieldValueIndex, GETFIELD_QUICK);
+                        getField(false, op);
                         break;
                     case GETFIELD_QUICK:
-                        fieldValueIndex = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
-                        stack.push(object.getValue(fieldValueIndex));
+                        getField(true, op);
                         break;
                     case GETSTATIC:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -1083,17 +1073,25 @@ public final class ExecutionEngine {
     }
 
     private void putField(boolean quick, @Nonnull Opcode op) {
-        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
         long value = stack.pop();
+        handleField((object, fieldValueIndex) -> object.setValue(fieldValueIndex, value), PUTFIELD_QUICK, quick, op);
+    }
+
+    private void getField(boolean quick, @Nonnull Opcode op) {
+        handleField((object, fieldValueIndex) -> stack.push(object.getValue(fieldValueIndex)), GETFIELD_QUICK, quick, op);
+    }
+
+    private void handleField(BiConsumer<InstanceObject, Integer> consumer, @Nonnull Opcode opcode, boolean quick, @Nonnull Opcode op) {
+        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
         InstanceObject object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
         int fieldValueIndex;
         if (quick) {
             fieldValueIndex = index;
         } else {
             fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(klassName, index)));
-            preserveDirectRefIndexIfNeeded(fieldValueIndex, PUTFIELD_QUICK);
+            preserveDirectRefIndexIfNeeded(fieldValueIndex, opcode);
         }
-        object.setValue(fieldValueIndex, value);
+        consumer.accept(object, fieldValueIndex);
     }
 
     private void evaluate(@Nonnull BiFunction<Integer, Integer, Integer> operation, @Nonnull Opcode op) {
@@ -1136,7 +1134,7 @@ public final class ExecutionEngine {
         stack.push(function.apply(object.getValue(index)));
     }
 
-    private void storeToArray(@Nonnull BiFunction<Long, InstanceObject, Long> function ,@Nonnull JVMType type, @Nonnull Opcode op) {
+    private void storeToArray(@Nonnull BiFunction<Long, InstanceObject, Long> function, @Nonnull JVMType type, @Nonnull Opcode op) {
         long value = checkValueType(stack.pop(), type, op);
         int index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
         InstanceObject object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
