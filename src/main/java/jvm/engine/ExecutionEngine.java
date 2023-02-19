@@ -99,7 +99,6 @@ public final class ExecutionEngine {
             int first;
             int cpLookup;
             int objectRef;
-            int methodIndex;
             try {
                 switch (op) {
                     case ACONST_NULL:
@@ -377,21 +376,16 @@ public final class ExecutionEngine {
                         stack.push(setIntValueType(-first));
                         break;
                     case INVOKESPECIAL:
-                        invokeSpecialMethod(false, op);
+                        invokeNonVirtualMethod(false, false, op);
                         break;
                     case INVOKESPECIAL_QUICK:
-                        invokeSpecialMethod(true, op);
+                        invokeNonVirtualMethod(true, false, op);
                         break;
                     case INVOKESTATIC:
-                        cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        methodIndex = getStaticMethodIndex(klassName, cpLookup); // todo restore to resolution
-                        method = heap.getMethodRepo().getMethod(methodIndex);
-                        byteCode = method.getBytecode();
-                        klassName = method.getClassName();
-                        stackMethod[++stackMethodPointer] = method;
-                        stack.programCounter = programCounter;
-                        programCounter = 0;
-                        stack.initNewMethodStack(method.getArgSize(), method.getVarSize(), method.getOperandSize());
+                        invokeNonVirtualMethod(false, true, op);
+                        break;
+                    case INVOKESTATIC_QUICK:
+                        invokeNonVirtualMethod(true, true, op);
                         break;
                     case INVOKEVIRTUAL:
                         invokeVirtualMethod(false, op);
@@ -797,7 +791,7 @@ public final class ExecutionEngine {
                     + " is not equal "
                     + type.name()
                     + "\n"
-                    + getStackTrace(opcode, false));
+                    + getStackTrace(opcode,  false));
         }
         return value;
     }
@@ -849,30 +843,30 @@ public final class ExecutionEngine {
         return (int) value;
     }
 
-    private String getName(String fullName) {
+    private String getName(@Nonnull String fullName) {
         return fullName.substring(fullName.indexOf(".") + 1);
     }
 
-    private String getFieldName(String klassFieldName) {
+    private String getFieldName(@Nonnull String klassFieldName) {
         return getName(klassFieldName);
     }
 
-    private String getMethodName(String klassMethodName) {
+    private String getMethodName(@Nonnull String klassMethodName) {
         return getName(klassMethodName);
     }
 
-    private String getKlassName(String fullName) {
+    private String getKlassName(@Nonnull String fullName) {
         return fullName.substring(0, fullName.indexOf("."));
     }
 
-    private int getStaticFieldIndex(String klassFieldName) {
-        return heap.getInstanceKlass(getInstanceKlassIndex(klassFieldName))
+    private int getStaticFieldIndex(@Nonnull String klassFieldName) {
+        return heap.getInstanceKlass(getInstanceKlassIndexByFullName(klassFieldName))
                 .getIndexByFieldName(getFieldName(klassFieldName));
     }
 
-    private int getInstanceKlassIndex(@Nonnull String fullName) {
+    private int getInstanceKlassIndexByFullName(@Nonnull String fullName) {
         String klassName = getKlassName(fullName);
-        return indexNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(klassName, true), klassName);
+        return getInstanceKlassIndexByKlassName(klassName);
     }
 
     private int getInstanceKlassIndexByKlassName(@Nonnull String klassName) {
@@ -891,30 +885,31 @@ public final class ExecutionEngine {
         return loadedKlass.getFieldByCPIndex((short) cpLookup);
     }
 
-    private int getMethodIndex(String sourceKlassName, int cpIndex) {
-        Klass klass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
-        String methodName = klass.getMethodNameByCPIndex((short) cpIndex);
-        return heap.getMethodRepo().getIndexByName(methodName);
+    private int getMethodIndex(@Nonnull String sourceKlassName, int cpIndex) {
+        return heap.getMethodRepo().getIndexByName(getKlassMethodName(sourceKlassName, cpIndex));
     }
 
-    private int getStaticMethodIndex(String sourceKlassName, int cpIndex) {
-        Klass klass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
-        String klassMethodName = klass.getMethodNameByCPIndex((short) cpIndex);
-        InstanceKlass instanceKlass = heap.getInstanceKlass(getInstanceKlassIndex(klassMethodName));
+    private int getStaticMethodIndex(@Nonnull String sourceKlassName, int cpIndex) {
+        String klassMethodName = getKlassMethodName(sourceKlassName, cpIndex);
+        InstanceKlass instanceKlass = heap.getInstanceKlass(getInstanceKlassIndexByFullName(klassMethodName));
         return instanceKlass.getIndexByMethodName(getMethodName(klassMethodName));
     }
 
-    private int getVirtualMethodIndex(String sourceKlassName, int cpIndex, int klassIndex) {
-        Klass klass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
-        String fullName = klass.getMethodNameByCPIndex((short) cpIndex);
+    private int getVirtualMethodIndex(@Nonnull String sourceKlassName, int cpIndex, int klassIndex) {
         InstanceKlass instanceKlass = heap.getInstanceKlass(klassIndex);
-        return instanceKlass.getIndexByVirtualMethodName(getMethodName(fullName));
+        return instanceKlass.getIndexByVirtualMethodName(getMethodName(getKlassMethodName(sourceKlassName, cpIndex)));
     }
 
-    private int getArgSize(String sourceKlassName, int cpIndex) {
-        Klass klass = heap.getKlassLoader().getLoadedKlassByName(sourceKlassName);
+    @Nonnull
+    private String getKlassMethodName(@Nonnull String klassName, int cpIndex) {
+        Klass sourceKlass = heap.getKlassLoader().getLoadedKlassByName(klassName);
+        return sourceKlass.getMethodNameByCPIndex((short) cpIndex);
+    }
+
+    private int getArgSize(int cpIndex) {
+        Klass klass = heap.getKlassLoader().getLoadedKlassByName(klassName);
         String fullName = klass.getMethodNameByCPIndex((short) cpIndex);
-        Klass cpKlass = heap.getInstanceKlass(getInstanceKlassIndex(fullName)).getCpKlass();
+        Klass cpKlass = heap.getInstanceKlass(getInstanceKlassIndexByFullName(fullName)).getCpKlass();
         Method method = null;
         String parentName = null;
         while (method == null) {
@@ -1027,16 +1022,16 @@ public final class ExecutionEngine {
         byteCode[counter] = (byte) index;
     }
 
-    private void invokeSpecialMethod(boolean quick, @Nonnull Opcode opcode) {
+    private void invokeNonVirtualMethod(boolean quick, boolean staticMethod, @Nonnull Opcode opcode) {
         int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
         int methodIndex;
         if (quick) {
             methodIndex = index;
         } else {
-            methodIndex = getMethodIndex(klassName, index);
-            preserveDirectRefIndexIfNeeded(methodIndex, INVOKESPECIAL_QUICK);
+            methodIndex = staticMethod ? getStaticMethodIndex(klassName, index) : getMethodIndex(klassName, index);
+            preserveDirectRefIndexIfNeeded(methodIndex, staticMethod ? INVOKESTATIC_QUICK : INVOKESPECIAL_QUICK);
         }
-        handleMethod(heap.getMethodRepo().getMethod(methodIndex), opcode);
+        handleMethod(heap.getMethodRepo().getMethod(methodIndex), staticMethod, opcode);
     }
 
     private void invokeVirtualMethod(boolean quick, @Nonnull Opcode op) {
@@ -1047,7 +1042,7 @@ public final class ExecutionEngine {
             index = directRef.getIndex();
             argSize = directRef.getObjectRef();
         } else {
-            argSize = getArgSize(klassName, index);
+            argSize = getArgSize(index);
         }
         long reference = stack.getObjectRefBeforeInvoke(argSize);
         int objectRef = getPureValue(checkValueType(reference, JVMType.A, op));
@@ -1061,7 +1056,7 @@ public final class ExecutionEngine {
         }
         int methodIndex = heap.getInstanceKlass(klassIndex).getMethodIndex(virtualMethodIndex);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        handleMethod(method, op);
+        handleMethod(method, false, op);
     }
 
     private void pushStaticFieldOntoStackFromInstanceObject(boolean quick) {
@@ -1081,7 +1076,7 @@ public final class ExecutionEngine {
             objectRef = directRef.getObjectRef();
             fieldValueIndex = directRef.getIndex();
         } else {
-            objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, index))).getObjectRef();
+            objectRef = heap.getInstanceKlass(getInstanceKlassIndexByFullName(getKlassFieldName(klassName, index))).getObjectRef();
             fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, index));
             preserveDirectRefIndexIfNeeded(objectRef, fieldValueIndex, opcode);
         }
@@ -1171,21 +1166,21 @@ public final class ExecutionEngine {
         }
     }
 
-    private void handleMethod(@Nonnull Method method, @Nonnull Opcode op) {
+    private void handleMethod(@Nonnull Method method, boolean staticMethod, @Nonnull Opcode op) {
         if (method.isNative()) {
             invokeNativeMethod(stack, method, stackMethod, stackMethodPointer, op);
         } else {
-            initNewMethod(method);
+            initNewMethod(method, staticMethod);
         }
     }
 
-    private void initNewMethod(@Nonnull Method method) {
+    private void initNewMethod(@Nonnull Method method, boolean staticMethod) {
         byteCode = method.getBytecode();
         klassName = method.getClassName();
         stackMethod[++stackMethodPointer] = method;
         stack.programCounter = programCounter;
         programCounter = 0;
-        stack.initNewMethodStack(method.getArgSize() + 1, method.getVarSize(), method.getOperandSize());
+        stack.initNewMethodStack(method.getArgSize() + (staticMethod ? 0 : 1), method.getVarSize(), method.getOperandSize());
     }
 
     private int checkNotNull(int objectRef) {
