@@ -99,7 +99,6 @@ public final class ExecutionEngine {
             int first;
             int cpLookup;
             int objectRef;
-            int fieldValueIndex;
             int methodIndex;
             try {
                 switch (op) {
@@ -167,16 +166,22 @@ public final class ExecutionEngine {
                         pushFieldOntoStackFromInstanceObject(true, op);
                         break;
                     case GETSTATIC:
-                        cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup))).getObjectRef();
-                        fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, cpLookup));
-                        preserveDirectRefIndexIfNeeded(objectRef, fieldValueIndex, GETSTATIC_QUICK);
-                        stack.push(heap.getInstanceObject(objectRef).getValue(fieldValueIndex)); // to do deal with type to JVMValue
+                        pushStaticFieldOntoStackFromInstanceObject(false);
                         break;
                     case GETSTATIC_QUICK:
-                        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(index);
-                        stack.push(heap.getInstanceObject(directRef.getObjectRef()).getValue(directRef.getIndex()));
+                        pushStaticFieldOntoStackFromInstanceObject(true);
+                        break;
+                    case PUTFIELD:
+                        putFieldToInstanceObjectFromStack(false, op);
+                        break;
+                    case PUTFIELD_QUICK:
+                        putFieldToInstanceObjectFromStack(true, op);
+                        break;
+                    case PUTSTATIC:
+                        putStaticFieldToInstanceObjectFromStack(false);
+                        break;
+                    case PUTSTATIC_QUICK:
+                        putStaticFieldToInstanceObjectFromStack(true);
                         break;
                     case CHECKCAST:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -343,7 +348,7 @@ public final class ExecutionEngine {
                          * The const is an immediate signed byte. The local variable at index must contain an int.
                          * The value const is first sign-extended to an int, and then the local variable at index is incremented by that amount.
                          * */
-                        index = byteCode[programCounter++];
+                        int index = byteCode[programCounter++];
                         first = getPureValue(checkValueType(stack.getLocalVar(index), JVMType.I, op));
                         stack.setLocalVar(index, setIntValueType(first + byteCode[programCounter++]));
                         break;
@@ -422,9 +427,6 @@ public final class ExecutionEngine {
                         break;
                     case ISTORE_3:
                         stack.setLocalVar(3, stack.pop());
-                        break;
-                    case MONITORENTER:
-                    case MONITOREXIT:
                         break;
                     case NEW:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -530,33 +532,9 @@ public final class ExecutionEngine {
                          */
                         storeToArrayFromStack((val, obj) -> setCharValueType(getPureValue(val)), JVMType.I, op);
                         break;
-                    //--------------------------------------------------------------------------------------------------------------------------------------
-                    case NOP:
-                        break;
                     case POP:
                         stack.pop();
                         break;
-                    //--------------------------------------------------------------------------------------------------------------------------------------
-                    case POP2:
-                        break;
-                    //--------------------------------------------------------------------------------------------------------------------------------------
-                    case PUTFIELD:
-                        putFieldToInstanceObjectFromStack(false, op);
-                        break;
-                    case PUTFIELD_QUICK:
-                        putFieldToInstanceObjectFromStack(true, op);
-                        break;
-                    case PUTSTATIC:
-                        cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        //---------------------------------------------------------------------------------
-                        // todo restore indexes for resolving
-                        objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, cpLookup))).getObjectRef();
-                        fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, cpLookup));
-                        //----------------------------------------------------------------------------------
-                        heap.getInstanceObject(objectRef)
-                                .setValue(fieldValueIndex, stack.pop()); // to do create type to JVMValue
-                        break;
-                    //--------------------------------------------------------------------------------------------------------------------------------------
                     case RET:
                         throw new IllegalArgumentException("Illegal opcode byte: " + (b & 0xff) + " encountered at position " + (programCounter - 1) + ". Stopping.");
                     case RETURN:
@@ -594,6 +572,11 @@ public final class ExecutionEngine {
                         }
                         break;
                     //-------------------------------------------------------------------------------------------------------------------------------------
+                    case NOP:
+                    case POP2:
+                    case MONITORENTER:
+                    case MONITOREXIT:
+                        break;
                     case BREAKPOINT:
                     case IMPDEP1:
                     case IMPDEP2:
@@ -1070,6 +1053,30 @@ public final class ExecutionEngine {
         int methodIndex = heap.getInstanceKlass(klassIndex).getMethodIndex(virtualMethodIndex);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         handleMethod(method, op);
+    }
+
+    private void pushStaticFieldOntoStackFromInstanceObject(boolean quick) {
+        handleStaticField((objRef, fieldValInd) -> stack.push(heap.getInstanceObject(objRef).getValue(fieldValInd)), GETSTATIC_QUICK, quick);
+    }
+
+    private void putStaticFieldToInstanceObjectFromStack(boolean quick) {
+        handleStaticField((objRef, fieldValInd) -> heap.getInstanceObject(objRef).setValue(fieldValInd, stack.pop()), PUTSTATIC_QUICK, quick);
+    }
+
+    private void handleStaticField(BiConsumer<Integer, Integer> consumer, @Nonnull Opcode opcode, boolean quick) {
+        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+        int objectRef;
+        int fieldValueIndex;
+        if (quick) {
+            Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(index);
+            objectRef = directRef.getObjectRef();
+            fieldValueIndex = directRef.getIndex();
+        } else {
+            objectRef = heap.getInstanceKlass(getInstanceKlassIndex(getKlassFieldName(klassName, index))).getObjectRef();
+            fieldValueIndex = getStaticFieldIndex(getKlassFieldName(klassName, index));
+            preserveDirectRefIndexIfNeeded(objectRef, fieldValueIndex, opcode);
+        }
+        consumer.accept(objectRef, fieldValueIndex);
     }
 
     private void putFieldToInstanceObjectFromStack(boolean quick, @Nonnull Opcode op) {
