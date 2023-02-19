@@ -173,6 +173,7 @@ public class Method {
         return directRefList.size() - 1;
     }
 
+    @Nonnull
     public DirectRef getDirectRef(int index) {
         return directRefList.get(index);
     }

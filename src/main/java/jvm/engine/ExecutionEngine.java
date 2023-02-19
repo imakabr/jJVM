@@ -376,12 +376,11 @@ public final class ExecutionEngine {
                         first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
                         stack.push(setIntValueType(-first));
                         break;
-                    //------------------------------------------------------------------------------------------------------------------------------------------
                     case INVOKESPECIAL:
-                        cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        methodIndex = getMethodIndex(klassName, cpLookup); // todo restore to resolution
-                        method = heap.getMethodRepo().getMethod(methodIndex);
-                        handleMethod(method, op);
+                        invokeSpecialMethod(false, op);
+                        break;
+                    case INVOKESPECIAL_QUICK:
+                        invokeSpecialMethod(true, op);
                         break;
                     case INVOKESTATIC:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -1021,23 +1020,33 @@ public final class ExecutionEngine {
         this.exceptionDebugMode = exceptionDebugMode;
     }
 
-    private void preserveDirectRefIndex(int index, Opcode opcode) {
+    private void preserveDirectRefIndex(int index, @Nonnull Opcode opcode) {
         int counter = programCounter - 3;
         byteCode[counter++] = opcode.b();
         byteCode[counter++] = (byte) (index >> 8);
         byteCode[counter] = (byte) index;
     }
 
+    private void invokeSpecialMethod(boolean quick, @Nonnull Opcode opcode) {
+        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+        int methodIndex;
+        if (quick) {
+            methodIndex = index;
+        } else {
+            methodIndex = getMethodIndex(klassName, index);
+            preserveDirectRefIndexIfNeeded(methodIndex, INVOKESPECIAL_QUICK);
+        }
+        handleMethod(heap.getMethodRepo().getMethod(methodIndex), opcode);
+    }
+
     private void invokeVirtualMethod(boolean quick, @Nonnull Opcode op) {
-        int index;
+        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
         int argSize;
         if (quick) {
-            int directRefIndex = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-            Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(directRefIndex);
+            Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(index);
             index = directRef.getIndex();
             argSize = directRef.getObjectRef();
         } else {
-            index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
             argSize = getArgSize(klassName, index);
         }
         long reference = stack.getObjectRefBeforeInvoke(argSize);
@@ -1163,10 +1172,10 @@ public final class ExecutionEngine {
     }
 
     private void handleMethod(@Nonnull Method method, @Nonnull Opcode op) {
-        if (!method.isNative()) {
-            initNewMethod(method);
-        } else {
+        if (method.isNative()) {
             invokeNativeMethod(stack, method, stackMethod, stackMethodPointer, op);
+        } else {
+            initNewMethod(method);
         }
     }
 
