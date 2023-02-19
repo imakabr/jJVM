@@ -30,8 +30,8 @@ public class MethodRepo {
     }
 
     @Nonnull
-    public Integer getIndexByName(@Nonnull String methodName) {
-        return indexByName.get(methodName);
+    public Integer getIndexByName(@Nonnull String klassMethodName) {
+        return indexByName.get(klassMethodName);
     }
 
 }

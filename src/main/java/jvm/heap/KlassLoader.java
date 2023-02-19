@@ -61,12 +61,12 @@ public class KlassLoader {
         setConstantPoolKlassByName(object.getKlassName(), object);
     }
 
-    public void setIndexByName(String name, int index) {
+    public void setIndexByName(@Nonnull String name, int index) {
         this.indexByName.put(name, index);
     }
 
     @Nullable
-    public Integer getInstanceKlassIndexByName(String name, boolean loadIfAbsent) {
+    public Integer getInstanceKlassIndexByName(@Nonnull String name, boolean loadIfAbsent) {
         Integer index = indexByName.get(name);
         if (index != null) {
             return index;
