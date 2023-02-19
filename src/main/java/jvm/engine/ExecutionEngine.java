@@ -109,19 +109,19 @@ public final class ExecutionEngine {
                         break;
                     case ALOAD:
                         // The objectref in the local variable at index is pushed onto the operand stack
-                        load(byteCode[programCounter++]);
+                        pushOntoStackFromLocalVar(byteCode[programCounter++]);
                         break;
                     case ALOAD_0:
-                        load(0);
+                        pushOntoStackFromLocalVar(0);
                         break;
                     case ALOAD_1:
-                        load(1);
+                        pushOntoStackFromLocalVar(1);
                         break;
                     case ALOAD_2:
-                        load(2);
+                        pushOntoStackFromLocalVar(2);
                         break;
                     case ALOAD_3:
-                        load(3);
+                        pushOntoStackFromLocalVar(3);
                         break;
                     case ARETURN:
                         if (stack.invokeCount == 0) {
@@ -135,19 +135,19 @@ public final class ExecutionEngine {
                         programCounter = stack.programCounter;
                         break;
                     case ASTORE:
-                        store(byteCode[programCounter++], op);
+                        setLocalVarFromStack(byteCode[programCounter++], op);
                         break;
                     case ASTORE_0:
-                        store(0, op);
+                        setLocalVarFromStack(0, op);
                         break;
                     case ASTORE_1:
-                        store(1, op);
+                        setLocalVarFromStack(1, op);
                         break;
                     case ASTORE_2:
-                        store(2, op);
+                        setLocalVarFromStack(2, op);
                         break;
                     case ASTORE_3:
-                        store(3, op);
+                        setLocalVarFromStack(3, op);
                         break;
                     case BIPUSH:
                         //The immediate byte is sign-extended to an int value. That value is pushed onto the operand stack.
@@ -161,10 +161,10 @@ public final class ExecutionEngine {
                         stack.dupX1();
                         break;
                     case GETFIELD:
-                        getField(false, op);
+                        pushFieldOntoStackFromInstanceObject(false, op);
                         break;
                     case GETFIELD_QUICK:
-                        getField(true, op);
+                        pushFieldOntoStackFromInstanceObject(true, op);
                         break;
                     case GETSTATIC:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -237,19 +237,19 @@ public final class ExecutionEngine {
                         stack.push(setIntValueType(getPureValue(stack.pop()) & getPureValue(stack.pop())));
                         break;
                     case ISHL:
-                        evaluate((firstVal, secondVal) -> secondVal << firstVal, op);
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> secondVal << firstVal, op);
                         break;
                     case ISHR:
-                        evaluate((firstVal, secondVal) -> secondVal >> firstVal, op);
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> secondVal >> firstVal, op);
                         break;
                     case IUSHR:
-                        evaluate((firstVal, secondVal) -> secondVal >>> firstVal, op);
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> secondVal >>> firstVal, op);
                         break;
                     case IXOR:
-                        evaluate((firstVal, secondVal) -> ~secondVal, op);
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> ~secondVal, op);
                         break;
                     case IDIV:
-                        evaluate((firstVal, secondVal) -> {
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> {
                             if (firstVal == 0) {
                                 throw new ArithmeticException("cannot divide 0");
                             }
@@ -257,16 +257,16 @@ public final class ExecutionEngine {
                         }, op);
                         break;
                     case IMUL:
-                        evaluate((firstVal, secondVal) -> firstVal * secondVal, op);
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> firstVal * secondVal, op);
                         break;
                     case ISUB:
-                        evaluate((firstVal, secondVal) -> secondVal - firstVal, op);
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> secondVal - firstVal, op);
                         break;
                     case IOR:
-                        evaluate((firstVal, secondVal) -> firstVal | secondVal, op);
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> firstVal | secondVal, op);
                         break;
                     case IREM:
-                        evaluate((firstVal, secondVal) -> secondVal % firstVal, op);
+                        evaluateAndPushBackOntoStack((firstVal, secondVal) -> secondVal % firstVal, op);
                         break;
                     case ICONST_0:
                         stack.push(setIntValueType(0));
@@ -290,52 +290,52 @@ public final class ExecutionEngine {
                         stack.push(setIntValueType(-1));
                         break;
                     case IF_ACMPNE:
-                        compare((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.A, op);
+                        compareValuesFromStack((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.A, op);
                         break;
                     case IF_ACMPEQ:
-                        compare((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.A, op);
+                        compareValuesFromStack((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.A, op);
                         break;
                     case IF_ICMPEQ:
-                        compare((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.I, op);
                         break;
                     case IF_ICMPNE:
-                        compare((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.I, op);
                         break;
                     case IF_ICMPLT:
-                        compare((firstVal, secondVal) -> secondVal < firstVal, JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> secondVal < firstVal, JVMType.I, op);
                         break;
                     case IF_ICMPGT:
-                        compare((firstVal, secondVal) -> secondVal > firstVal, JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> secondVal > firstVal, JVMType.I, op);
                         break;
                     case IF_ICMPGE:
-                        compare((firstVal, secondVal) -> secondVal >= firstVal, JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> secondVal >= firstVal, JVMType.I, op);
                         break;
                     case IF_ICMPLE:
-                        compare((firstVal, secondVal) -> secondVal <= firstVal, JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> secondVal <= firstVal, JVMType.I, op);
                         break;
                     case IFEQ:
-                        compare(val -> val == 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val == 0, JVMType.I, op);
                         break;
                     case IFGE:
-                        compare(val -> val >= 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val >= 0, JVMType.I, op);
                         break;
                     case IFGT:
-                        compare(val -> val > 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val > 0, JVMType.I, op);
                         break;
                     case IFLE:
-                        compare(val -> val <= 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val <= 0, JVMType.I, op);
                         break;
                     case IFLT:
-                        compare(val -> val < 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val < 0, JVMType.I, op);
                         break;
                     case IFNE:
-                        compare(val -> val != 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val != 0, JVMType.I, op);
                         break;
                     case IFNONNULL:
-                        compare(val -> val != 0, JVMType.A, op);
+                        compareValuesFromStack(val -> val != 0, JVMType.A, op);
                         break;
                     case IFNULL:
-                        compare(val -> val == 0, JVMType.A, op);
+                        compareValuesFromStack(val -> val == 0, JVMType.A, op);
                         break;
                     case IINC:
                         /*
@@ -390,10 +390,10 @@ public final class ExecutionEngine {
                         stack.initNewMethodStack(method.getArgSize(), method.getVarSize(), method.getOperandSize());
                         break;
                     case INVOKEVIRTUAL:
-                        invokeVirtual(false, op);
+                        invokeVirtualMethod(false, op);
                         break;
                     case INVOKEVIRTUAL_QUICK:
-                        invokeVirtual(true, op);
+                        invokeVirtualMethod(true, op);
                         break;
 //                    ----------------------------------------------------------------------------------------------------------------------------------
                     case IRETURN: //return type boolean, byte, short, char, or int.
@@ -470,10 +470,10 @@ public final class ExecutionEngine {
                         stack.push(setIntValueType(object.size()));
                         break;
                     case AALOAD:
-                        loadFromArray(val -> checkValueType(val, JVMType.A, op), op);
+                        pushOntoStackFromArray(val -> checkValueType(val, JVMType.A, op), op);
                         break;
                     case IALOAD:
-                        loadFromArray(val -> checkValueType(val, JVMType.I, op), op);
+                        pushOntoStackFromArray(val -> checkValueType(val, JVMType.I, op), op);
                         break;
                     case BALOAD:
                         /*
@@ -481,7 +481,7 @@ public final class ExecutionEngine {
                          * The index must be of type int. Both arrayref and index are popped from the operand stack.
                          * The byte value in the component of the array at index is retrieved, sign-extended to an int value, and pushed onto the top of the operand stack.
                          */
-                        loadFromArray(val -> setIntValueType(getPureValue(checkByteOrBooleanValueType(val))), op);
+                        pushOntoStackFromArray(val -> setIntValueType(getPureValue(checkByteOrBooleanValueType(val))), op);
                         break;
                     case CALOAD:
                         /*
@@ -489,7 +489,7 @@ public final class ExecutionEngine {
                          * The index must be of type int. Both arrayref and index are popped from the operand stack.
                          * The component of the array at index is retrieved and zero-extended to an int value. That value is pushed onto the operand stack.
                          */
-                        loadFromArray(val -> setIntValueType(getPureValue(checkValueType(val, JVMType.C, op))), op);
+                        pushOntoStackFromArray(val -> setIntValueType(getPureValue(checkValueType(val, JVMType.C, op))), op);
                         break;
                     case AASTORE:
                         /*
@@ -497,7 +497,7 @@ public final class ExecutionEngine {
                          * The index must be of type int and value must be of type reference. The arrayref, index, and value are popped from the operand stack.
                          * The reference value is stored as the component of the array at index.
                          */
-                        storeToArray((val, obj) -> val, JVMType.A, op);
+                        storeToArrayFromStack((val, obj) -> val, JVMType.A, op);
                         break;
                     case IASTORE:
                         /*
@@ -505,7 +505,7 @@ public final class ExecutionEngine {
                          * Both index and value must be of type int. The arrayref, index, and value are popped from the operand stack.
                          * The int value is stored as the component of the array indexed by index.
                          */
-                        storeToArray((val, obj) -> val, JVMType.I, op);
+                        storeToArrayFromStack((val, obj) -> val, JVMType.I, op);
                         break;
                     case BASTORE:
                         /*
@@ -513,7 +513,7 @@ public final class ExecutionEngine {
                          * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                          * The int value is truncated to a byte and stored as the component of the array indexed by index.
                          */
-                        storeToArray((val, obj) -> {
+                        storeToArrayFromStack((val, obj) -> {
                             JVMType type = obj.getValueType();
                             if (type == JVMType.Z || type == JVMType.B) {
                                 return setValueType(getPureValue(val), type);
@@ -528,7 +528,7 @@ public final class ExecutionEngine {
                          * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                          * The int value is truncated to a char and stored as the component of the array indexed by index.
                          */
-                        storeToArray((val, obj) -> setCharValueType(getPureValue(val)), JVMType.I, op);
+                        storeToArrayFromStack((val, obj) -> setCharValueType(getPureValue(val)), JVMType.I, op);
                         break;
                     //--------------------------------------------------------------------------------------------------------------------------------------
                     case NOP:
@@ -541,10 +541,10 @@ public final class ExecutionEngine {
                         break;
                     //--------------------------------------------------------------------------------------------------------------------------------------
                     case PUTFIELD:
-                        putField(false, op);
+                        putFieldToInstanceObjectFromStack(false, op);
                         break;
                     case PUTFIELD_QUICK:
-                        putField(true, op);
+                        putFieldToInstanceObjectFromStack(true, op);
                         break;
                     case PUTSTATIC:
                         cpLookup = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
@@ -1045,7 +1045,7 @@ public final class ExecutionEngine {
         byteCode[counter] = (byte) index;
     }
 
-    private void invokeVirtual(boolean quick, @Nonnull Opcode op) {
+    private void invokeVirtualMethod(boolean quick, @Nonnull Opcode op) {
         int index;
         int argSize;
         if (quick) {
@@ -1072,12 +1072,12 @@ public final class ExecutionEngine {
         handleMethod(method, op);
     }
 
-    private void putField(boolean quick, @Nonnull Opcode op) {
+    private void putFieldToInstanceObjectFromStack(boolean quick, @Nonnull Opcode op) {
         long value = stack.pop();
         handleField((object, fieldValueIndex) -> object.setValue(fieldValueIndex, value), PUTFIELD_QUICK, quick, op);
     }
 
-    private void getField(boolean quick, @Nonnull Opcode op) {
+    private void pushFieldOntoStackFromInstanceObject(boolean quick, @Nonnull Opcode op) {
         handleField((object, fieldValueIndex) -> stack.push(object.getValue(fieldValueIndex)), GETFIELD_QUICK, quick, op);
     }
 
@@ -1094,13 +1094,13 @@ public final class ExecutionEngine {
         consumer.accept(object, fieldValueIndex);
     }
 
-    private void evaluate(@Nonnull BiFunction<Integer, Integer, Integer> operation, @Nonnull Opcode op) {
+    private void evaluateAndPushBackOntoStack(@Nonnull BiFunction<Integer, Integer, Integer> operation, @Nonnull Opcode op) {
         int first = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
         int second = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
         stack.push(setIntValueType(operation.apply(first, second)));
     }
 
-    private void compare(@Nonnull Predicate<Integer> predicate, @Nonnull JVMType type, @Nonnull Opcode op) {
+    private void compareValuesFromStack(@Nonnull Predicate<Integer> predicate, @Nonnull JVMType type, @Nonnull Opcode op) {
         int jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
         int first = getPureValue(checkValueType(stack.pop(), type, op));
         if (predicate.test(first)) {
@@ -1108,7 +1108,7 @@ public final class ExecutionEngine {
         }
     }
 
-    private void compare(@Nonnull BiPredicate<Integer, Integer> predicate, @Nonnull JVMType type, @Nonnull Opcode op) {
+    private void compareValuesFromStack(@Nonnull BiPredicate<Integer, Integer> predicate, @Nonnull JVMType type, @Nonnull Opcode op) {
         int jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
         int first = getPureValue(checkValueType(stack.pop(), type, op));
         int second = getPureValue(checkValueType(stack.pop(), type, op));
@@ -1117,24 +1117,24 @@ public final class ExecutionEngine {
         }
     }
 
-    private void load(int index) {
+    private void pushOntoStackFromLocalVar(int index) {
         long reference = stack.getLocalVar(index);
         stack.push(reference);
     }
 
-    private void store(int index, @Nonnull Opcode opcode) {
+    private void setLocalVarFromStack(int index, @Nonnull Opcode opcode) {
         long reference = checkValueType(stack.pop(), JVMType.A, opcode);
         stack.setLocalVar(index, reference);
     }
 
-    private void loadFromArray(@Nonnull Function<Long, Long> function, @Nonnull Opcode op) {
+    private void pushOntoStackFromArray(@Nonnull Function<Long, Long> function, @Nonnull Opcode op) {
         int index = getPureValue(stack.pop());
         InstanceObject object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
         checkArrayObject(object, op);
         stack.push(function.apply(object.getValue(index)));
     }
 
-    private void storeToArray(@Nonnull BiFunction<Long, InstanceObject, Long> function, @Nonnull JVMType type, @Nonnull Opcode op) {
+    private void storeToArrayFromStack(@Nonnull BiFunction<Long, InstanceObject, Long> function, @Nonnull JVMType type, @Nonnull Opcode op) {
         long value = checkValueType(stack.pop(), type, op);
         int index = getPureValue(checkValueType(stack.pop(), JVMType.I, op));
         InstanceObject object = heap.getInstanceObject(getPureValue(checkValueType(stack.pop(), JVMType.A, op)));
