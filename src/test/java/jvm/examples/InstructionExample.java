@@ -23,7 +23,7 @@ public class InstructionExample {
         return s == null;
     }
 
-    private Object getNull() {
+    private static Object getNull() {
         return null;
     }
 

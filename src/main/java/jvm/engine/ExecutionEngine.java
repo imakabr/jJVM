@@ -11,7 +11,6 @@ import jvm.parser.Klass;
 import jvm.parser.ConstantPoolEntry;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -51,39 +50,47 @@ public final class ExecutionEngine {
     private final StackFrame stack;
     @Nonnull
     private final Method[] stackMethod;
-    int stackMethodPointer = 0;
+    private int stackMethodPointer = 0;
+    private byte[] byteCode;
+    private String klassName;
+    private int programCounter;
+    @Nonnull
+    private Opcode currentOpcode;
+    @Nonnull
+    private static final Map<Integer, Object> nativeObjects = new HashMap<>();
 
     // VM Options
     private boolean exceptionDebugMode;
 
     private boolean symbolicRefResolution = true;
-    private byte[] byteCode;
-    private String klassName;
-    private int programCounter;
 
-    private static final Map<Integer, Object> nativeObjects = new HashMap<>();
 
     public ExecutionEngine(@Nonnull Heap heap, @Nonnull StackFrame stackFrame) {
         this.heap = heap;
         this.stack = stackFrame;
         this.stackMethod = new Method[100];
+        this.currentOpcode = NOP;
         for (Opcode op : values()) {
             table[op.getOpcode()] = op;
         }
     }
 
-    public long invoke(@Nonnull Method firstMethod) {
+    private void init(@Nonnull Method method) {
+        this.stackMethod[0] = method;
+        this.byteCode = method.getBytecode();
+        this.klassName = method.getClassName();
+        this.stack.init(method.getVarSize(), method.getOperandSize());
+        this.programCounter = 0;
+        this.currentOpcode = NOP;
+    }
 
-        programCounter = 0;
-        stackMethod[0] = firstMethod;
-        byteCode = firstMethod.getBytecode();
-        klassName = firstMethod.getClassName();
-        stack.init(firstMethod.getVarSize(), firstMethod.getOperandSize());
+    public long invoke(@Nonnull Method method) {
 
+        init(method);
         while (true) {
-            byte b = byteCode[programCounter++];
-            Opcode op = table[b & 0xff];
-            if (op == null) {
+            byte b = readByte();
+            currentOpcode = table[b & 0xff];
+            if (currentOpcode == null) {
                 throw new RuntimeException("Unrecognised opcode byte: "
                         + (b & 0xff)
                         + " encountered at position "
@@ -91,79 +98,78 @@ public final class ExecutionEngine {
                         + ". Stopping."
                         + "\n"
                         + "\n"
-                        + getStackTrace(null, true));
+                        + getStackTrace(true));
             }
 
             InstanceObject object;
             int first;
-            int cpIndex;
             try {
-                switch (op) {
+                switch (currentOpcode) {
                     case ACONST_NULL:
                         // push the null object reference onto the operand stack
                         pushRefValueOntoStack(NULL);
                         break;
                     case ALOAD:
                         // The objectref in the local variable at index is pushed onto the operand stack
-                        pushOntoStackFromLocalVar(byteCode[programCounter++]);
+                        pushRefValueOntoStackFromLocalVar(readByte());
                         break;
                     case ALOAD_0:
-                        pushOntoStackFromLocalVar(0);
+                        pushRefValueOntoStackFromLocalVar(0);
                         break;
                     case ALOAD_1:
-                        pushOntoStackFromLocalVar(1);
+                        pushRefValueOntoStackFromLocalVar(1);
                         break;
                     case ALOAD_2:
-                        pushOntoStackFromLocalVar(2);
+                        pushRefValueOntoStackFromLocalVar(2);
                         break;
                     case ALOAD_3:
-                        pushOntoStackFromLocalVar(3);
+                        pushRefValueOntoStackFromLocalVar(3);
                         break;
                     case ILOAD:
                         //Load int from local variable to the operand stack
-                        stack.push(stack.getLocalVar(byteCode[programCounter++]));
+                        pushIntValueOntoStackFromLocalVar(readByte());
                         break;
                     case ILOAD_0:
-                        pushIntValueOntoStackFromLocalVar(0, op);
+                        pushIntValueOntoStackFromLocalVar(0);
                         break;
                     case ILOAD_1:
-                        pushIntValueOntoStackFromLocalVar(1, op);
+                        pushIntValueOntoStackFromLocalVar(1);
                         break;
                     case ILOAD_2:
-                        pushIntValueOntoStackFromLocalVar(2, op);
+                        pushIntValueOntoStackFromLocalVar(2);
                         break;
                     case ILOAD_3:
-                        pushIntValueOntoStackFromLocalVar(3, op);
+                        pushIntValueOntoStackFromLocalVar(3);
                         break;
                     case ASTORE:
-                        setLocalVarFromStack(byteCode[programCounter++], op);
+                        setLocalRefValueFromStack(readByte());
                         break;
                     case ASTORE_0:
-                        setLocalVarFromStack(0, op);
+                        setLocalRefValueFromStack(0);
                         break;
                     case ASTORE_1:
-                        setLocalVarFromStack(1, op);
+                        setLocalRefValueFromStack(1);
                         break;
                     case ASTORE_2:
-                        setLocalVarFromStack(2, op);
+                        setLocalRefValueFromStack(2);
                         break;
                     case ASTORE_3:
-                        setLocalVarFromStack(3, op);
+                        setLocalRefValueFromStack(3);
                         break;
                     case ISTORE:
-                        stack.setLocalVar(byteCode[programCounter++], stack.pop());
+                        setLocalIntValueFromStack(readByte());
                         break;
                     case ISTORE_0:
-                        stack.setLocalVar(0, stack.pop());
+                        setLocalIntValueFromStack(0);
                         break;
                     case ISTORE_1:
-                        stack.setLocalVar(1, stack.pop());
+                        setLocalIntValueFromStack(1);
                         break;
                     case ISTORE_2:
-                        stack.setLocalVar(2, stack.pop());
+                        setLocalIntValueFromStack(2);
                         break;
                     case ISTORE_3:
-                        stack.setLocalVar(3, stack.pop());
+                        setLocalIntValueFromStack(3);
                         break;
                     case ICONST_0:
                         pushIntValueOntoStack(0);
@@ -188,7 +194,7 @@ public final class ExecutionEngine {
                         break;
                     case BIPUSH:
                         //The immediate byte is sign-extended to an int value. That value is pushed onto the operand stack.
-                        pushIntValueOntoStack(byteCode[programCounter++]);
+                        pushIntValueOntoStack(readByte());
                         break;
                     case DUP:
                         //Duplicate the top operand stack value
@@ -198,10 +204,10 @@ public final class ExecutionEngine {
                         stack.dupX1();
                         break;
                     case GETFIELD:
-                        pushFieldOntoStackFromInstanceObject(false, op);
+                        pushFieldOntoStackFromInstanceObject(false);
                         break;
                     case GETFIELD_QUICK:
-                        pushFieldOntoStackFromInstanceObject(true, op);
+                        pushFieldOntoStackFromInstanceObject(true);
                         break;
                     case GETSTATIC:
                         pushStaticFieldOntoStackFromInstanceObject(false);
@@ -210,10 +216,10 @@ public final class ExecutionEngine {
                         pushStaticFieldOntoStackFromInstanceObject(true);
                         break;
                     case PUTFIELD:
-                        putFieldToInstanceObjectFromStack(false, op);
+                        putFieldToInstanceObjectFromStack(false);
                         break;
                     case PUTFIELD_QUICK:
-                        putFieldToInstanceObjectFromStack(true, op);
+                        putFieldToInstanceObjectFromStack(true);
                         break;
                     case PUTSTATIC:
                         putStaticFieldToInstanceObjectFromStack(false);
@@ -222,31 +228,31 @@ public final class ExecutionEngine {
                         putStaticFieldToInstanceObjectFromStack(true);
                         break;
                     case CHECKCAST:
-                        checkCast(op);
+                        checkCast();
                         break;
                     case GOTO:
                         programCounter += (byteCode[programCounter] << 8) + (byteCode[programCounter + 1] & 0xff) - 1;
                         break;
                     case INSTANCEOF:
-                        checkInstanceOf(op);
+                        checkInstanceOf();
                         break;
                     case IADD:
-                        evaluateIntValueAndPushBackOntoStack(Integer::sum, op);
+                        evaluateIntValueAndPushBackOntoStack(Integer::sum);
                         break;
                     case IAND:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal & firstVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal & firstVal);
                         break;
                     case ISHL:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal << firstVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal << firstVal);
                         break;
                     case ISHR:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal >> firstVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal >> firstVal);
                         break;
                     case IUSHR:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal >>> firstVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal >>> firstVal);
                         break;
                     case IXOR:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> ~secondVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> ~secondVal);
                         break;
                     case IDIV:
                         evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> {
@@ -254,67 +260,67 @@ public final class ExecutionEngine {
                                 throw new ArithmeticException("cannot divide 0");
                             }
                             return secondVal / firstVal;
-                        }, op);
+                        });
                         break;
                     case IMUL:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> firstVal * secondVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> firstVal * secondVal);
                         break;
                     case ISUB:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal - firstVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal - firstVal);
                         break;
                     case IOR:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> firstVal | secondVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> firstVal | secondVal);
                         break;
                     case IREM:
-                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal % firstVal, op);
+                        evaluateIntValueAndPushBackOntoStack((firstVal, secondVal) -> secondVal % firstVal);
                         break;
                     case IF_ACMPNE:
-                        compareValuesFromStack((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.A, op);
+                        compareValuesFromStack((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.A);
                         break;
                     case IF_ACMPEQ:
-                        compareValuesFromStack((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.A, op);
+                        compareValuesFromStack((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.A);
                         break;
                     case IF_ICMPEQ:
-                        compareValuesFromStack((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> Objects.equals(secondVal, firstVal), JVMType.I);
                         break;
                     case IF_ICMPNE:
-                        compareValuesFromStack((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> !Objects.equals(secondVal, firstVal), JVMType.I);
                         break;
                     case IF_ICMPLT:
-                        compareValuesFromStack((firstVal, secondVal) -> secondVal < firstVal, JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> secondVal < firstVal, JVMType.I);
                         break;
                     case IF_ICMPGT:
-                        compareValuesFromStack((firstVal, secondVal) -> secondVal > firstVal, JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> secondVal > firstVal, JVMType.I);
                         break;
                     case IF_ICMPGE:
-                        compareValuesFromStack((firstVal, secondVal) -> secondVal >= firstVal, JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> secondVal >= firstVal, JVMType.I);
                         break;
                     case IF_ICMPLE:
-                        compareValuesFromStack((firstVal, secondVal) -> secondVal <= firstVal, JVMType.I, op);
+                        compareValuesFromStack((firstVal, secondVal) -> secondVal <= firstVal, JVMType.I);
                         break;
                     case IFEQ:
-                        compareValuesFromStack(val -> val == 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val == 0, JVMType.I);
                         break;
                     case IFGE:
-                        compareValuesFromStack(val -> val >= 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val >= 0, JVMType.I);
                         break;
                     case IFGT:
-                        compareValuesFromStack(val -> val > 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val > 0, JVMType.I);
                         break;
                     case IFLE:
-                        compareValuesFromStack(val -> val <= 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val <= 0, JVMType.I);
                         break;
                     case IFLT:
-                        compareValuesFromStack(val -> val < 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val < 0, JVMType.I);
                         break;
                     case IFNE:
-                        compareValuesFromStack(val -> val != 0, JVMType.I, op);
+                        compareValuesFromStack(val -> val != 0, JVMType.I);
                         break;
                     case IFNONNULL:
-                        compareValuesFromStack(val -> val != 0, JVMType.A, op);
+                        compareValuesFromStack(val -> val != 0, JVMType.A);
                         break;
                     case IFNULL:
-                        compareValuesFromStack(val -> val == 0, JVMType.A, op);
+                        compareValuesFromStack(val -> val == 0, JVMType.A);
                         break;
                     case IINC:
                         /*
@@ -322,39 +328,39 @@ public final class ExecutionEngine {
                          * The const is an immediate signed byte. The local variable at index must contain an int.
                          * The value const is first sign-extended to an int, and then the local variable at index is incremented by that amount.
                          * */
-                        int index = byteCode[programCounter++];
-                        first = getIntValue(stack.getLocalVar(index), op);
-                        stack.setLocalVar(index, setIntValueType(first + byteCode[programCounter++]));
+                        int index = readByte();
+                        first = getIntValue(stack.getLocalVar(index));
+                        stack.setLocalVar(index, setIntValueType(first + readByte()));
                         break;
                     case I2C:
-                        first = getIntValue(stack.pop(), op);
+                        first = getIntValue(stack.pop());
                         pushIntValueOntoStack(first);
                         break;
                     case INEG:
-                        first = getIntValue(stack.pop(), op);
+                        first = getIntValue(stack.pop());
                         pushIntValueOntoStack(-first);
                         break;
                     case INVOKESPECIAL:
-                        invokeNonVirtualMethod(false, false, op);
+                        invokeNonVirtualMethod(false, false);
                         break;
                     case INVOKESPECIAL_QUICK:
-                        invokeNonVirtualMethod(true, false, op);
+                        invokeNonVirtualMethod(true, false);
                         break;
                     case INVOKESTATIC:
-                        invokeNonVirtualMethod(false, true, op);
+                        invokeNonVirtualMethod(false, true);
                         break;
                     case INVOKESTATIC_QUICK:
-                        invokeNonVirtualMethod(true, true, op);
+                        invokeNonVirtualMethod(true, true);
                         break;
                     case INVOKEVIRTUAL:
-                        invokeVirtualMethod(false, op);
+                        invokeVirtualMethod(false);
                         break;
                     case INVOKEVIRTUAL_QUICK:
-                        invokeVirtualMethod(true, op);
+                        invokeVirtualMethod(true);
                         break;
                     case ARETURN:
                         if (stack.invokeCount == 0) {
-                            return getRefValue(stack.pop(), op);
+                            return getRefValue(stack.pop());
                         }
                         destroyCurrentMethod(true);
                         break;
@@ -372,11 +378,10 @@ public final class ExecutionEngine {
                         destroyCurrentMethod(false);
                         break;
                     case NEW:
-                        cpIndex = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        pushRefValueOntoStack(allocateInstanceObjectAndGetReference(cpIndex));
+                        pushRefValueOntoStack(allocateInstanceObjectAndGetReference(readTwoBytes()));
                         break;
                     case NEWARRAY:
-                        int atype = byteCode[programCounter++];
+                        int atype = readByte();
                     /*  Array Type	atype
                         T_BOOLEAN	4
                         T_CHAR	    5
@@ -389,17 +394,16 @@ public final class ExecutionEngine {
                         */
                         pushRefValueOntoStack(allocateArray("[" + JVMType.values()[atype - 3].name(),
                                 JVMType.values()[atype - 3].name(),
-                                getPureValue(stack.pop())));
+                                getIntValue(stack.pop())));
                         break;
                     case ANEWARRAY:
-                        cpIndex = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        pushRefValueOntoStack(allocateArrayOfRef(cpIndex, getPureValue(stack.pop())));
+                        pushRefValueOntoStack(allocateArrayOfRef(readTwoBytes(), getIntValue(stack.pop())));
                         break;
                     case MULTIANEWARRAY:
-                        cpIndex = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-                        int[] dimensions = new int[byteCode[programCounter++]];
+                        int cpIndex = readTwoBytes();
+                        int[] dimensions = new int[readByte()];
                         for (int i = dimensions.length - 1; i >= 0; i--) {
-                            dimensions[i] = getIntValue(stack.pop(), op);
+                            dimensions[i] = getIntValue(stack.pop());
                         }
                         String arrayType = getKlassName(cpIndex);
                         object = createArrayOfRef(arrayType, dimensions[0], -1);
@@ -407,15 +411,15 @@ public final class ExecutionEngine {
                         createMultiArray(1, dimensions, object, arrayType);
                         break;
                     case ARRAYLENGTH:
-                        object = getInstanceObjectByValue(stack.pop(), op);
-                        checkArrayObject(object, op);
+                        object = getInstanceObjectByValue(stack.pop());
+                        checkArrayObject(object);
                         pushIntValueOntoStack(object.size());
                         break;
                     case AALOAD:
-                        pushOntoStackFromArray(val -> checkValueType(val, JVMType.A, op), op);
+                        pushOntoStackFromArray(val -> checkValueType(val, JVMType.A));
                         break;
                     case IALOAD:
-                        pushOntoStackFromArray(val -> checkValueType(val, JVMType.I, op), op);
+                        pushOntoStackFromArray(val -> checkValueType(val, JVMType.I));
                         break;
                     case BALOAD:
                         /*
@@ -423,7 +427,7 @@ public final class ExecutionEngine {
                          * The index must be of type int. Both arrayref and index are popped from the operand stack.
                          * The byte value in the component of the array at index is retrieved, sign-extended to an int value, and pushed onto the top of the operand stack.
                          */
-                        pushOntoStackFromArray(val -> setIntValueType(getPureValue(checkByteOrBooleanValueType(val))), op);
+                        pushOntoStackFromArray(val -> setIntValueType(getPureValue(checkByteOrBooleanValueType(val))));
                         break;
                     case CALOAD:
                         /*
@@ -431,7 +435,7 @@ public final class ExecutionEngine {
                          * The index must be of type int. Both arrayref and index are popped from the operand stack.
                          * The component of the array at index is retrieved and zero-extended to an int value. That value is pushed onto the operand stack.
                          */
-                        pushOntoStackFromArray(val -> setIntValueType(getPureValue(checkValueType(val, JVMType.C, op))), op);
+                        pushOntoStackFromArray(val -> setIntValueType(getPureValue(checkValueType(val, JVMType.C))));
                         break;
                     case AASTORE:
                         /*
@@ -439,7 +443,7 @@ public final class ExecutionEngine {
                          * The index must be of type int and value must be of type reference. The arrayref, index, and value are popped from the operand stack.
                          * The reference value is stored as the component of the array at index.
                          */
-                        storeToArrayFromStack((val, obj) -> val, JVMType.A, op);
+                        storeToArrayFromStack((val, obj) -> val, JVMType.A);
                         break;
                     case IASTORE:
                         /*
@@ -447,7 +451,7 @@ public final class ExecutionEngine {
                          * Both index and value must be of type int. The arrayref, index, and value are popped from the operand stack.
                          * The int value is stored as the component of the array indexed by index.
                          */
-                        storeToArrayFromStack((val, obj) -> val, JVMType.I, op);
+                        storeToArrayFromStack((val, obj) -> val, JVMType.I);
                         break;
                     case BASTORE:
                         /*
@@ -460,9 +464,9 @@ public final class ExecutionEngine {
                             if (type == JVMType.Z || type == JVMType.B) {
                                 return setValueType(getPureValue(val), type);
                             } else {
-                                throw new RuntimeException("Wrong type of array\n" + getStackTrace(op, false));
+                                throw new RuntimeException("Wrong type of array\n" + getStackTrace(false));
                             }
-                        }, JVMType.I, op);
+                        }, JVMType.I);
                         break;
                     case CASTORE:
                         /*
@@ -470,7 +474,7 @@ public final class ExecutionEngine {
                          * The index and the value must both be of type int. The arrayref, index, and value are popped from the operand stack.
                          * The int value is truncated to a char and stored as the component of the array indexed by index.
                          */
-                        storeToArrayFromStack((val, obj) -> setCharValueType(getPureValue(val)), JVMType.I, op);
+                        storeToArrayFromStack((val, obj) -> setCharValueType(getIntValue(val)), JVMType.I);
                         break;
                     case POP:
                         stack.pop();
@@ -478,7 +482,7 @@ public final class ExecutionEngine {
                     case RET:
                         throw new IllegalArgumentException("Illegal opcode byte: " + (b & 0xff) + " encountered at position " + (programCounter - 1) + ". Stopping.");
                     case SIPUSH:
-                        pushIntValueOntoStack(((int) (byteCode[programCounter++]) << 8) + (byteCode[programCounter++] & 0xff));
+                        pushIntValueOntoStack(readTwoBytes());
                         break;
                     case SWAP:
                         long firstVal = stack.pop();
@@ -487,8 +491,7 @@ public final class ExecutionEngine {
                         stack.push(secondVal);
                         break;
                     case LDC:
-                        cpIndex = byteCode[programCounter++];
-                        ConstantPoolEntry entry = getSourceKlass().getCPItem(cpIndex - 1);
+                        ConstantPoolEntry entry = getSourceKlass().getCPItem(readByte() - 1);
                         switch (entry.getType()) {
                             case INTEGER:
                                 pushIntValueOntoStack((Integer) entry.getNum());
@@ -509,35 +512,35 @@ public final class ExecutionEngine {
                     case JSR:
                     case JSR_W:
                     default:
-                        System.err.println("Saw " + op + " - that can't happen. Stopping.");
-                        System.err.println(getStackTrace(op, true));
+                        System.err.println("Saw " + currentOpcode + " - that can't happen. Stopping.");
+                        System.err.println(getStackTrace(true));
                         System.exit(1);
                 }
             } catch (RuntimeExceptionJVM e) {
                 if (exceptionDebugMode) {
                     if (e instanceof ClassCastExceptionJVM) {
-                        throw new ClassCastExceptionJVM(e.getLocalizedMessage() + "\n" + getStackTrace(op, false));
+                        throw new ClassCastExceptionJVM(e.getLocalizedMessage() + "\n" + getStackTrace(false));
                     } else if (e instanceof NullPointerExceptionJVM) {
-                        throw new NullPointerExceptionJVM("\n" + getStackTrace(op, false));
+                        throw new NullPointerExceptionJVM("\n" + getStackTrace(false));
                     } else if (e instanceof OutOfMemoryErrorJVM) {
-                        throw new OutOfMemoryErrorJVM("\n" + getStackTrace(op, false));
+                        throw new OutOfMemoryErrorJVM("\n" + getStackTrace(false));
                     } else if (e instanceof ClassNotFoundExceptionJVM) {
-                        throw new ClassNotFoundExceptionJVM(e.getLocalizedMessage() + "\n" + getStackTrace(op, false));
+                        throw new ClassNotFoundExceptionJVM(e.getLocalizedMessage() + "\n" + getStackTrace(false));
                     } else {
                         throw e;
                     }
                 } else {
-                    System.out.println(Utils.changeJVMKlassNameToSystemKlassName(e.toString()) + "\n" + getStackTrace(op, false));
+                    System.out.println(Utils.changeJVMKlassNameToSystemKlassName(e.toString()) + "\n" + getStackTrace(false));
                     System.exit(-1);
                 }
             } catch (Exception e) {
-                throw new RuntimeException("\n" + getStackTrace(op, false) + "\n\n" + e);
+                throw new RuntimeException("\n" + getStackTrace(false) + "\n\n" + e);
             }
         }
     }
 
     @Nonnull
-    private String getStackTrace(@Nullable Opcode opcode, boolean showMnemonics) {
+    private String getStackTrace(boolean showMnemonics) {
         StringBuilder stackTrace = new StringBuilder();
         for (int i = stackMethodPointer; i >= 0; i--) {
             Method method = stackMethod[i];
@@ -545,7 +548,7 @@ public final class ExecutionEngine {
                     .append(method.getClassName())
                     .append(".")
                     .append(method.getNameAndType())
-                    .append(i == stackMethodPointer && opcode != null ? " " + opcode : "")
+                    .append(i == stackMethodPointer ? " " + currentOpcode : "")
                     .append("\n")
                     .append(showMnemonics ? method.getMnemonics() + "\n" : "");
         }
@@ -561,16 +564,16 @@ public final class ExecutionEngine {
         return castKlassName.equals(klassName) || checkCast(parentKlass, castKlassName);
     }
 
-    private void invokeNativeMethod(@Nonnull Method method, Opcode opcode) {
+    private void invokeNativeMethod(@Nonnull Method method) {
         String methodName = method.getClassName() + "." + method.getNameAndType();
         switch (methodName) {
             case HASHCODE: {
-                InstanceObject object1 = getInstanceObjectByValue(stack.pop(), opcode);
+                InstanceObject object1 = getInstanceObjectByValue(stack.pop());
                 pushIntValueOntoStack(Objects.hashCode(object1));
                 break;
             }
             case TO_STRING: {
-                int objectRef = getRefValue(stack.pop(), opcode);
+                int objectRef = getRefValue(stack.pop());
                 InstanceObject object1 = getInstanceObjectByRef(objectRef);
                 String result = getNameFromInstanceKlassByIndex(object1.getKlassIndex()).replace('/', '.')
                         + "@"
@@ -579,38 +582,38 @@ public final class ExecutionEngine {
                 break;
             }
             case STRING_PRINTLN: {
-                int stringObjectRef = getRefValue(stack.pop(), opcode);
-                System.out.println(getString(stringObjectRef, opcode));
+                int stringObjectRef = getRefValue(stack.pop());
+                System.out.println(getString(stringObjectRef));
                 stack.pop();
                 break;
             }
             case STRING_PRINT: {
-                int stringObjectRef = getRefValue(stack.pop(), opcode);
-                System.out.print(getString(stringObjectRef, opcode));
+                int stringObjectRef = getRefValue(stack.pop());
+                System.out.print(getString(stringObjectRef));
                 stack.pop();
                 break;
             }
             case CHAR_PRINT:
-                System.out.print((char) getIntValue(stack.pop(), opcode));
+                System.out.print((char) getIntValue(stack.pop()));
                 stack.pop();
                 break;
             case CHAR_PRINTLN:
-                System.out.println((char) getIntValue(stack.pop(), opcode));
+                System.out.println((char) getIntValue(stack.pop()));
                 stack.pop();
                 break;
             case INT_PRINT:
-                System.out.print(getIntValue(stack.pop(), opcode));
+                System.out.print(getIntValue(stack.pop()));
                 stack.pop();
                 break;
             case INT_PRINTLN:
-                System.out.println(getIntValue(stack.pop(), opcode));
+                System.out.println(getIntValue(stack.pop()));
                 stack.pop();
                 break;
             case INIT_SOCKET: {
-                int socketObjRef = getRefValue(stack.getLocalVar(0), opcode);
-                int stringObjRef = getRefValue(stack.getLocalVar(1), opcode);
-                int port = getIntValue(stack.getLocalVar(2), opcode);
-                String ipAddress = getString(stringObjRef, opcode);
+                int socketObjRef = getRefValue(stack.getLocalVar(0));
+                int stringObjRef = getRefValue(stack.getLocalVar(1));
+                int port = getIntValue(stack.getLocalVar(2));
+                String ipAddress = getString(stringObjRef);
                 try {
                     nativeObjects.put(socketObjRef, new Socket(ipAddress, port));
                 } catch (IOException e) {
@@ -621,7 +624,7 @@ public final class ExecutionEngine {
             case GET_INPUT_STREAM:
             case GET_OUTPUT_STREAM: {
                 int streamObjRef = allocateInstanceObjectAndGetReference(INPUT_STREAM);
-                int socketObjRef = getRefValue(stack.pop(), opcode);
+                int socketObjRef = getRefValue(stack.pop());
                 pushRefValueOntoStack(streamObjRef);
                 Socket socket = (Socket) nativeObjects.get(socketObjRef);
                 try {
@@ -632,37 +635,37 @@ public final class ExecutionEngine {
                 break;
             }
             case INIT_INPUT_STREAM_READER: {
-                int inputStreamObjRef = getRefValue(stack.pop(), opcode);
-                int inputStreamReaderObjRef = getRefValue(stack.pop(), opcode);
+                int inputStreamObjRef = getRefValue(stack.pop());
+                int inputStreamReaderObjRef = getRefValue(stack.pop());
                 InputStream inputStream = (InputStream) nativeObjects.get(inputStreamObjRef);
                 nativeObjects.put(inputStreamReaderObjRef, new InputStreamReader(inputStream));
                 break;
             }
             case INIT_BUFFERED_READER: {
-                int inputStreamReaderObjRef = getRefValue(stack.pop(), opcode);
-                int bufferedReaderObjRef = getRefValue(stack.pop(), opcode);
+                int inputStreamReaderObjRef = getRefValue(stack.pop());
+                int bufferedReaderObjRef = getRefValue(stack.pop());
                 Reader inputStreamReader = (Reader) nativeObjects.get(inputStreamReaderObjRef);
                 nativeObjects.put(bufferedReaderObjRef, new BufferedReader(inputStreamReader));
                 break;
             }
             case INIT_PRINT_WRITER: {
-                int bool = getIntValue(stack.pop(), opcode);
-                int outputStreamObjRef = getRefValue(stack.pop(), opcode);
-                int printWriterObjRef = getRefValue(stack.pop(), opcode);
+                int bool = getIntValue(stack.pop());
+                int outputStreamObjRef = getRefValue(stack.pop());
+                int printWriterObjRef = getRefValue(stack.pop());
                 OutputStream outputStream = (OutputStream) nativeObjects.get(outputStreamObjRef);
                 nativeObjects.put(printWriterObjRef, new PrintWriter(outputStream, bool == 1));
                 break;
             }
             case PRINT_WRITER_PRINTLN: {
-                int stringObjRef = getRefValue(stack.pop(), opcode);
-                String message = getString(stringObjRef, opcode);
-                int printWriterObjRef = getRefValue(stack.pop(), opcode);
+                int stringObjRef = getRefValue(stack.pop());
+                String message = getString(stringObjRef);
+                int printWriterObjRef = getRefValue(stack.pop());
                 PrintWriter printWriter = (PrintWriter) nativeObjects.get(printWriterObjRef);
                 printWriter.println(message);
                 break;
             }
             case READ_LINE: {
-                int bufferedReaderObjRef = getRefValue(stack.pop(), opcode);
+                int bufferedReaderObjRef = getRefValue(stack.pop());
                 BufferedReader bufferedReader = (BufferedReader) nativeObjects.get(bufferedReaderObjRef);
                 try {
                     String message = bufferedReader.readLine();
@@ -673,22 +676,30 @@ public final class ExecutionEngine {
                 break;
             }
             case RANDOM_NEXT_INT:
-                int bound = getIntValue(stack.pop(), opcode);
+                int bound = getIntValue(stack.pop());
                 pushIntValueOntoStack(new Random().nextInt(bound));
                 break;
             case STRING_INTERN:
-                int stringObjRef = getRefValue(stack.pop(), opcode);
-                String str = getString(stringObjRef, opcode);
+                int stringObjRef = getRefValue(stack.pop());
+                String str = getString(stringObjRef);
                 createStringInstance(str, true);
                 break;
         }
     }
 
+    private int readTwoBytes() {
+        return (readByte() << 8) + (readByte() & 0xff);
+    }
+
+    private byte readByte() {
+        return byteCode[programCounter++];
+    }
+
     @Nonnull
-    private String getString(int objectRef, Opcode opcode) {
+    private String getString(int objectRef) {
         InstanceObject stringObject = getInstanceObjectByRef(objectRef);
         InstanceObject charArrayObject = getInstanceObjectByValue(
-                stringObject.getValue(stringObject.getIndexByFieldName("value:[C")), opcode);
+                stringObject.getValue(stringObject.getIndexByFieldName("value:[C")));
         char[] buf = new char[charArrayObject.size()];
         for (int i = 0; i < buf.length; i++) {
             buf[i] = (char) charArrayObject.getValue(i);
@@ -709,7 +720,7 @@ public final class ExecutionEngine {
         }
     }
 
-    private long checkValueType(long value, @Nonnull JVMType type, Opcode opcode) {
+    private long checkValueType(long value, @Nonnull JVMType type) {
         if (type.equals(JVMType.I) || type.equals(JVMType.Z)) {
             if (getValueType(value) == JVMType.I.ordinal() || getValueType(value) == JVMType.Z.ordinal()) {
                 return value;
@@ -721,7 +732,7 @@ public final class ExecutionEngine {
                     + " is not equal "
                     + type.name()
                     + "\n"
-                    + getStackTrace(opcode, false));
+                    + getStackTrace(false));
         }
         return value;
     }
@@ -733,9 +744,9 @@ public final class ExecutionEngine {
         throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(value)] + " is not equal " + "byte or boolean");
     }
 
-    private void checkArrayObject(@Nonnull InstanceObject object, @Nullable Opcode opcode) {
+    private void checkArrayObject(@Nonnull InstanceObject object) {
         if (!object.isArray()) {
-            throw new RuntimeException("Object is not array\n" + getStackTrace(opcode, false));
+            throw new RuntimeException("Object is not array\n" + getStackTrace(false));
         }
     }
 
@@ -773,19 +784,20 @@ public final class ExecutionEngine {
         stack.push(setRefValueType(value));
     }
 
-    private void pushOntoStackFromLocalVar(int index) {
-        long reference = stack.getLocalVar(index);
-        stack.push(reference);
+    private void pushRefValueOntoStackFromLocalVar(int index) {
+        stack.push(checkValueType(stack.getLocalVar(index), JVMType.A));
     }
 
-    private void pushIntValueOntoStackFromLocalVar(int index, @Nonnull Opcode opcode) {
-        int value = getIntValue(stack.getLocalVar(index), opcode);
-        pushIntValueOntoStack(value);
+    private void pushIntValueOntoStackFromLocalVar(int index) {
+        stack.push(checkValueType(stack.getLocalVar(index), JVMType.I));
     }
 
-    private void setLocalVarFromStack(int index, @Nonnull Opcode opcode) {
-        long reference = checkValueType(stack.pop(), JVMType.A, opcode);
-        stack.setLocalVar(index, reference);
+    private void setLocalRefValueFromStack(int index) {
+        stack.setLocalVar(index, checkValueType(stack.pop(), JVMType.A));
+    }
+
+    private void setLocalIntValueFromStack(int index) {
+        stack.setLocalVar(index, checkValueType(stack.pop(), JVMType.I));
     }
 
     private long setValueType(int type) {
@@ -796,16 +808,16 @@ public final class ExecutionEngine {
         return (int) value;
     }
 
-    private int getIntValue(long value, @Nonnull Opcode opcode) {
-        return getCheckedValue(value, JVMType.I, opcode);
+    private int getIntValue(long value) {
+        return getValue(value, JVMType.I);
     }
 
-    private int getRefValue(long value, @Nonnull Opcode opcode) {
-        return getCheckedValue(value, JVMType.A, opcode);
+    private int getRefValue(long value) {
+        return getValue(value, JVMType.A);
     }
 
-    private int getCheckedValue(long value, JVMType type, @Nonnull Opcode opcode) {
-        return getPureValue(checkValueType(value, type, opcode));
+    private int getValue(long value, JVMType type) {
+        return getPureValue(checkValueType(value, type));
     }
 
     private String getName(@Nonnull String fullName) {
@@ -840,8 +852,8 @@ public final class ExecutionEngine {
     }
 
     @Nonnull
-    private InstanceObject getInstanceObjectByValue(long value, @Nonnull Opcode opcode) {
-        return getInstanceObjectByRef(getRefValue(value, opcode));
+    private InstanceObject getInstanceObjectByValue(long value) {
+        return getInstanceObjectByRef(getRefValue(value));
     }
     @Nonnull
     private InstanceObject getInstanceObjectByRef(int objectRef) {
@@ -999,8 +1011,8 @@ public final class ExecutionEngine {
         byteCode[counter] = (byte) index;
     }
 
-    private void invokeNonVirtualMethod(boolean quick, boolean staticMethod, @Nonnull Opcode opcode) {
-        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+    private void invokeNonVirtualMethod(boolean quick, boolean staticMethod) {
+        int index = readTwoBytes();
         int methodIndex;
         if (quick) {
             methodIndex = index;
@@ -1008,11 +1020,11 @@ public final class ExecutionEngine {
             methodIndex = staticMethod ? getStaticMethodIndex(index) : getMethodIndex(index);
             preserveDirectRefIndexIfNeeded(methodIndex, staticMethod ? INVOKESTATIC_QUICK : INVOKESPECIAL_QUICK);
         }
-        handleMethod(heap.getMethodRepo().getMethod(methodIndex), staticMethod, opcode);
+        handleMethod(heap.getMethodRepo().getMethod(methodIndex), staticMethod);
     }
 
-    private void invokeVirtualMethod(boolean quick, @Nonnull Opcode op) {
-        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+    private void invokeVirtualMethod(boolean quick) {
+        int index = readTwoBytes();
         int argSize;
         if (quick) {
             Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(index);
@@ -1022,7 +1034,7 @@ public final class ExecutionEngine {
             argSize = getArgSize(index);
         }
         long reference = stack.getObjectRefBeforeInvoke(argSize);
-        int klassIndex = getInstanceObjectByValue(reference, op).getKlassIndex();
+        int klassIndex = getInstanceObjectByValue(reference).getKlassIndex();
         int virtualMethodIndex;
         if (quick) {
             virtualMethodIndex = index;
@@ -1032,7 +1044,7 @@ public final class ExecutionEngine {
         }
         int methodIndex = getInstanceKlassByIndex(klassIndex).getMethodIndex(virtualMethodIndex);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        handleMethod(method, false, op);
+        handleMethod(method, false);
     }
 
     private void pushStaticFieldOntoStackFromInstanceObject(boolean quick) {
@@ -1044,7 +1056,7 @@ public final class ExecutionEngine {
     }
 
     private void handleStaticField(BiConsumer<Integer, Integer> consumer, @Nonnull Opcode opcode, boolean quick) {
-        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+        int index = readTwoBytes();
         int objectRef;
         int fieldValueIndex;
         if (quick) {
@@ -1061,18 +1073,18 @@ public final class ExecutionEngine {
         consumer.accept(objectRef, fieldValueIndex);
     }
 
-    private void putFieldToInstanceObjectFromStack(boolean quick, @Nonnull Opcode op) {
+    private void putFieldToInstanceObjectFromStack(boolean quick) {
         long value = stack.pop();
-        handleField((object, fieldValueIndex) -> object.setValue(fieldValueIndex, value), PUTFIELD_QUICK, quick, op);
+        handleField((object, fieldValueIndex) -> object.setValue(fieldValueIndex, value), PUTFIELD_QUICK, quick);
     }
 
-    private void pushFieldOntoStackFromInstanceObject(boolean quick, @Nonnull Opcode op) {
-        handleField((object, fieldValueIndex) -> stack.push(object.getValue(fieldValueIndex)), GETFIELD_QUICK, quick, op);
+    private void pushFieldOntoStackFromInstanceObject(boolean quick) {
+        handleField((object, fieldValueIndex) -> stack.push(object.getValue(fieldValueIndex)), GETFIELD_QUICK, quick);
     }
 
-    private void handleField(BiConsumer<InstanceObject, Integer> consumer, @Nonnull Opcode opcode, boolean quick, @Nonnull Opcode op) {
-        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-        InstanceObject object = getInstanceObjectByValue(stack.pop(), op);
+    private void handleField(BiConsumer<InstanceObject, Integer> consumer, @Nonnull Opcode opcode, boolean quick) {
+        int index = readTwoBytes();
+        InstanceObject object = getInstanceObjectByValue(stack.pop());
         int fieldValueIndex;
         if (quick) {
             fieldValueIndex = index;
@@ -1083,41 +1095,41 @@ public final class ExecutionEngine {
         consumer.accept(object, fieldValueIndex);
     }
 
-    private void evaluateIntValueAndPushBackOntoStack(@Nonnull BiFunction<Integer, Integer, Integer> operation, @Nonnull Opcode op) {
-        int first = getIntValue(stack.pop(), op);
-        int second = getIntValue(stack.pop(), op);
+    private void evaluateIntValueAndPushBackOntoStack(@Nonnull BiFunction<Integer, Integer, Integer> operation) {
+        int first = getIntValue(stack.pop());
+        int second = getIntValue(stack.pop());
         pushIntValueOntoStack(operation.apply(first, second));
     }
 
-    private void compareValuesFromStack(@Nonnull Predicate<Integer> predicate, @Nonnull JVMType type, @Nonnull Opcode op) {
-        int jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-        int first = getCheckedValue(stack.pop(), type, op);
+    private void compareValuesFromStack(@Nonnull Predicate<Integer> predicate, @Nonnull JVMType type) {
+        int jumpTo = readTwoBytes();
+        int first = getValue(stack.pop(), type);
         if (predicate.test(first)) {
             programCounter += jumpTo - 3;
         }
     }
 
-    private void compareValuesFromStack(@Nonnull BiPredicate<Integer, Integer> predicate, @Nonnull JVMType type, @Nonnull Opcode op) {
-        int jumpTo = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-        int first = getCheckedValue(stack.pop(), type, op);
-        int second = getCheckedValue(stack.pop(), type, op);
+    private void compareValuesFromStack(@Nonnull BiPredicate<Integer, Integer> predicate, @Nonnull JVMType type) {
+        int jumpTo = readTwoBytes();
+        int first = getValue(stack.pop(), type);
+        int second = getValue(stack.pop(), type);
         if (predicate.test(first, second)) {
             programCounter += jumpTo - 3;
         }
     }
 
-    private void pushOntoStackFromArray(@Nonnull Function<Long, Long> function, @Nonnull Opcode op) {
-        int index = getPureValue(stack.pop());
-        InstanceObject object = getInstanceObjectByValue(stack.pop(), op);
-        checkArrayObject(object, op);
+    private void pushOntoStackFromArray(@Nonnull Function<Long, Long> function) {
+        int index = getIntValue(stack.pop());
+        InstanceObject object = getInstanceObjectByValue(stack.pop());
+        checkArrayObject(object);
         stack.push(function.apply(object.getValue(index)));
     }
 
-    private void storeToArrayFromStack(@Nonnull BiFunction<Long, InstanceObject, Long> function, @Nonnull JVMType type, @Nonnull Opcode op) {
-        long value = checkValueType(stack.pop(), type, op);
-        int index = getIntValue(stack.pop(), op);
-        InstanceObject object = getInstanceObjectByValue(stack.pop(), op);
-        checkArrayObject(object, op);
+    private void storeToArrayFromStack(@Nonnull BiFunction<Long, InstanceObject, Long> function, @Nonnull JVMType type) {
+        long value = checkValueType(stack.pop(), type);
+        int index = getIntValue(stack.pop());
+        InstanceObject object = getInstanceObjectByValue(stack.pop());
+        checkArrayObject(object);
         object.setValue(index, function.apply(value, object));
     }
 
@@ -1134,9 +1146,9 @@ public final class ExecutionEngine {
         }
     }
 
-    private void handleMethod(@Nonnull Method method, boolean staticMethod, @Nonnull Opcode op) {
+    private void handleMethod(@Nonnull Method method, boolean staticMethod) {
         if (method.isNative()) {
-            invokeNativeMethod(method, op);
+            invokeNativeMethod(method);
         } else {
             initNewMethod(method, staticMethod);
         }
@@ -1160,9 +1172,9 @@ public final class ExecutionEngine {
         programCounter = stack.programCounter;
     }
 
-    private void checkCast(@Nonnull Opcode op) {
-        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
-        int objectRef = getRefValue(stack.pop(), op);
+    private void checkCast() {
+        int index = readTwoBytes();
+        int objectRef = getRefValue(stack.pop());
         if (objectRef == NULL) {
             pushRefValueOntoStack(NULL);
         } else {
@@ -1191,10 +1203,10 @@ public final class ExecutionEngine {
         }
     }
 
-    private void checkInstanceOf(@Nonnull Opcode op) {
-        int index = (byteCode[programCounter++] << 8) + (byteCode[programCounter++] & 0xff);
+    private void checkInstanceOf() {
+        int index = readTwoBytes();
         String className = getKlassName(index);
-        int objectRef = getRefValue(stack.pop(), op);
+        int objectRef = getRefValue(stack.pop());
         if (objectRef == NULL) {
             pushIntValueOntoStack(NULL);
             return;
