@@ -52,7 +52,8 @@ public final class ExecutionEngine {
     private final Method[] stackMethod;
     private int stackMethodPointer = 0;
     private byte[] byteCode;
-    private String klassName;
+    @Nonnull
+    private String klassName = "java/lang/Object";
     private int programCounter;
     @Nonnull
     private Opcode currentOpcode;
@@ -95,14 +96,10 @@ public final class ExecutionEngine {
                         + (b & 0xff)
                         + " encountered at position "
                         + (programCounter - 1)
-                        + ". Stopping."
                         + "\n"
                         + "\n"
                         + getStackTrace(true));
             }
-
-            InstanceObject object;
-            int first;
             try {
                 switch (currentOpcode) {
                     case ACONST_NULL:
@@ -329,16 +326,13 @@ public final class ExecutionEngine {
                          * The value const is first sign-extended to an int, and then the local variable at index is incremented by that amount.
                          * */
                         int index = readByte();
-                        first = getIntValue(stack.getLocalVar(index));
-                        stack.setLocalVar(index, setIntValueType(first + readByte()));
+                        stack.setLocalVar(index, setIntValueType(getIntValue(stack.getLocalVar(index)) + readByte()));
                         break;
                     case I2C:
-                        first = getIntValue(stack.pop());
-                        pushIntValueOntoStack(first);
+                        stack.push(checkValueType(stack.pop(), JVMType.I));
                         break;
                     case INEG:
-                        first = getIntValue(stack.pop());
-                        pushIntValueOntoStack(-first);
+                        pushIntValueOntoStack(-getIntValue(stack.pop()));
                         break;
                     case INVOKESPECIAL:
                         invokeNonVirtualMethod(false, false);
@@ -400,20 +394,10 @@ public final class ExecutionEngine {
                         pushRefValueOntoStack(allocateArrayOfRef(readTwoBytes(), getIntValue(stack.pop())));
                         break;
                     case MULTIANEWARRAY:
-                        int cpIndex = readTwoBytes();
-                        int[] dimensions = new int[readByte()];
-                        for (int i = dimensions.length - 1; i >= 0; i--) {
-                            dimensions[i] = getIntValue(stack.pop());
-                        }
-                        String arrayType = getKlassName(cpIndex);
-                        object = createArrayOfRef(arrayType, dimensions[0], -1);
-                        pushRefValueOntoStack(getInstanceObjectReference(object));
-                        createMultiArray(1, dimensions, object, arrayType);
+                        newMultiArray();
                         break;
                     case ARRAYLENGTH:
-                        object = getInstanceObjectByValue(stack.pop());
-                        checkArrayObject(object);
-                        pushIntValueOntoStack(object.size());
+                        pushIntValueOntoStack(checkArrayObject(getInstanceObjectByValue(stack.pop())).size());
                         break;
                     case AALOAD:
                         pushOntoStackFromArray(val -> checkValueType(val, JVMType.A));
@@ -744,10 +728,12 @@ public final class ExecutionEngine {
         throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(value)] + " is not equal " + "byte or boolean");
     }
 
-    private void checkArrayObject(@Nonnull InstanceObject object) {
+    @Nonnull
+    private InstanceObject checkArrayObject(@Nonnull InstanceObject object) {
         if (!object.isArray()) {
             throw new RuntimeException("Object is not array\n" + getStackTrace(false));
         }
+        return object;
     }
 
     private int getValueType(long value) {
@@ -855,6 +841,7 @@ public final class ExecutionEngine {
     private InstanceObject getInstanceObjectByValue(long value) {
         return getInstanceObjectByRef(getRefValue(value));
     }
+
     @Nonnull
     private InstanceObject getInstanceObjectByRef(int objectRef) {
         return heap.getInstanceObject(checkNotNull(objectRef));
@@ -1000,6 +987,18 @@ public final class ExecutionEngine {
         return getInstanceObject(heap, arrayType, JVMType.A.name(), count, klassIndex);
     }
 
+    private void newMultiArray() {
+        int cpIndex = readTwoBytes();
+        int[] dimensions = new int[readByte()];
+        for (int i = dimensions.length - 1; i >= 0; i--) {
+            dimensions[i] = getIntValue(stack.pop());
+        }
+        String arrayType = getKlassName(cpIndex);
+        InstanceObject object = createArrayOfRef(arrayType, dimensions[0], -1);
+        pushRefValueOntoStack(getInstanceObjectReference(object));
+        createMultiArray(1, dimensions, object, arrayType);
+    }
+
     public void setExceptionDebugMode(boolean exceptionDebugMode) {
         this.exceptionDebugMode = exceptionDebugMode;
     }
@@ -1120,16 +1119,14 @@ public final class ExecutionEngine {
 
     private void pushOntoStackFromArray(@Nonnull Function<Long, Long> function) {
         int index = getIntValue(stack.pop());
-        InstanceObject object = getInstanceObjectByValue(stack.pop());
-        checkArrayObject(object);
+        InstanceObject object = checkArrayObject(getInstanceObjectByValue(stack.pop()));
         stack.push(function.apply(object.getValue(index)));
     }
 
     private void storeToArrayFromStack(@Nonnull BiFunction<Long, InstanceObject, Long> function, @Nonnull JVMType type) {
         long value = checkValueType(stack.pop(), type);
         int index = getIntValue(stack.pop());
-        InstanceObject object = getInstanceObjectByValue(stack.pop());
-        checkArrayObject(object);
+        InstanceObject object = checkArrayObject(getInstanceObjectByValue(stack.pop()));
         object.setValue(index, function.apply(value, object));
     }
 
