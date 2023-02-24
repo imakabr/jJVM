@@ -391,7 +391,10 @@ public final class ExecutionEngine {
                                 getIntValue(stack.pop())));
                         break;
                     case ANEWARRAY:
-                        pushRefValueOntoStack(allocateArrayOfRef(readTwoBytes(), getIntValue(stack.pop())));
+                        pushRefValueOntoStack(allocateReferenceArray(false));
+                        break;
+                    case ANEWARRAY_QUICK:
+                        pushRefValueOntoStack(allocateReferenceArray(true));
                         break;
                     case MULTIANEWARRAY:
                         newMultiArray();
@@ -977,10 +980,22 @@ public final class ExecutionEngine {
         return getInstanceObjectReference(getInstanceObject(heap, arrayType, valueType, count, klassIndex));
     }
 
-    private int allocateArrayOfRef(int cpIndex, int count) {
-        String destKlassName = getKlassName(cpIndex);
-        int klassIndex = getInstanceKlassIndexByKlassName(destKlassName);
-        return getInstanceObjectReference(createArrayOfRef("[L" + destKlassName + ";", count, klassIndex));
+    private int allocateReferenceArray(boolean quick) {
+        int klassIndex;
+        String klassName;
+        if (quick) {
+            Method.DirectRef directRef = getCurrentMethod().getDirectRef(readTwoBytes());
+            klassName = directRef.getStr();
+            klassIndex = directRef.getFirstIndex();
+        } else {
+            klassName = getKlassName(readTwoBytes());
+            klassIndex = getInstanceKlassIndexByKlassName(klassName);
+            preserveIfNeeded(method -> method.builder()
+                    .addString(klassName)
+                    .addFirstIndex(klassIndex)
+                    .buildDirectRefIndex(), ANEWARRAY_QUICK);
+        }
+        return getInstanceObjectReference(createArrayOfRef("[L" + klassName + ";", getIntValue(stack.pop()), klassIndex));
     }
 
     private InstanceObject createArrayOfRef(String arrayType, int count, int klassIndex) {
@@ -1017,7 +1032,7 @@ public final class ExecutionEngine {
             methodIndex = index;
         } else {
             methodIndex = staticMethod ? getStaticMethodIndex(index) : getMethodIndex(index);
-            preserveDirectRefIndexIfNeeded(methodIndex, staticMethod ? INVOKESTATIC_QUICK : INVOKESPECIAL_QUICK);
+            preserveIndexIfNeeded(methodIndex, staticMethod ? INVOKESTATIC_QUICK : INVOKESPECIAL_QUICK);
         }
         handleMethod(heap.getMethodRepo().getMethod(methodIndex), staticMethod);
     }
@@ -1026,9 +1041,9 @@ public final class ExecutionEngine {
         int index = readTwoBytes();
         int argSize;
         if (quick) {
-            Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(index);
-            index = directRef.getIndex();
-            argSize = directRef.getObjectRef();
+            Method.DirectRef directRef = getCurrentMethod().getDirectRef(index);
+            index = directRef.getSecondIndex();
+            argSize = directRef.getFirstIndex();
         } else {
             argSize = getArgSize(index);
         }
@@ -1039,7 +1054,7 @@ public final class ExecutionEngine {
             virtualMethodIndex = index;
         } else {
             virtualMethodIndex = getVirtualMethodIndex(index, klassIndex);
-            preserveDirectRefIndexIfNeeded(argSize, virtualMethodIndex, INVOKEVIRTUAL_QUICK);
+            preserveDirectRefIfNeeded(argSize, virtualMethodIndex, INVOKEVIRTUAL_QUICK);
         }
         int methodIndex = getInstanceKlassByIndex(klassIndex).getMethodIndex(virtualMethodIndex);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
@@ -1059,15 +1074,15 @@ public final class ExecutionEngine {
         int objectRef;
         int fieldValueIndex;
         if (quick) {
-            Method.DirectRef directRef = stackMethod[stackMethodPointer].getDirectRef(index);
-            objectRef = directRef.getObjectRef();
-            fieldValueIndex = directRef.getIndex();
+            Method.DirectRef directRef = getCurrentMethod().getDirectRef(index);
+            objectRef = directRef.getFirstIndex();
+            fieldValueIndex = directRef.getSecondIndex();
         } else {
             String klassFieldName = getKlassFieldName(index);
             InstanceKlass instanceKlass = getInstanceKlassByName(getKlassName(klassFieldName));
             objectRef = instanceKlass.getObjectRef();
             fieldValueIndex = instanceKlass.getIndexByFieldName(getFieldName(klassFieldName));
-            preserveDirectRefIndexIfNeeded(objectRef, fieldValueIndex, opcode);
+            preserveDirectRefIfNeeded(objectRef ,fieldValueIndex, opcode);
         }
         consumer.accept(objectRef, fieldValueIndex);
     }
@@ -1089,7 +1104,7 @@ public final class ExecutionEngine {
             fieldValueIndex = index;
         } else {
             fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(index)));
-            preserveDirectRefIndexIfNeeded(fieldValueIndex, opcode);
+            preserveIndexIfNeeded(fieldValueIndex, opcode);
         }
         consumer.accept(object, fieldValueIndex);
     }
@@ -1130,17 +1145,32 @@ public final class ExecutionEngine {
         object.setValue(index, function.apply(value, object));
     }
 
-    private void preserveDirectRefIndexIfNeeded(int objectRef, int index, @Nonnull Opcode opcode) {
+    private void preserveDirectRefIfNeeded(int first, int second, @Nonnull Opcode opcode) {
+        preserveIfNeeded(method -> method.builder()
+                .addFirstIndex(first)
+                .addSecondIndex(second)
+                .buildDirectRefIndex(), opcode);
+    }
+
+    private void preserveIndexIfNeeded(int index, @Nonnull Opcode opcode) {
         if (symbolicRefResolution) {
-            int directRefIndex = stackMethod[stackMethodPointer].addDirectRef(objectRef, index);
+            preserveDirectRefIndex(index, opcode);
+        }
+    }
+
+    private void preserveStringIfNeeded(@Nonnull String str, @Nonnull Opcode opcode) {
+        preserveIfNeeded(method -> method.builder().addString(str).buildDirectRefIndex(), opcode);
+    }
+
+    private void preserveIfNeeded(@Nonnull Function<Method, Integer> function, @Nonnull Opcode opcode) {
+        if (symbolicRefResolution) {
+            int directRefIndex = function.apply(getCurrentMethod());
             preserveDirectRefIndex(directRefIndex, opcode);
         }
     }
 
-    private void preserveDirectRefIndexIfNeeded(int index, @Nonnull Opcode opcode) {
-        if (symbolicRefResolution) {
-            preserveDirectRefIndex(index, opcode);
-        }
+    private Method getCurrentMethod() {
+        return stackMethod[stackMethodPointer];
     }
 
     private void handleMethod(@Nonnull Method method, boolean staticMethod) {

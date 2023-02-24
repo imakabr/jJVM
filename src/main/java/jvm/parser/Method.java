@@ -168,9 +168,8 @@ public class Method {
         return "Method{" + "className=" + className + ", nameAndType=" + nameAndType + ", bytecode=" + mnemonics + ", signature=" + signature + ", flags=" + flags + ", numParams=" + argSize + '}';
     }
 
-    public int addDirectRef(int objectRef, int index) {
-        directRefList.add(new DirectRef(objectRef, index));
-        return directRefList.size() - 1;
+    public DirectRefBuilder builder() {
+        return new DirectRefBuilder();
     }
 
     @Nonnull
@@ -179,22 +178,57 @@ public class Method {
     }
 
     public static class DirectRef {
-        private final int instanceObjectRef;
-        private final int index;
+        private final int firstIndex;
+        private final int secondIndex;
+        @Nonnull
+        private final String str;
 
-        public DirectRef(int instanceObjectRef, int index) {
-            this.instanceObjectRef = instanceObjectRef;
-            this.index = index;
+        public DirectRef(int firstIndex, int secondIndex, @Nonnull String str) {
+            this.firstIndex = firstIndex;
+            this.secondIndex = secondIndex;
+            this.str = str;
         }
 
-        public int getObjectRef() {
-            return instanceObjectRef;
+        public int getFirstIndex() {
+            return firstIndex;
         }
 
-        public int getIndex() {
-            return index;
+        public int getSecondIndex() {
+            return secondIndex;
+        }
+
+        @Nonnull
+        public String getStr() {
+            return str;
         }
     }
 
+    public class DirectRefBuilder {
+
+        private int firstIndex;
+        private int secondIndex;
+        @Nonnull
+        private String str = "";
+
+        public DirectRefBuilder addFirstIndex(int index) {
+            this.firstIndex = index;
+            return this;
+        }
+
+        public DirectRefBuilder addSecondIndex(int index) {
+            this.secondIndex = index;
+            return this;
+        }
+
+        public DirectRefBuilder addString(@Nonnull String str) {
+            this.str = str;
+            return this;
+        }
+
+        public int buildDirectRefIndex() {
+            directRefList.add(new DirectRef(firstIndex, secondIndex, str));
+            return directRefList.size() - 1;
+        }
+    }
 
 }
