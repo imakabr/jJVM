@@ -372,7 +372,10 @@ public final class ExecutionEngine {
                         destroyCurrentMethod(false);
                         break;
                     case NEW:
-                        pushRefValueOntoStack(allocateInstanceObjectAndGetReference(readTwoBytes()));
+                        pushRefValueOntoStack(allocateInstanceObjectAndGetReference(false));
+                        break;
+                    case NEW_QUICK:
+                        pushRefValueOntoStack(allocateInstanceObjectAndGetReference(true));
                         break;
                     case NEWARRAY:
                         int atype = readByte();
@@ -943,8 +946,15 @@ public final class ExecutionEngine {
         }
     }
 
-    private int allocateInstanceObjectAndGetReference(int cpIndex) {
-        return allocateInstanceObjectAndGetReference(getKlassName(cpIndex));
+    private int allocateInstanceObjectAndGetReference(boolean quick) {
+        String klassName;
+        if (quick) {
+            klassName = getCurrentMethod().getDirectRef(readTwoBytes()).getString();
+        } else {
+            klassName = getKlassName(readTwoBytes());
+            preserveStringIfNeeded(klassName, NEW_QUICK);
+        }
+        return allocateInstanceObjectAndGetReference(klassName);
     }
 
     private int allocateInstanceObjectAndGetReference(@Nonnull String klassName) {
@@ -988,7 +998,7 @@ public final class ExecutionEngine {
         String klassName;
         if (quick) {
             Method.DirectRef directRef = getCurrentMethod().getDirectRef(readTwoBytes());
-            klassName = directRef.getStr();
+            klassName = directRef.getString();
             klassIndex = directRef.getFirstIndex();
         } else {
             klassName = getKlassName(readTwoBytes());
@@ -1008,7 +1018,7 @@ public final class ExecutionEngine {
     private void newMultiArray(boolean quick) {
         String arrayType;
         if (quick) {
-            arrayType = getCurrentMethod().getDirectRef(readTwoBytes()).getStr();
+            arrayType = getCurrentMethod().getDirectRef(readTwoBytes()).getString();
         } else {
             arrayType = getKlassName(readTwoBytes());
             preserveStringIfNeeded(arrayType, MULTIANEWARRAY_QUICK);

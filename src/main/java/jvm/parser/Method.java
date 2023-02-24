@@ -198,7 +198,7 @@ public class Method {
         }
 
         @Nonnull
-        public String getStr() {
+        public String getString() {
             return str;
         }
     }
