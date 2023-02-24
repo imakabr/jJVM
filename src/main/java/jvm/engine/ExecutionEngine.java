@@ -949,7 +949,7 @@ public final class ExecutionEngine {
     private int allocateInstanceObjectAndGetReference(boolean quick) {
         String klassName;
         if (quick) {
-            klassName = getCurrentMethod().getDirectRef(readTwoBytes()).getString();
+            klassName = getDirectRef(readTwoBytes()).getString();
         } else {
             klassName = getKlassName(readTwoBytes());
             preserveStringIfNeeded(klassName, NEW_QUICK);
@@ -997,7 +997,7 @@ public final class ExecutionEngine {
         int klassIndex;
         String klassName;
         if (quick) {
-            Method.DirectRef directRef = getCurrentMethod().getDirectRef(readTwoBytes());
+            Method.DirectRef directRef = getDirectRef(readTwoBytes());
             klassName = directRef.getString();
             klassIndex = directRef.getFirstIndex();
         } else {
@@ -1018,7 +1018,7 @@ public final class ExecutionEngine {
     private void newMultiArray(boolean quick) {
         String arrayType;
         if (quick) {
-            arrayType = getCurrentMethod().getDirectRef(readTwoBytes()).getString();
+            arrayType = getDirectRef(readTwoBytes()).getString();
         } else {
             arrayType = getKlassName(readTwoBytes());
             preserveStringIfNeeded(arrayType, MULTIANEWARRAY_QUICK);
@@ -1088,15 +1088,14 @@ public final class ExecutionEngine {
     }
 
     private void handleStaticField(BiConsumer<Integer, Integer> consumer, @Nonnull Opcode opcode, boolean quick) {
-        int index = readTwoBytes();
         int objectRef;
         int fieldValueIndex;
         if (quick) {
-            Method.DirectRef directRef = getCurrentMethod().getDirectRef(index);
+            Method.DirectRef directRef = getDirectRef(readTwoBytes());
             objectRef = directRef.getFirstIndex();
             fieldValueIndex = directRef.getSecondIndex();
         } else {
-            String klassFieldName = getKlassFieldName(index);
+            String klassFieldName = getKlassFieldName(readTwoBytes());
             InstanceKlass instanceKlass = getInstanceKlassByName(getKlassName(klassFieldName));
             objectRef = instanceKlass.getObjectRef();
             fieldValueIndex = instanceKlass.getIndexByFieldName(getFieldName(klassFieldName));
@@ -1187,8 +1186,14 @@ public final class ExecutionEngine {
         }
     }
 
+    @Nonnull
     private Method getCurrentMethod() {
         return stackMethod[stackMethodPointer];
+    }
+
+    @Nonnull
+    private Method.DirectRef getDirectRef(int index) {
+        return getCurrentMethod().getDirectRef(index);
     }
 
     private void handleMethod(@Nonnull Method method, boolean staticMethod) {
