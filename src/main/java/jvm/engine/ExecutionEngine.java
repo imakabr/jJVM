@@ -397,7 +397,10 @@ public final class ExecutionEngine {
                         pushRefValueOntoStack(allocateReferenceArray(true));
                         break;
                     case MULTIANEWARRAY:
-                        newMultiArray();
+                        newMultiArray(false);
+                        break;
+                    case MULTIANEWARRAY_QUICK:
+                        newMultiArray(true);
                         break;
                     case ARRAYLENGTH:
                         pushIntValueOntoStack(checkArrayObject(getInstanceObjectByValue(stack.pop())).size());
@@ -700,7 +703,7 @@ public final class ExecutionEngine {
             if (indexDim == dimensions.length - 1) {
                 object.setValue(i, setRefValueType(allocateArray(arrayType, arrayType.substring(1), dimensions[indexDim])));
             } else {
-                InstanceObject newObject = createArrayOfRef(arrayType, dimensions[indexDim], -1);
+                InstanceObject newObject = createReferenceArray(arrayType, dimensions[indexDim], -1);
                 object.setValue(i, setRefValueType(getInstanceObjectReference(newObject)));
                 createMultiArray(indexDim + 1, dimensions, newObject, arrayType);
             }
@@ -995,21 +998,26 @@ public final class ExecutionEngine {
                     .addFirstIndex(klassIndex)
                     .buildDirectRefIndex(), ANEWARRAY_QUICK);
         }
-        return getInstanceObjectReference(createArrayOfRef("[L" + klassName + ";", getIntValue(stack.pop()), klassIndex));
+        return getInstanceObjectReference(createReferenceArray("[L" + klassName + ";", getIntValue(stack.pop()), klassIndex));
     }
 
-    private InstanceObject createArrayOfRef(String arrayType, int count, int klassIndex) {
+    private InstanceObject createReferenceArray(String arrayType, int count, int klassIndex) {
         return getInstanceObject(heap, arrayType, JVMType.A.name(), count, klassIndex);
     }
 
-    private void newMultiArray() {
-        int cpIndex = readTwoBytes();
+    private void newMultiArray(boolean quick) {
+        String arrayType;
+        if (quick) {
+            arrayType = getCurrentMethod().getDirectRef(readTwoBytes()).getStr();
+        } else {
+            arrayType = getKlassName(readTwoBytes());
+            preserveStringIfNeeded(arrayType, MULTIANEWARRAY_QUICK);
+        }
         int[] dimensions = new int[readByte()];
         for (int i = dimensions.length - 1; i >= 0; i--) {
             dimensions[i] = getIntValue(stack.pop());
         }
-        String arrayType = getKlassName(cpIndex);
-        InstanceObject object = createArrayOfRef(arrayType, dimensions[0], -1);
+        InstanceObject object = createReferenceArray(arrayType, dimensions[0], -1);
         pushRefValueOntoStack(getInstanceObjectReference(object));
         createMultiArray(1, dimensions, object, arrayType);
     }
@@ -1082,7 +1090,7 @@ public final class ExecutionEngine {
             InstanceKlass instanceKlass = getInstanceKlassByName(getKlassName(klassFieldName));
             objectRef = instanceKlass.getObjectRef();
             fieldValueIndex = instanceKlass.getIndexByFieldName(getFieldName(klassFieldName));
-            preserveDirectRefIfNeeded(objectRef ,fieldValueIndex, opcode);
+            preserveDirectRefIfNeeded(objectRef, fieldValueIndex, opcode);
         }
         consumer.accept(objectRef, fieldValueIndex);
     }
