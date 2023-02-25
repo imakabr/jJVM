@@ -225,7 +225,10 @@ public final class ExecutionEngine {
                         putStaticFieldToInstanceObjectFromStack(true);
                         break;
                     case CHECKCAST:
-                        checkCast();
+                        checkCast(false);
+                        break;
+                    case CHECKCAST_QUICK:
+                        checkCast(true);
                         break;
                     case GOTO:
                         programCounter += (byteCode[programCounter] << 8) + (byteCode[programCounter + 1] & 0xff) - 1;
@@ -947,14 +950,19 @@ public final class ExecutionEngine {
     }
 
     private int allocateInstanceObjectAndGetReference(boolean quick) {
-        String klassName;
+        return allocateInstanceObjectAndGetReference(getResolvedString(quick, readTwoBytes(), NEW_QUICK));
+    }
+
+    @Nonnull
+    private String getResolvedString(boolean quick, int index, @Nonnull Opcode opcode) {
+        String result;
         if (quick) {
-            klassName = getDirectRef(readTwoBytes()).getString();
+            result = getDirectRef(index).getString();
         } else {
-            klassName = getKlassName(readTwoBytes());
-            preserveStringIfNeeded(klassName, NEW_QUICK);
+            result = getKlassName(index);
+            preserveStringIfNeeded(result, opcode);
         }
-        return allocateInstanceObjectAndGetReference(klassName);
+        return result;
     }
 
     private int allocateInstanceObjectAndGetReference(@Nonnull String klassName) {
@@ -1016,13 +1024,7 @@ public final class ExecutionEngine {
     }
 
     private void newMultiArray(boolean quick) {
-        String arrayType;
-        if (quick) {
-            arrayType = getDirectRef(readTwoBytes()).getString();
-        } else {
-            arrayType = getKlassName(readTwoBytes());
-            preserveStringIfNeeded(arrayType, MULTIANEWARRAY_QUICK);
-        }
+        String arrayType = getResolvedString(quick, readTwoBytes(), MULTIANEWARRAY_QUICK);
         int[] dimensions = new int[readByte()];
         for (int i = dimensions.length - 1; i >= 0; i--) {
             dimensions[i] = getIntValue(stack.pop());
@@ -1059,7 +1061,7 @@ public final class ExecutionEngine {
         int index = readTwoBytes();
         int argSize;
         if (quick) {
-            Method.DirectRef directRef = getCurrentMethod().getDirectRef(index);
+            Method.DirectRef directRef = getDirectRef(index);
             index = directRef.getSecondIndex();
             argSize = directRef.getFirstIndex();
         } else {
@@ -1222,14 +1224,14 @@ public final class ExecutionEngine {
         programCounter = stack.programCounter;
     }
 
-    private void checkCast() {
+    private void checkCast(boolean quick) {
         int index = readTwoBytes();
         int objectRef = getRefValue(stack.pop());
         if (objectRef == NULL) {
             pushRefValueOntoStack(NULL);
         } else {
+            String castKlassName = getResolvedString(quick, index, CHECKCAST_QUICK);
             InstanceObject object = getInstanceObjectByRef(objectRef);
-            String castKlassName = getKlassName(index);
             if (object.isArray()) {
                 if (castKlassName.equals(object.getArrayType())) {
                     pushRefValueOntoStack(objectRef);
