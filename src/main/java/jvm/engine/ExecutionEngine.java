@@ -234,7 +234,10 @@ public final class ExecutionEngine {
                         programCounter += (byteCode[programCounter] << 8) + (byteCode[programCounter + 1] & 0xff) - 1;
                         break;
                     case INSTANCEOF:
-                        checkInstanceOf();
+                        checkInstanceOf(false);
+                        break;
+                    case INSTANCEOF_QUICK:
+                        checkInstanceOf(true);
                         break;
                     case IADD:
                         evaluateIntValueAndPushBackOntoStack(Integer::sum);
@@ -1255,9 +1258,8 @@ public final class ExecutionEngine {
         }
     }
 
-    private void checkInstanceOf() {
-        int index = readTwoBytes();
-        String className = getKlassName(index);
+    private void checkInstanceOf(boolean quick) {
+        String className = getResolvedString(quick, readTwoBytes(), INSTANCEOF_QUICK);
         int objectRef = getRefValue(stack.pop());
         if (objectRef == NULL) {
             pushIntValueOntoStack(NULL);
