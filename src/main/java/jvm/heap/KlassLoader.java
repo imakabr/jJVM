@@ -33,6 +33,8 @@ public class KlassLoader {
     public static final String PRINT_STREAM = "jvm/io/PrintStreamJVM";
 
 
+    public static final String[] arrayNames = {"boolean[]", "char[]", "float[]", "double[]", "byte[]", "short[]", "int[]", "long[]"};
+
     @Nonnull
     private final Map<String, Integer> indexByName; // index to Heap.instanceKlasses
     @Nonnull
@@ -51,14 +53,21 @@ public class KlassLoader {
     }
 
     public void initSystemKlasses() {
-        initObjectKlass();
+        for (String arrayName : arrayNames) {
+            initKlass(getArrayKlass(arrayName));
+        }
+        initKlass(ObjectJVM.getObjectKlass());
         loadKlass(STRING_JVM);
     }
 
-    private void initObjectKlass() {
-        Klass object = ObjectJVM.getObjectKlass();
-        prepareKlass(object);
-        setConstantPoolKlassByName(object.getKlassName(), object);
+    private void initKlass(@Nonnull Klass klass) {
+        prepareKlass(klass);
+        setConstantPoolKlassByName(klass.getKlassName(), klass);
+    }
+
+    @Nonnull
+    public Klass getArrayKlass(@Nonnull String arrayName) {
+        return new Klass(arrayName, ABSENCE);
     }
 
     public void setIndexByName(@Nonnull String name, int index) {

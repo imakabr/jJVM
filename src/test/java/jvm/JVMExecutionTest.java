@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 public class JVMExecutionTest {
 
-    public static final int FIRST_NOT_SYSTEM_INSTANCE = 3;
+    public static final int FIRST_NOT_SYSTEM_INSTANCE = 11;
     public static final String INSTRUCTION = "jvm/examples/InstructionExample";
     public static final String ARRAY = "jvm/examples/ArrayExample";
     public static final String ALGORITHM = "jvm/examples/AlgorithmExample";
