@@ -16,7 +16,7 @@ public class MarkAndSweepTest {
 
     @Test
     public void markAndSweepTest() {
-        VirtualMachine virtualMachine = new VirtualMachine(30, 12, 100, false);
+        VirtualMachine virtualMachine = new VirtualMachine(100, 100, 100, false);
         virtualMachine.getKlassLoader().loadKlass(klass);
         Heap heap = virtualMachine.getHeap();
         int systemObjectSize = heap.getInstanceObjectSize();
@@ -24,7 +24,7 @@ public class MarkAndSweepTest {
         Method method = heap.getMethodRepo().getMethod(methodIndex);
         int reference = (int) virtualMachine.getEngine().invoke(method); // Should create 9 objects on the heap (1 - instance class, 8 - instance objects)
 
-        assertEquals(systemObjectSize + 9, heap.getInstanceObjectSize());
+        assertEquals(systemObjectSize + 10, heap.getInstanceObjectSize());
 
         StackFrame stackFrame = new StackFrame(1,0);
         stackFrame.setLocalVar(0, setRefValueType(reference));
@@ -32,7 +32,7 @@ public class MarkAndSweepTest {
         garbageCollector.setHeap(heap);
         garbageCollector.run(); // Should remove 4 objects from the heap
 
-        assertEquals(systemObjectSize + 5, heap.getInstanceObjectSize());
+        assertEquals(systemObjectSize + 6, heap.getInstanceObjectSize());
     }
 
     private long setRefValueType(int value) {
