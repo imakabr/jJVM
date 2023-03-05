@@ -54,7 +54,7 @@ public class KlassLoader {
 
     public void initSystemKlasses() {
         for (String arrayName : arrayNames) {
-            initKlass(getArrayKlass(arrayName));
+            initArrayKlass(arrayName);
         }
         initKlass(ObjectJVM.getObjectKlass());
         loadKlass(STRING_JVM);
@@ -65,9 +65,8 @@ public class KlassLoader {
         setConstantPoolKlassByName(klass.getKlassName(), klass);
     }
 
-    @Nonnull
-    public Klass getArrayKlass(@Nonnull String arrayName) {
-        return new Klass(arrayName, ABSENCE);
+    public void initArrayKlass(@Nonnull String name) {
+        initKlass(new Klass(name, ABSENCE));
     }
 
     public void setIndexByName(@Nonnull String name, int index) {
@@ -142,7 +141,7 @@ public class KlassLoader {
         Integer parentKlassIndex = getInstanceKlassIndexByName(constantPoolKlass.getParent(), false);
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
         InstanceObject object = getInstanceObject(parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) ?
-                heap.getInstanceObject(parentKlass.getObjectRef()) : null,
+                        heap.getInstanceObject(parentKlass.getObjectRef()) : null,
                 constantPoolKlass.getKlassName(),
                 heap, constantPoolKlass.getStaticFieldNames(), -1);
         int objectRef = heap.changeObject(parentKlass != null

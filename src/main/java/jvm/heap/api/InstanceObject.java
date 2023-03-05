@@ -1,6 +1,5 @@
 package jvm.heap.api;
 
-import jvm.JVMType;
 import jvm.lang.NullPointerExceptionJVM;
 
 import javax.annotation.Nonnull;
@@ -34,11 +33,5 @@ public interface InstanceObject {
     int getIndexByFieldName(@Nonnull String name) throws NullPointerExceptionJVM;
 
     int getKlassIndex();
-
-    @Nullable
-    JVMType getValueType();
-
-    @Nullable
-    String getArrayType();
 
 }

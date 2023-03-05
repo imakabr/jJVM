@@ -51,12 +51,12 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
         }
     }
 
-    public InstanceObjectImpl(@Nonnull Heap heap, @Nonnull String arrayType, @Nonnull String valueType, int size, int klassIndex) {
-        super(heap, arrayType, valueType, klassIndex);
+    public InstanceObjectImpl(@Nonnull Heap heap, @Nonnull JVMType valueType, int size, int klassIndex) {
+        super(heap, klassIndex);
         this.fieldValues = new long[size];
         this.indexByFieldName = new HashMap<>();
         for (int index = 0; index < size; index++) {
-            setDefaultValue(index, getValueType(valueType));
+            setDefaultValue(index, valueType);
         }
     }
 

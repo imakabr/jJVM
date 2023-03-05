@@ -1,5 +1,6 @@
 package jvm.heap;
 
+import jvm.JVMType;
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceKlass;
 import jvm.heap.api.InstanceObject;
@@ -34,12 +35,11 @@ public class InstanceFactory {
 
     @Nonnull
     public static InstanceObject getInstanceObject(@Nonnull Heap heap,
-                                                   @Nonnull String arrayType,
-                                                   @Nonnull String valueType,
+                                                   @Nonnull JVMType valueType,
                                                    int size,
                                                    int klassIndex) {
-        return heapMonitor ? new InstanceObjectVolImpl(heap, arrayType, valueType, size, klassIndex)
-                : new InstanceObjectImpl(heap, arrayType, valueType, size, klassIndex);
+        return heapMonitor ? new InstanceObjectVolImpl(heap, valueType, size, klassIndex)
+                : new InstanceObjectImpl(heap, valueType, size, klassIndex);
     }
 
     @Nonnull

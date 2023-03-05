@@ -71,7 +71,7 @@ public class Utils {
             builder.append(value)
                     .append(" ");
         }
-        return builder.toString();
+        return builder.length() == 0 ? "absence" : builder.toString();
     }
 
     @Nonnull

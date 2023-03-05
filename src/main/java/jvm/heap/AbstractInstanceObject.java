@@ -17,10 +17,6 @@ public abstract class AbstractInstanceObject implements InstanceObject {
 
     private final int klassIndex;
     private final boolean array;
-    @Nullable
-    private String arrayType;
-    @Nullable
-    private JVMType valueType;
     @Nonnull
     private final Heap heap;
 
@@ -30,12 +26,10 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         this.klassIndex = staticContentKlassName == null ? klassIndex : -1;
     }
 
-    public AbstractInstanceObject(@Nonnull Heap heap, @Nonnull String arrayType, @Nonnull String valueType, int klassIndex) {
+    public AbstractInstanceObject(@Nonnull Heap heap, int klassIndex) {
         this.heap = heap;
         this.klassIndex = klassIndex;
         this.array = true;
-        this.valueType = getValueType(valueType);
-        this.arrayType = arrayType;
     }
 
     @Nonnull
@@ -92,23 +86,23 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         return klassIndex;
     }
 
-    @Nullable
-    public JVMType getValueType() {
-        return valueType;
-    }
-
-    @Nullable
-    public String getArrayType() {
-        return arrayType;
-    }
-
     @Override
     public String toString() {
-        String type = array ? "Array" : klassIndex == -1 ? "Object | Fields : " : heap.getInstanceKlass(klassIndex).getName() + " | Fields : ";
-        type = array && valueType != JVMType.C ? type + " | Values : " : type;
-        String fields = Utils.toString(getFieldValues(), getFieldValuesSize());
-        String str = valueType == JVMType.C ? " | String : " + Utils.toStringFromCharArray(getFieldValues()) : "";
-        return type + (!str.isEmpty() ? str : (fields.isEmpty() ? "absence" : fields));
+        String type;
+        if (array) {
+            if (isCharType()) {
+                return "Array | String : " + Utils.toStringFromCharArray(getFieldValues());
+            } else {
+                type = "Array " + heap.getInstanceKlass(klassIndex).getName() + " | Values : ";
+            }
+        } else {
+            type = klassIndex == -1 ? "Static | Fields : " : heap.getInstanceKlass(klassIndex).getName() + " | Fields : ";
+        }
+        return type + Utils.toString(getFieldValues(), getFieldValuesSize());
+    }
+
+    private boolean isCharType() {
+        return size() > 0 && getValueType(getValue(0)) == JVMType.C.ordinal();
     }
 
 }

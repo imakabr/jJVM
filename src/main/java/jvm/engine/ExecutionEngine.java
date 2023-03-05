@@ -43,7 +43,7 @@ public final class ExecutionEngine {
     private final static String RANDOM_NEXT_INT = "java/util/Random.nextInt:(I)I";
     private final static String STRING_INTERN = "java/lang/String.intern:()Ljava/lang/String;";
 
-    private final Opcode[] table = new Opcode[256];
+    private final static Opcode[] table = new Opcode[256];
     @Nonnull
     private final Heap heap;
     @Nonnull
@@ -395,9 +395,8 @@ public final class ExecutionEngine {
                         T_INT	    10
                         T_LONG	    11
                         */
-                        pushRefValueOntoStack(allocateArray("[" + JVMType.values()[atype - 3].name(),
-                                JVMType.values()[atype - 3].name(),
-                                getIntValue(stack.pop())));
+                        pushRefValueOntoStack(allocateArray(JVMType.values()[atype - 3],
+                                getIntValue(stack.pop()), atype - 4));
                         break;
                     case ANEWARRAY:
                         pushRefValueOntoStack(allocateReferenceArray(false));
@@ -459,7 +458,7 @@ public final class ExecutionEngine {
                          * The int value is truncated to a byte and stored as the component of the array indexed by index.
                          */
                         storeToArrayFromStack((val, obj) -> {
-                            JVMType type = obj.getValueType();
+                            JVMType type = JVMType.values()[obj.getKlassIndex() + 1];
                             if (type == JVMType.Z || type == JVMType.B) {
                                 return setValueType(getPureValue(val), type);
                             } else {
@@ -710,12 +709,32 @@ public final class ExecutionEngine {
         String arrayType = type.substring(type.indexOf('[') + 1);
         for (int i = 0; i < object.size(); i++) {
             if (indexDim == dimensions.length - 1) {
-                object.setValue(i, setRefValueType(allocateArray(arrayType, arrayType.substring(1), dimensions[indexDim])));
+                boolean refType = (arrayType.startsWith("[") && arrayType.endsWith(";"));
+                int arrayKlassIndex = getArrayKlassIndex(arrayType, refType);
+                object.setValue(i, setRefValueType(
+                        allocateArray(refType ? JVMType.A : JVMType.values()[arrayKlassIndex + 1], dimensions[indexDim], arrayKlassIndex)));
             } else {
-                InstanceObject newObject = createReferenceArray(arrayType, dimensions[indexDim], -1);
+                InstanceObject newObject = createReferenceArray(dimensions[indexDim], setArrayInstanceKlass(arrayType));
                 object.setValue(i, setRefValueType(getInstanceObjectReference(newObject)));
                 createMultiArray(indexDim + 1, dimensions, newObject, arrayType);
             }
+        }
+    }
+
+    private int getArrayKlassIndex(@Nonnull String arrayType, boolean refType) {
+        if (refType) {
+            return setArrayInstanceKlass(arrayType);
+        }
+        String aType = arrayType.substring(1);
+        switch (aType) {
+            case "B":
+                return 0;
+            case "C":
+                return 1;
+            case "I":
+                return 6;
+            default:
+                throw new RuntimeException("Unknown array type :" + aType);
         }
     }
 
@@ -939,7 +958,7 @@ public final class ExecutionEngine {
         InstanceObject stringObj = allocateInstanceObject(STRING);
         objRef = getInstanceObjectReference(stringObj);
         pushRefValueOntoStack(objRef);
-        int charArrayRef = allocateArray("[" + JVMType.C.name(), JVMType.C.name(), str.length());
+        int charArrayRef = allocateArray(JVMType.C, str.length(), JVMType.C.ordinal() - 1);
         /*----------------------------------*/
         InstanceObject charArrayObj = getInstanceObjectByRef(charArrayRef);
         for (int i = 0; i < str.length(); i++) {
@@ -995,35 +1014,23 @@ public final class ExecutionEngine {
     }
 
 
-    private int allocateArray(@Nonnull String arrayType, @Nonnull String valueType, int count) {
-        int klassIndex = -1;
-        if (arrayType.startsWith("[") && arrayType.endsWith(";")) {
-            String klassName = arrayType.substring(arrayType.indexOf('L') + 1, arrayType.length() - 1);
-            klassIndex = getInstanceKlassIndexByKlassName(klassName);
-        }
-        return getInstanceObjectReference(getInstanceObject(heap, arrayType, valueType, count, klassIndex));
+    private int allocateArray(@Nonnull JVMType valueType, int count, int klassIndex) {
+        return getInstanceObjectReference(getInstanceObject(heap, valueType, count, klassIndex));
     }
 
     private int allocateReferenceArray(boolean quick) {
         int klassIndex;
-        String klassName;
         if (quick) {
-            Method.DirectRef directRef = getDirectRef(readTwoBytes());
-            klassName = directRef.getString();
-            klassIndex = directRef.getFirstIndex();
+            klassIndex = readTwoBytes();
         } else {
-            klassName = getKlassName(readTwoBytes());
-            klassIndex = getInstanceKlassIndexByKlassName(klassName);
-            preserveIfNeeded(method -> method.builder()
-                    .addString(klassName)
-                    .addFirstIndex(klassIndex)
-                    .buildDirectRefIndex(), ANEWARRAY_QUICK);
+            klassIndex = setArrayInstanceKlass("[L" + getKlassName(readTwoBytes()) + ";");
+            preserveIndexIfNeeded(klassIndex, ANEWARRAY_QUICK);
         }
-        return getInstanceObjectReference(createReferenceArray("[L" + klassName + ";", getIntValue(stack.pop()), klassIndex));
+        return getInstanceObjectReference(createReferenceArray(getIntValue(stack.pop()), klassIndex));
     }
 
-    private InstanceObject createReferenceArray(String arrayType, int count, int klassIndex) {
-        return getInstanceObject(heap, arrayType, JVMType.A.name(), count, klassIndex);
+    private InstanceObject createReferenceArray(int count, int klassIndex) {
+        return getInstanceObject(heap, JVMType.A, count, klassIndex);
     }
 
     private void newMultiArray(boolean quick) {
@@ -1032,9 +1039,18 @@ public final class ExecutionEngine {
         for (int i = dimensions.length - 1; i >= 0; i--) {
             dimensions[i] = getIntValue(stack.pop());
         }
-        InstanceObject object = createReferenceArray(arrayType, dimensions[0], -1);
+        InstanceObject object = createReferenceArray(dimensions[0], setArrayInstanceKlass(arrayType));
         pushRefValueOntoStack(getInstanceObjectReference(object));
         createMultiArray(1, dimensions, object, arrayType);
+    }
+
+    private int setArrayInstanceKlass(@Nonnull String array) {
+        Integer index = heap.getKlassLoader().getInstanceKlassIndexByName(array, false);
+        if (index != null) {
+            return index;
+        }
+        heap.getKlassLoader().initArrayKlass(array);
+        return setArrayInstanceKlass(array);
     }
 
     public void setExceptionDebugMode(boolean exceptionDebugMode) {
@@ -1233,14 +1249,23 @@ public final class ExecutionEngine {
         if (objectRef == NULL) {
             pushRefValueOntoStack(NULL);
         } else {
-            String castKlassName = getResolvedString(quick, index, CHECKCAST_QUICK);
+            String castKlassName;
+            int castKlassNameIndex;
+            if (quick) {
+                castKlassNameIndex = index;
+                castKlassName = getInstanceKlassByIndex(castKlassNameIndex).getName();
+            } else {
+                castKlassName = getKlassName(index);
+                castKlassNameIndex = getInstanceKlassIndexByKlassName(castKlassName);
+                preserveIndexIfNeeded(castKlassNameIndex, CHECKCAST_QUICK);
+            }
             InstanceObject object = getInstanceObjectByRef(objectRef);
             if (object.isArray()) {
-                if (castKlassName.equals(object.getArrayType())) {
+                if (castKlassNameIndex == object.getKlassIndex()) {
                     pushRefValueOntoStack(objectRef);
                 } else {
                     throw new ClassCastExceptionJVM(
-                            Objects.requireNonNull(object.getArrayType()).replace("/", ".")
+                            getNameFromInstanceKlassByIndex(object.getKlassIndex()).replace("/", ".")
                                     + " cannot be cast to "
                                     + castKlassName.replace("/", "."));
                 }
@@ -1268,7 +1293,7 @@ public final class ExecutionEngine {
         InstanceObject object = getInstanceObjectByRef(objectRef);
         boolean instanceOf;
         if (object.isArray()) {
-            instanceOf = className.equals(object.getArrayType());
+            instanceOf = className.equals(getNameFromInstanceKlassByIndex(object.getKlassIndex()));
         } else {
             Klass currentKlass = getKlass(getNameFromInstanceKlassByIndex(object.getKlassIndex()));
             instanceOf = checkCast(currentKlass, className);

@@ -53,12 +53,12 @@ public class InstanceObjectVolImpl extends AbstractInstanceObject {
         }
     }
 
-    public InstanceObjectVolImpl(@Nonnull Heap heap, @Nonnull String arrayType, @Nonnull String valueType, int size, int klassIndex) {
-        super(heap, arrayType, valueType, klassIndex);
+    public InstanceObjectVolImpl(@Nonnull Heap heap, @Nonnull JVMType valueType, int size, int klassIndex) {
+        super(heap, klassIndex);
         this.fieldValues = new AtomicLongArray(size);
         this.indexByFieldName = new ConcurrentHashMap<>();
         for (int index = 0; index < size; index++) {
-            setDefaultValue(index, getValueType(valueType));
+            setDefaultValue(index, valueType);
         }
     }
 
