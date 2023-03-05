@@ -1,6 +1,5 @@
 package jvm;
 
-import jvm.heap.*;
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceKlass;
 import jvm.heap.api.InstanceObject;
@@ -26,7 +25,7 @@ public class JVMExecutionTest {
     public static final String SIMPLE_OBJECT = "jvm/examples/SimpleObject";
 
     @Test
-    public void simpleStaticFieldsInstanceKlassTest() throws NoSuchFieldException, IllegalAccessException {
+    public void simpleStaticFieldsInstanceKlassTest() {
         String fName = "jvm/examples/SimpleStatic";
 
         VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000, false);
@@ -101,7 +100,7 @@ public class JVMExecutionTest {
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/SimpleObject.m:()V");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long result = virtualMachine.getEngine().invoke(method);
+        virtualMachine.getEngine().invoke(method);
 
         InstanceObject simpleClassObject = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
 
@@ -174,7 +173,7 @@ public class JVMExecutionTest {
 
         int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ChildChildObject.m:()V");
         Method method = heap.getMethodRepo().getMethod(methodIndex);
-        long result = virtualMachine.getEngine().invoke(method);
+        virtualMachine.getEngine().invoke(method);
 
         InstanceObject object = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
 
@@ -598,6 +597,12 @@ public class JVMExecutionTest {
     public void checkCheckCastMultiArray5() {
         // check INSTANCEOF CHECKCAST
         checkMethodInInstructionClass("checkCastMultiArray5:()I", 1);
+    }
+
+    @Test
+    public void checkCheckCastMultiArray6() {
+        // check INSTANCEOF CHECKCAST
+        checkMethodInInstructionClass("checkCastMultiArray6:()I", 1);
     }
 
     private void checkException(@Nonnull String methodName, @Nonnull Class<? extends RuntimeExceptionJVM> klass, @Nonnull String message) {
