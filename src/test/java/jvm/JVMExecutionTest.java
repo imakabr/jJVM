@@ -37,15 +37,15 @@ public class JVMExecutionTest {
         InstanceObject object = heap.getInstanceObject(simpleStaticFieldsInstanceKlass.getObjectRef());
         int fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("b:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(555, getIntValue(object.getValue(fieldValueIndex)));
+        assertEquals(555, getIntValue(object.getFieldValue(fieldValueIndex)));
 
         fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("c:I");
         assertEquals(1, fieldValueIndex);
-        assertEquals(-129, getIntValue(object.getValue(fieldValueIndex)));
+        assertEquals(-129, getIntValue(object.getFieldValue(fieldValueIndex)));
 
         fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("d:I");
         assertEquals(2, fieldValueIndex);
-        assertEquals(333, getIntValue(object.getValue(fieldValueIndex)));
+        assertEquals(333, getIntValue(object.getFieldValue(fieldValueIndex)));
 
     }
 
@@ -62,7 +62,7 @@ public class JVMExecutionTest {
         InstanceObject object = heap.getInstanceObject(complexStaticFieldsInstanceKlass.getObjectRef());
         int fieldValueIndex = complexStaticFieldsInstanceKlass.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(888, getIntValue(object.getValue(fieldValueIndex)));
+        assertEquals(888, getIntValue(object.getFieldValue(fieldValueIndex)));
     }
 
     @Test
@@ -106,15 +106,15 @@ public class JVMExecutionTest {
 
         int fieldValueIndex = simpleClassObject.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(1, getIntValue(simpleClassObject.getValue(fieldValueIndex)));
+        assertEquals(1, getIntValue(simpleClassObject.getFieldValue(fieldValueIndex)));
 
         fieldValueIndex = simpleClassObject.getIndexByFieldName("b:I");
         assertEquals(1, fieldValueIndex);
-        assertEquals(2, getIntValue(simpleClassObject.getValue(fieldValueIndex)));
+        assertEquals(2, getIntValue(simpleClassObject.getFieldValue(fieldValueIndex)));
 
         fieldValueIndex = simpleClassObject.getIndexByFieldName("c:I");
         assertEquals(2, fieldValueIndex);
-        assertEquals(3, getIntValue(simpleClassObject.getValue(fieldValueIndex)));
+        assertEquals(3, getIntValue(simpleClassObject.getFieldValue(fieldValueIndex)));
     }
 
     @Test
@@ -179,7 +179,7 @@ public class JVMExecutionTest {
 
         int fieldValueIndex = object.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
-        assertEquals(11, getIntValue(object.getValue(fieldValueIndex)));
+        assertEquals(11, getIntValue(object.getFieldValue(fieldValueIndex)));
 
     }
 

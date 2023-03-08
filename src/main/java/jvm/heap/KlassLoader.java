@@ -14,6 +14,7 @@ import jvm.parser.KlassParser;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static jvm.Utils.changeSystemKlassNameToJVMKlassName;
 import static jvm.Utils.changeJVMKlassNameToSystemKlassName;
@@ -148,8 +149,8 @@ public class KlassLoader {
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
                 ? parentKlass.getObjectRef() : -1, object);
 
-        InstanceKlass instanceKlass = getInstanceKlass(
-                object.getIndexByFieldNameFromStaticContent(constantPoolKlass.getKlassName(), parentKlass), objectRef, constantPoolKlass);
+        InstanceKlass instanceKlass = getInstanceKlass(getIndexByFieldNameFromStaticContent(object.getIndexFieldNameMap(),
+                constantPoolKlass.getKlassName(), parentKlass), objectRef, constantPoolKlass);
         setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 
         Map<String, Integer> allStaticMethods = new HashMap<>(
@@ -186,6 +187,16 @@ public class KlassLoader {
         instanceKlass.setVirtualMethodTable(virtualMethodTable);
 
         return clInit;
+    }
+
+    public Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull Map<String, Integer> indexFieldName,
+                                                                     @Nonnull String klassName,
+                                                                     @Nullable InstanceKlass parentKlass) {
+        Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getIndexByFieldName() : Collections.emptyMap());
+        result.putAll(indexFieldName.keySet().stream()
+                .filter(klassNameField -> klassNameField.contains(klassName))
+                .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), indexFieldName::get)));
+        return Collections.unmodifiableMap(result);
     }
 
 }

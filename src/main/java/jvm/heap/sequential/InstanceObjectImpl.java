@@ -31,7 +31,7 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
                 indexByFieldName.put(field, fieldIndex);
             }
         } else {
-            // a chain of inherited classes for storing data in static fields contain a single InstanceObject
+            // a chain of inherited classes for storing data in static fields contains a single InstanceObject
             this.indexByFieldName = new HashMap<>(objectFromStaticContent != null ?
                     objectFromStaticContent.getIndexFieldNameMap() : Collections.emptyMap());
             int count = fields.size();
@@ -69,7 +69,7 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
         return Collections.unmodifiableSet(indexByFieldName.keySet());
     }
 
-    public int size() {
+    public int getFieldValuesSize() {
         return fieldValues.length;
     }
 
@@ -77,22 +77,18 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
         return fieldValues;
     }
 
-    public void setValue(int index, long value) {
+    public void setFieldValue(int index, long value) {
         checkType(fieldValues[index], value);
         fieldValues[index] = value;
     }
 
-    public long getValue(int fieldIndex) {
+    public long getFieldValue(int fieldIndex) {
         return fieldValues[fieldIndex];
     }
 
     @Nonnull
     public Map<String, Integer> getIndexFieldNameMap() {
         return Collections.unmodifiableMap(indexByFieldName);
-    }
-
-    public int getFieldValuesSize() {
-        return fieldValues.length;
     }
 
     private void setDefaultValue(int index, @Nonnull JVMType type) {

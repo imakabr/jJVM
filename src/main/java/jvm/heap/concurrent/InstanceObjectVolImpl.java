@@ -41,7 +41,7 @@ public class InstanceObjectVolImpl extends AbstractInstanceObject {
                     objectFromStaticContent.getFieldValuesSize() + count : fields.size());
             if (objectFromStaticContent != null) {
                 for (int i = 0; i < objectFromStaticContent.getFieldValuesSize(); i++) {
-                    this.fieldValues.set(i, objectFromStaticContent.getValue(i));
+                    this.fieldValues.set(i, objectFromStaticContent.getFieldValue(i));
                 }
             }
             for (String newField : fields) {
@@ -71,7 +71,7 @@ public class InstanceObjectVolImpl extends AbstractInstanceObject {
         return Collections.unmodifiableSet(indexByFieldName.keySet());
     }
 
-    public int size() {
+    public int getFieldValuesSize() {
         return fieldValues.length();
     }
 
@@ -83,22 +83,18 @@ public class InstanceObjectVolImpl extends AbstractInstanceObject {
         return result;
     }
 
-    public void setValue(int index, long value) {
+    public void setFieldValue(int index, long value) {
         checkType(fieldValues.get(index), value);
         fieldValues.set(index, value);
     }
 
-    public long getValue(int fieldIndex) {
+    public long getFieldValue(int fieldIndex) {
         return fieldValues.get(fieldIndex);
     }
 
     @Nonnull
     public Map<String, Integer> getIndexFieldNameMap() {
         return Collections.unmodifiableMap(indexByFieldName);
-    }
-
-    public int getFieldValuesSize() {
-        return fieldValues.length();
     }
 
     private void setDefaultValue(int index, @Nonnull JVMType type) {

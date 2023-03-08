@@ -3,15 +3,11 @@ package jvm.heap;
 import jvm.JVMType;
 import jvm.Utils;
 import jvm.heap.api.Heap;
-import jvm.heap.api.InstanceKlass;
 import jvm.heap.api.InstanceObject;
-import jvm.heap.sequential.InstanceObjectImpl;
 import jvm.lang.NullPointerExceptionJVM;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class AbstractInstanceObject implements InstanceObject {
 
@@ -30,17 +26,6 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         this.heap = heap;
         this.klassIndex = klassIndex;
         this.array = true;
-    }
-
-    @Nonnull
-    public Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull String klassName, @Nullable InstanceKlass parentKlass) {
-        Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getIndexByFieldName() : Collections.emptyMap());
-        result.putAll(getIndexFieldNameMap().keySet()
-                .stream()
-                .filter(klassNameField -> klassNameField.contains(klassName))
-                .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1),
-                        field -> getIndexFieldNameMap().get(field))));
-        return Collections.unmodifiableMap(result);
     }
 
     public boolean isArray() {
@@ -102,7 +87,7 @@ public abstract class AbstractInstanceObject implements InstanceObject {
     }
 
     private boolean isCharType() {
-        return size() > 0 && getValueType(getValue(0)) == JVMType.C.ordinal();
+        return getFieldValuesSize() > 0 && getValueType(getFieldValue(0)) == JVMType.C.ordinal();
     }
 
 }

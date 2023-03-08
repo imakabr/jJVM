@@ -411,7 +411,7 @@ public final class ExecutionEngine {
                         newMultiArray(true);
                         break;
                     case ARRAYLENGTH:
-                        pushIntValueOntoStack(checkArrayObject(getInstanceObjectByValue(stack.pop())).size());
+                        pushIntValueOntoStack(checkArrayObject(getInstanceObjectByValue(stack.pop())).getFieldValuesSize());
                         break;
                     case AALOAD:
                         pushOntoStackFromArray(val -> checkValueType(val, JVMType.A));
@@ -697,25 +697,25 @@ public final class ExecutionEngine {
     private String getString(int objectRef) {
         InstanceObject stringObject = getInstanceObjectByRef(objectRef);
         InstanceObject charArrayObject = getInstanceObjectByValue(
-                stringObject.getValue(stringObject.getIndexByFieldName("value:[C")));
-        char[] buf = new char[charArrayObject.size()];
+                stringObject.getFieldValue(stringObject.getIndexByFieldName("value:[C")));
+        char[] buf = new char[charArrayObject.getFieldValuesSize()];
         for (int i = 0; i < buf.length; i++) {
-            buf[i] = (char) charArrayObject.getValue(i);
+            buf[i] = (char) charArrayObject.getFieldValue(i);
         }
         return String.valueOf(buf);
     }
 
     private void createMultiArray(int indexDim, int[] dimensions, InstanceObject object, String type) {
         String arrayType = type.substring(type.indexOf('[') + 1);
-        for (int i = 0; i < object.size(); i++) {
+        for (int i = 0; i < object.getFieldValuesSize(); i++) {
             if (indexDim == dimensions.length - 1) {
                 boolean refType = (arrayType.startsWith("[") && arrayType.endsWith(";"));
                 int arrayKlassIndex = getArrayKlassIndex(arrayType, refType);
-                object.setValue(i, setRefValueType(
+                object.setFieldValue(i, setRefValueType(
                         allocateArray(refType ? JVMType.A : JVMType.values()[arrayKlassIndex + 1], dimensions[indexDim], arrayKlassIndex)));
             } else {
                 InstanceObject newObject = createReferenceArray(dimensions[indexDim], setArrayInstanceKlass(arrayType));
-                object.setValue(i, setRefValueType(getInstanceObjectReference(newObject)));
+                object.setFieldValue(i, setRefValueType(getInstanceObjectReference(newObject)));
                 createMultiArray(indexDim + 1, dimensions, newObject, arrayType);
             }
         }
@@ -962,9 +962,9 @@ public final class ExecutionEngine {
         /*----------------------------------*/
         InstanceObject charArrayObj = getInstanceObjectByRef(charArrayRef);
         for (int i = 0; i < str.length(); i++) {
-            charArrayObj.setValue(i, setCharValueType(str.charAt(i)));
+            charArrayObj.setFieldValue(i, setCharValueType(str.charAt(i)));
         }
-        stringObj.setValue(stringObj.getIndexByFieldName("value:[C"), setRefValueType(charArrayRef));
+        stringObj.setFieldValue(stringObj.getIndexByFieldName("value:[C"), setRefValueType(charArrayRef));
 
         if (heap.isEnabledCacheString() && toPoolOfStrings) {
             heap.putStringRefToPool(str, objRef, charArrayRef);
@@ -1101,11 +1101,11 @@ public final class ExecutionEngine {
     }
 
     private void pushStaticFieldOntoStackFromInstanceObject(boolean quick) {
-        handleStaticField((objRef, fieldValInd) -> stack.push(getInstanceObjectByRef(objRef).getValue(fieldValInd)), GETSTATIC_QUICK, quick);
+        handleStaticField((objRef, fieldValInd) -> stack.push(getInstanceObjectByRef(objRef).getFieldValue(fieldValInd)), GETSTATIC_QUICK, quick);
     }
 
     private void putStaticFieldToInstanceObjectFromStack(boolean quick) {
-        handleStaticField((objRef, fieldValInd) -> getInstanceObjectByRef(objRef).setValue(fieldValInd, stack.pop()), PUTSTATIC_QUICK, quick);
+        handleStaticField((objRef, fieldValInd) -> getInstanceObjectByRef(objRef).setFieldValue(fieldValInd, stack.pop()), PUTSTATIC_QUICK, quick);
     }
 
     private void handleStaticField(BiConsumer<Integer, Integer> consumer, @Nonnull Opcode opcode, boolean quick) {
@@ -1127,11 +1127,11 @@ public final class ExecutionEngine {
 
     private void putFieldToInstanceObjectFromStack(boolean quick) {
         long value = stack.pop();
-        handleField((object, fieldValueIndex) -> object.setValue(fieldValueIndex, value), PUTFIELD_QUICK, quick);
+        handleField((object, fieldValueIndex) -> object.setFieldValue(fieldValueIndex, value), PUTFIELD_QUICK, quick);
     }
 
     private void pushFieldOntoStackFromInstanceObject(boolean quick) {
-        handleField((object, fieldValueIndex) -> stack.push(object.getValue(fieldValueIndex)), GETFIELD_QUICK, quick);
+        handleField((object, fieldValueIndex) -> stack.push(object.getFieldValue(fieldValueIndex)), GETFIELD_QUICK, quick);
     }
 
     private void handleField(BiConsumer<InstanceObject, Integer> consumer, @Nonnull Opcode opcode, boolean quick) {
@@ -1173,14 +1173,14 @@ public final class ExecutionEngine {
     private void pushOntoStackFromArray(@Nonnull Function<Long, Long> function) {
         int index = getIntValue(stack.pop());
         InstanceObject object = checkArrayObject(getInstanceObjectByValue(stack.pop()));
-        stack.push(function.apply(object.getValue(index)));
+        stack.push(function.apply(object.getFieldValue(index)));
     }
 
     private void storeToArrayFromStack(@Nonnull BiFunction<Long, InstanceObject, Long> function, @Nonnull JVMType type) {
         long value = checkValueType(stack.pop(), type);
         int index = getIntValue(stack.pop());
         InstanceObject object = checkArrayObject(getInstanceObjectByValue(stack.pop()));
-        object.setValue(index, function.apply(value, object));
+        object.setFieldValue(index, function.apply(value, object));
     }
 
     private void preserveDirectRefIfNeeded(int first, int second, @Nonnull Opcode opcode) {

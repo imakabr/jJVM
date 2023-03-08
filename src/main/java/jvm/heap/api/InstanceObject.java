@@ -3,19 +3,9 @@ package jvm.heap.api;
 import jvm.lang.NullPointerExceptionJVM;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Map;
-import java.util.Set;
 
 public interface InstanceObject {
-
-    @Nonnull
-    Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull String klassName, @Nullable InstanceKlass parentKlass);
-
-    @Nonnull
-    Set<String> getFieldNames();
-
-    int getFieldValuesSize();
 
     @Nonnull
     Map<String, Integer> getIndexFieldNameMap();
@@ -24,11 +14,11 @@ public interface InstanceObject {
 
     boolean isArray();
 
-    int size();
+    int getFieldValuesSize();
 
-    void setValue(int index, long value);
+    void setFieldValue(int index, long value);
 
-    long getValue(int fieldIndex);
+    long getFieldValue(int fieldIndex);
 
     int getIndexByFieldName(@Nonnull String name) throws NullPointerExceptionJVM;
 
