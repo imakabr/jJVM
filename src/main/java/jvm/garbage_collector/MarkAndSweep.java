@@ -120,7 +120,8 @@ public class MarkAndSweep implements GarbageCollector {
                     int objectIndex = refTable.getInstanceObjectIndex(objectRef);
                     if (objectIndex != -1) {
                         InstanceObject object = heap.getInstanceObject(objectRef);
-                        for (long value : object.getFieldValues()) {
+                        for (int i = 0; i < object.getFieldValuesSize(); i++) {
+                            long value = object.getFieldValue(i);
                             if (getValueType(value) == JVMType.A.ordinal() && getPureValue(value) != NULL) {
                                 queue.add(getPureValue(value));
                             }

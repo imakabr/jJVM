@@ -75,14 +75,6 @@ public class InstanceObjectVolImpl extends AbstractInstanceObject {
         return fieldValues.length();
     }
 
-    public long[] getFieldValues() {
-        long[] result = new long[fieldValues.length()];
-        for (int i = 0; i < fieldValues.length(); i++) {
-            result[i] = fieldValues.get(i);
-        }
-        return result;
-    }
-
     public void setFieldValue(int index, long value) {
         checkType(fieldValues.get(index), value);
         fieldValues.set(index, value);

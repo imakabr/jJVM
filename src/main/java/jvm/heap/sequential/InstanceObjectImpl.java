@@ -38,9 +38,9 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
             this.fieldValues = new long[objectFromStaticContent != null ?
                     objectFromStaticContent.getFieldValuesSize() + count : fields.size()];
             if (objectFromStaticContent != null) {
-                System.arraycopy(objectFromStaticContent.getFieldValues(), 0,
-                        this.fieldValues, 0,
-                        objectFromStaticContent.getFieldValuesSize());
+                for (int i = 0; i < objectFromStaticContent.getFieldValuesSize(); i++) {
+                    this.fieldValues[i] = objectFromStaticContent.getFieldValue(i);
+                }
             }
             for (String newField : fields) {
                 int index = fieldValues.length - count;
@@ -71,10 +71,6 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
 
     public int getFieldValuesSize() {
         return fieldValues.length;
-    }
-
-    public long[] getFieldValues() {
-        return fieldValues;
     }
 
     public void setFieldValue(int index, long value) {

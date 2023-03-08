@@ -90,4 +90,12 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         return getFieldValuesSize() > 0 && getValueType(getFieldValue(0)) == JVMType.C.ordinal();
     }
 
+    private long[] getFieldValues() {
+        long[] result = new long[getFieldValuesSize()];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = getFieldValue(i);
+        }
+        return result;
+    }
+
 }

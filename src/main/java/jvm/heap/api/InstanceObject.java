@@ -10,8 +10,6 @@ public interface InstanceObject {
     @Nonnull
     Map<String, Integer> getIndexFieldNameMap();
 
-    long[] getFieldValues();
-
     boolean isArray();
 
     int getFieldValuesSize();
