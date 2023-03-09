@@ -149,7 +149,7 @@ public class KlassLoader {
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
                 ? parentKlass.getObjectRef() : -1, object);
 
-        InstanceKlass instanceKlass = getInstanceKlass(getIndexByFieldNameFromStaticContent(object.getIndexFieldNameMap(),
+        InstanceKlass instanceKlass = getInstanceKlass(getIndexByFieldNameFromStaticContent(object,
                 constantPoolKlass.getKlassName(), parentKlass), objectRef, constantPoolKlass);
         setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 
@@ -189,13 +189,13 @@ public class KlassLoader {
         return clInit;
     }
 
-    public Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull Map<String, Integer> indexFieldName,
+    public Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull InstanceObject object,
                                                                      @Nonnull String klassName,
                                                                      @Nullable InstanceKlass parentKlass) {
         Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getIndexByFieldName() : Collections.emptyMap());
-        result.putAll(indexFieldName.keySet().stream()
+        result.putAll(object.getFieldNames().stream()
                 .filter(klassNameField -> klassNameField.contains(klassName))
-                .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), indexFieldName::get)));
+                .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), object::getIndexByFieldName)));
         return Collections.unmodifiableMap(result);
     }
 

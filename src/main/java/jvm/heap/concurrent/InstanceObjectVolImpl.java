@@ -35,7 +35,7 @@ public class InstanceObjectVolImpl extends AbstractInstanceObject {
         } else {
             // a chain of inherited classes for storing data in static fields contain a single InstanceObject
             this.indexByFieldName = new ConcurrentHashMap<>(objectFromStaticContent != null ?
-                    objectFromStaticContent.getIndexFieldNameMap() : Collections.emptyMap());
+                    getFieldNameIndexMap(objectFromStaticContent) : Collections.emptyMap());
             int count = fields.size();
             this.fieldValues = new AtomicLongArray(objectFromStaticContent != null ?
                     objectFromStaticContent.getFieldValuesSize() + count : fields.size());
@@ -51,6 +51,14 @@ public class InstanceObjectVolImpl extends AbstractInstanceObject {
                 count--;
             }
         }
+    }
+
+    private Map<String, Integer> getFieldNameIndexMap(@Nonnull InstanceObject object) {
+        Map<String, Integer> result = new HashMap<>();
+        for (String fieldName : object.getFieldNames()) {
+            result.put(fieldName, object.getIndexByFieldName(fieldName));
+        }
+        return result;
     }
 
     public InstanceObjectVolImpl(@Nonnull Heap heap, @Nonnull JVMType valueType, int size, int klassIndex) {

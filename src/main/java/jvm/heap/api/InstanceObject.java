@@ -3,12 +3,12 @@ package jvm.heap.api;
 import jvm.lang.NullPointerExceptionJVM;
 
 import javax.annotation.Nonnull;
-import java.util.Map;
+import java.util.Set;
 
 public interface InstanceObject {
 
     @Nonnull
-    Map<String, Integer> getIndexFieldNameMap();
+    Set<String> getFieldNames();
 
     boolean isArray();
 

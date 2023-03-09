@@ -33,7 +33,7 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
         } else {
             // a chain of inherited classes for storing data in static fields contains a single InstanceObject
             this.indexByFieldName = new HashMap<>(objectFromStaticContent != null ?
-                    objectFromStaticContent.getIndexFieldNameMap() : Collections.emptyMap());
+                    getFieldNameIndexMap(objectFromStaticContent) : Collections.emptyMap());
             int count = fields.size();
             this.fieldValues = new long[objectFromStaticContent != null ?
                     objectFromStaticContent.getFieldValuesSize() + count : fields.size()];
@@ -49,6 +49,14 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
                 count--;
             }
         }
+    }
+
+    private Map<String, Integer> getFieldNameIndexMap(@Nonnull InstanceObject object) {
+        Map<String, Integer> result = new HashMap<>();
+        for (String fieldName : object.getFieldNames()) {
+            result.put(fieldName, object.getIndexByFieldName(fieldName));
+        }
+        return result;
     }
 
     public InstanceObjectImpl(@Nonnull Heap heap, @Nonnull JVMType valueType, int size, int klassIndex) {

@@ -8,6 +8,7 @@ import jvm.lang.NullPointerExceptionJVM;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Map;
 
 public abstract class AbstractInstanceObject implements InstanceObject {
 
@@ -66,6 +67,9 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         }
         return result;
     }
+
+    @Nonnull
+    public abstract Map<String, Integer> getIndexFieldNameMap();
 
     public int getKlassIndex() {
         return klassIndex;
