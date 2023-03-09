@@ -4,11 +4,11 @@ import jvm.heap.api.InstanceKlass;
 import jvm.parser.Klass;
 
 import javax.annotation.Nonnull;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicIntegerArray;
-
-import static java.util.Objects.requireNonNull;
 
 public class InstanceKlassVolImpl implements InstanceKlass {
 
@@ -51,8 +51,8 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     }
 
     @Nonnull
-    public Map<String, Integer> getStaticFieldNameToIndexMap() {
-        return staticFieldNameToIndexMap;
+    public Set<String> getStaticFieldNames() {
+        return Collections.unmodifiableSet(staticFieldNameToIndexMap.keySet());
     }
 
     @Nonnull
@@ -65,8 +65,9 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     }
 
     @Nonnull
-    public Map<String, Integer> getStaticMethodNameToIndexMap() {
-        return staticMethodNameToIndexMap;
+    @Override
+    public Set<String> getStaticMethodNames() {
+        return Collections.unmodifiableSet(staticMethodNameToIndexMap.keySet());
     }
 
     public int getObjectRef() {

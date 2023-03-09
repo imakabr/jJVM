@@ -49,8 +49,13 @@ public class InstanceKlassImpl implements InstanceKlass {
     }
 
     @Nonnull
-    public Map<String, Integer> getStaticFieldNameToIndexMap() {
-        return staticFieldNameToIndexMap;
+    public Set<String> getStaticFieldNames() {
+        return Collections.unmodifiableSet(staticFieldNameToIndexMap.keySet());
+    }
+
+    @Nonnull
+    public Set<String> getStaticMethodNames() {
+        return Collections.unmodifiableSet(staticMethodNameToIndexMap.keySet());
     }
 
     @Nonnull
@@ -60,11 +65,6 @@ public class InstanceKlassImpl implements InstanceKlass {
 
     public int getIndexByStaticMethodName(@Nonnull String methodName) {
         return staticMethodNameToIndexMap.get(methodName);
-    }
-
-    @Nonnull
-    public Map<String, Integer> getStaticMethodNameToIndexMap() {
-        return staticMethodNameToIndexMap;
     }
 
     public int getObjectRef() {

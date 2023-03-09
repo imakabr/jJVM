@@ -14,6 +14,8 @@ import jvm.parser.KlassParser;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static jvm.Utils.changeSystemKlassNameToJVMKlassName;
@@ -149,8 +151,8 @@ public class KlassLoader {
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
                 ? parentKlass.getObjectRef() : -1, object);
 
-        Map<String, Integer> allStaticMethods = new HashMap<>(
-                parentKlass != null ? parentKlass.getStaticMethodNameToIndexMap() : Collections.emptyMap());
+        Map<String, Integer> allStaticMethods = new HashMap<>(parentKlass != null ?
+                getNameToIndexMap(parentKlass::getStaticMethodNames, parentKlass::getIndexByStaticMethodName) : Collections.emptyMap());
 
         //find clinit and virtual methods
         Map<String, Integer> virtualMethods = new TreeMap<>(parentKlass != null ? parentKlass.getVirtualMethods() : Collections.emptyMap());
@@ -180,21 +182,31 @@ public class KlassLoader {
             virtualMethodNameToIndexMap.put(methodName, index);
         }
 
-        InstanceKlass instanceKlass = getInstanceKlass(getStaticFieldNameToIndexMap(object, constantPoolKlass.getKlassName(), parentKlass),
+        InstanceKlass instanceKlass = getInstanceKlass(getStaticFieldNameToIndexMapFromStaticContext(object, constantPoolKlass.getKlassName(), parentKlass),
                 allStaticMethods, virtualMethodNameToIndexMap, virtualMethodTable, objectRef, constantPoolKlass);
         setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 
         return clInit;
     }
 
-    public Map<String, Integer> getStaticFieldNameToIndexMap(@Nonnull InstanceObject object,
-                                                             @Nonnull String klassName,
-                                                             @Nullable InstanceKlass parentKlass) {
-        Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getStaticFieldNameToIndexMap() : Collections.emptyMap());
+    public Map<String, Integer> getStaticFieldNameToIndexMapFromStaticContext(@Nonnull InstanceObject object,
+                                                                              @Nonnull String klassName,
+                                                                              @Nullable InstanceKlass parentKlass) {
+        Map<String, Integer> result = new HashMap<>(parentKlass != null
+                ? getNameToIndexMap(parentKlass::getStaticFieldNames, parentKlass::getIndexByStaticFieldName) : Collections.emptyMap());
         result.putAll(object.getFieldNames().stream()
                 .filter(klassNameField -> klassNameField.contains(klassName))
                 .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), object::getIndexByFieldName)));
-        return Collections.unmodifiableMap(result);
+        return result;
+    }
+
+    private Map<String, Integer> getNameToIndexMap(@Nonnull Supplier<Set<String>> names,
+                                                   @Nonnull Function<String, Integer> function) {
+        Map<String, Integer> result = new HashMap<>();
+        for (String fieldName : names.get()) {
+            result.put(fieldName, function.apply(fieldName));
+        }
+        return result;
     }
 
 }
