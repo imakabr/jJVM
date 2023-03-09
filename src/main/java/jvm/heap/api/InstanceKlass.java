@@ -11,28 +11,22 @@ public interface InstanceKlass {
     Map<String, Integer> getVirtualMethods();
 
     @Nonnull
-    Map<String, Integer> getIndexByFieldName();
+    Map<String, Integer> getStaticFieldNameToIndexMap();
 
     @Nonnull
     String getName();
 
-    int getIndexByMethodName(@Nonnull String methodName);
+    int getIndexByStaticMethodName(@Nonnull String methodName);
 
     @Nonnull
-    Map<String, Integer> getAllIndexesByMethodName();
-
-    void setAllIndexesByMethodName(@Nonnull Map<String, Integer> indexByFieldName);
+    Map<String, Integer> getStaticMethodNameToIndexMap();
 
     int getObjectRef();
 
     @Nonnull
     Klass getCpKlass();
 
-    void setIndexByVirtualMethodName(@Nonnull String name, int index);
-
-    int getIndexByFieldName(@Nonnull String name);
-
-    void setVirtualMethodTable(int[] virtualMethodTable);
+    int getIndexByStaticFieldName(@Nonnull String name);
 
     int getMethodIndex(int virtualMethodIndex);
 

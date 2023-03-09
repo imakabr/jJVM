@@ -901,7 +901,7 @@ public final class ExecutionEngine {
     private int getStaticMethodIndex(int cpIndex) {
         String klassMethodName = getKlassMethodName(cpIndex);
         InstanceKlass instanceKlass = getInstanceKlassByName(getKlassName(klassMethodName));
-        return instanceKlass.getIndexByMethodName(getMethodName(klassMethodName));
+        return instanceKlass.getIndexByStaticMethodName(getMethodName(klassMethodName));
     }
 
     private int getVirtualMethodIndex(int cpIndex, int klassIndex) {
@@ -1119,7 +1119,7 @@ public final class ExecutionEngine {
             String klassFieldName = getKlassFieldName(readTwoBytes());
             InstanceKlass instanceKlass = getInstanceKlassByName(getKlassName(klassFieldName));
             objectRef = instanceKlass.getObjectRef();
-            fieldValueIndex = instanceKlass.getIndexByFieldName(getFieldName(klassFieldName));
+            fieldValueIndex = instanceKlass.getIndexByStaticFieldName(getFieldName(klassFieldName));
             preserveDirectRefIfNeeded(objectRef, fieldValueIndex, opcode);
         }
         consumer.accept(objectRef, fieldValueIndex);

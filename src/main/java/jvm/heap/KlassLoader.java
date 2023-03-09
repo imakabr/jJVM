@@ -143,18 +143,14 @@ public class KlassLoader {
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
         InstanceObject object = getInstanceObject(parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) ?
                         heap.getInstanceObject(parentKlass.getObjectRef()) : null,
-                constantPoolKlass.getKlassName(),
-                heap, constantPoolKlass.getStaticFieldNames(), -1);
+                constantPoolKlass.getKlassName(), heap, constantPoolKlass.getStaticFieldNames(), -1);
+
         int objectRef = heap.changeObject(parentKlass != null
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
                 ? parentKlass.getObjectRef() : -1, object);
 
-        InstanceKlass instanceKlass = getInstanceKlass(getIndexByFieldNameFromStaticContent(object,
-                constantPoolKlass.getKlassName(), parentKlass), objectRef, constantPoolKlass);
-        setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
-
         Map<String, Integer> allStaticMethods = new HashMap<>(
-                parentKlass != null ? parentKlass.getAllIndexesByMethodName() : Collections.emptyMap());
+                parentKlass != null ? parentKlass.getStaticMethodNameToIndexMap() : Collections.emptyMap());
 
         //find clinit and virtual methods
         Map<String, Integer> virtualMethods = new TreeMap<>(parentKlass != null ? parentKlass.getVirtualMethods() : Collections.emptyMap());
@@ -174,25 +170,27 @@ public class KlassLoader {
             }
         }
 
-        instanceKlass.setAllIndexesByMethodName(allStaticMethods);
-
         //create and set virtualMethodTable
         List<String> methodNames = new ArrayList<>(virtualMethods.keySet());
         int[] virtualMethodTable = new int[virtualMethods.size()];
+        Map<String, Integer> virtualMethodNameToIndexMap = new HashMap<>();
         for (int index = 0; index < virtualMethods.size(); index++) {
             String methodName = methodNames.get(index);
             virtualMethodTable[index] = virtualMethods.get(methodName);
-            instanceKlass.setIndexByVirtualMethodName(methodName, index);
+            virtualMethodNameToIndexMap.put(methodName, index);
         }
-        instanceKlass.setVirtualMethodTable(virtualMethodTable);
+
+        InstanceKlass instanceKlass = getInstanceKlass(getStaticFieldNameToIndexMap(object, constantPoolKlass.getKlassName(), parentKlass),
+                allStaticMethods, virtualMethodNameToIndexMap, virtualMethodTable, objectRef, constantPoolKlass);
+        setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 
         return clInit;
     }
 
-    public Map<String, Integer> getIndexByFieldNameFromStaticContent(@Nonnull InstanceObject object,
-                                                                     @Nonnull String klassName,
-                                                                     @Nullable InstanceKlass parentKlass) {
-        Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getIndexByFieldName() : Collections.emptyMap());
+    public Map<String, Integer> getStaticFieldNameToIndexMap(@Nonnull InstanceObject object,
+                                                             @Nonnull String klassName,
+                                                             @Nullable InstanceKlass parentKlass) {
+        Map<String, Integer> result = new HashMap<>(parentKlass != null ? parentKlass.getStaticFieldNameToIndexMap() : Collections.emptyMap());
         result.putAll(object.getFieldNames().stream()
                 .filter(klassNameField -> klassNameField.contains(klassName))
                 .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), object::getIndexByFieldName)));

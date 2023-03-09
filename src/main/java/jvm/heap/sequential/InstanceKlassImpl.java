@@ -4,7 +4,6 @@ import jvm.heap.api.InstanceKlass;
 import jvm.parser.Klass;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 
 import static java.util.Objects.requireNonNull;
@@ -13,39 +12,45 @@ public class InstanceKlassImpl implements InstanceKlass {
 
     private final int objectReference;
     @Nonnull
-    private final Map<String, Integer> indexByFieldName; //fields
-    @Nullable
-    private Map<String, Integer> indexByMethodName; //methods
-    @Nullable
-    private int[] virtualMethodTable; //virtual method table
+    private final Map<String, Integer> staticFieldNameToIndexMap; //fields
     @Nonnull
-    private final Map<String, Integer> indexByVirtualMethodName;
+    private final Map<String, Integer> staticMethodNameToIndexMap; //methods
+    @Nonnull
+    private final int[] virtualMethodTable; //virtual method table
+    @Nonnull
+    private final Map<String, Integer> virtualMethodNameToIndexMap;
 
     @Nonnull
     private final Klass cpKlass;
     @Nonnull
     private final String name;
 
-    public InstanceKlassImpl(@Nonnull Map<String, Integer> indexByFieldName, int objectReference, @Nonnull Klass cpKlass) {
+    public InstanceKlassImpl(@Nonnull Map<String, Integer> staticFieldNameToIndexMap,
+                             @Nonnull Map<String, Integer> staticMethodNameToIndexMap,
+                             @Nonnull Map<String, Integer> virtualMethodNameToIndexMap,
+                             @Nonnull int[] virtualMethodTable,
+                             int objectReference, @Nonnull Klass cpKlass) {
         this.name = cpKlass.getKlassName();
         this.objectReference = objectReference;
         this.cpKlass = cpKlass;
-        this.indexByVirtualMethodName = new HashMap<>();
-        this.indexByFieldName = indexByFieldName;
+        this.virtualMethodNameToIndexMap = new HashMap<>(virtualMethodNameToIndexMap);
+        this.staticFieldNameToIndexMap = new HashMap<>(staticFieldNameToIndexMap);
+        this.staticMethodNameToIndexMap = new HashMap<>(staticMethodNameToIndexMap);
+        this.virtualMethodTable = virtualMethodTable;
     }
 
     @Nonnull
     public Map<String, Integer> getVirtualMethods() {
         Map<String, Integer> result = new HashMap<>();
-        for (Map.Entry<String, Integer> entry : indexByVirtualMethodName.entrySet()) {
-            result.put(entry.getKey(), requireNonNull(virtualMethodTable)[entry.getValue()]);
+        for (Map.Entry<String, Integer> entry : virtualMethodNameToIndexMap.entrySet()) {
+            result.put(entry.getKey(), virtualMethodTable[entry.getValue()]);
         }
         return result;
     }
 
     @Nonnull
-    public Map<String, Integer> getIndexByFieldName() {
-        return indexByFieldName;
+    public Map<String, Integer> getStaticFieldNameToIndexMap() {
+        return staticFieldNameToIndexMap;
     }
 
     @Nonnull
@@ -53,17 +58,13 @@ public class InstanceKlassImpl implements InstanceKlass {
         return name;
     }
 
-    public int getIndexByMethodName(@Nonnull String methodName) {
-        return requireNonNull(indexByMethodName).get(methodName);
+    public int getIndexByStaticMethodName(@Nonnull String methodName) {
+        return staticMethodNameToIndexMap.get(methodName);
     }
 
     @Nonnull
-    public Map<String, Integer> getAllIndexesByMethodName() {
-        return requireNonNull(indexByMethodName);
-    }
-
-    public void setAllIndexesByMethodName(@Nonnull Map<String, Integer> indexByFieldName) {
-        this.indexByMethodName = indexByFieldName;
+    public Map<String, Integer> getStaticMethodNameToIndexMap() {
+        return staticMethodNameToIndexMap;
     }
 
     public int getObjectRef() {
@@ -75,24 +76,16 @@ public class InstanceKlassImpl implements InstanceKlass {
         return cpKlass;
     }
 
-    public void setIndexByVirtualMethodName(@Nonnull String name, int index) {
-        indexByVirtualMethodName.put(name, index);
-    }
-
-    public int getIndexByFieldName(@Nonnull String name) {
-        return indexByFieldName.get(name);
-    }
-
-    public final void setVirtualMethodTable(@Nonnull int[] virtualMethodTable) {
-        this.virtualMethodTable = virtualMethodTable;
+    public int getIndexByStaticFieldName(@Nonnull String name) {
+        return staticFieldNameToIndexMap.get(name);
     }
 
     public int getMethodIndex(int virtualMethodIndex) {
-        return requireNonNull(virtualMethodTable)[virtualMethodIndex];
+        return virtualMethodTable[virtualMethodIndex];
     }
 
     public int getIndexByVirtualMethodName(@Nonnull String methodName) {
-        return indexByVirtualMethodName.get(methodName);
+        return virtualMethodNameToIndexMap.get(methodName);
     }
 
     @Override

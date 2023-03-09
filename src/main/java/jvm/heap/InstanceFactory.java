@@ -49,10 +49,15 @@ public class InstanceFactory {
     }
 
     @Nonnull
-    public static InstanceKlass getInstanceKlass(@Nonnull Map<String, Integer> indexByFieldName,
+    public static InstanceKlass getInstanceKlass(@Nonnull Map<String, Integer> staticFieldNameToIndexMap,
+                                                 @Nonnull Map<String, Integer> staticMethodNameToIndexMap,
+                                                 @Nonnull Map<String, Integer> virtualMethodNameToIndexMap,
+                                                 @Nonnull int[] virtualMethodTable,
                                                  int objectReference, @Nonnull Klass cpKlass) {
-        return heapMonitor ? new InstanceKlassVolImpl(indexByFieldName, objectReference, cpKlass)
-                : new InstanceKlassImpl(indexByFieldName, objectReference, cpKlass);
+        return heapMonitor ? new InstanceKlassVolImpl(staticFieldNameToIndexMap, staticMethodNameToIndexMap, virtualMethodNameToIndexMap,
+                virtualMethodTable, objectReference, cpKlass)
+                : new InstanceKlassImpl(staticFieldNameToIndexMap, staticMethodNameToIndexMap, virtualMethodNameToIndexMap,
+                virtualMethodTable, objectReference, cpKlass);
 
     }
 }

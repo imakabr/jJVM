@@ -35,15 +35,15 @@ public class JVMExecutionTest {
         InstanceKlass simpleStaticFieldsInstanceKlass = heap.getInstanceKlass(
                 Objects.requireNonNull(heap.getKlassLoader().getInstanceKlassIndexByName(fName, false)));
         InstanceObject object = heap.getInstanceObject(simpleStaticFieldsInstanceKlass.getObjectRef());
-        int fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("b:I");
+        int fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByStaticFieldName("b:I");
         assertEquals(0, fieldValueIndex);
         assertEquals(555, getIntValue(object.getFieldValue(fieldValueIndex)));
 
-        fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("c:I");
+        fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByStaticFieldName("c:I");
         assertEquals(1, fieldValueIndex);
         assertEquals(-129, getIntValue(object.getFieldValue(fieldValueIndex)));
 
-        fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByFieldName("d:I");
+        fieldValueIndex = simpleStaticFieldsInstanceKlass.getIndexByStaticFieldName("d:I");
         assertEquals(2, fieldValueIndex);
         assertEquals(333, getIntValue(object.getFieldValue(fieldValueIndex)));
 
@@ -60,7 +60,7 @@ public class JVMExecutionTest {
                 heap.getKlassLoader().getInstanceKlassIndexByName(fName, false));
         InstanceKlass complexStaticFieldsInstanceKlass = heap.getInstanceKlass(complexStaticFieldsInstanceKlassIndex);
         InstanceObject object = heap.getInstanceObject(complexStaticFieldsInstanceKlass.getObjectRef());
-        int fieldValueIndex = complexStaticFieldsInstanceKlass.getIndexByFieldName("a:I");
+        int fieldValueIndex = complexStaticFieldsInstanceKlass.getIndexByStaticFieldName("a:I");
         assertEquals(0, fieldValueIndex);
         assertEquals(888, getIntValue(object.getFieldValue(fieldValueIndex)));
     }
@@ -146,21 +146,21 @@ public class JVMExecutionTest {
 
         InstanceKlass parentStaticKlass = heap.getInstanceKlass(Objects.requireNonNull(
                 heap.getKlassLoader().getInstanceKlassIndexByName("jvm/examples/ParentStatic", false)));
-        assertEquals(0, parentStaticKlass.getIndexByFieldName("a:I"));
-        assertThrows(NullPointerException.class, () -> parentStaticKlass.getIndexByFieldName("b:I"));
+        assertEquals(0, parentStaticKlass.getIndexByStaticFieldName("a:I"));
+        assertThrows(NullPointerException.class, () -> parentStaticKlass.getIndexByStaticFieldName("b:I"));
 
         InstanceKlass childStaticKlass = heap.getInstanceKlass(Objects.requireNonNull(
                 heap.getKlassLoader().getInstanceKlassIndexByName("jvm/examples/ChildStatic", false)));
-        assertEquals(0, childStaticKlass.getIndexByFieldName("a:I"));
-        assertEquals(1, childStaticKlass.getIndexByFieldName("b:I"));
-        assertThrows(NullPointerException.class, () -> childStaticKlass.getIndexByFieldName("c:I"));
+        assertEquals(0, childStaticKlass.getIndexByStaticFieldName("a:I"));
+        assertEquals(1, childStaticKlass.getIndexByStaticFieldName("b:I"));
+        assertThrows(NullPointerException.class, () -> childStaticKlass.getIndexByStaticFieldName("c:I"));
 
         InstanceKlass childChildStaticKlass = heap.getInstanceKlass(Objects.requireNonNull(
                 heap.getKlassLoader().getInstanceKlassIndexByName(fName, false)));
-        assertEquals(0, childChildStaticKlass.getIndexByFieldName("a:I"));
-        assertEquals(1, childChildStaticKlass.getIndexByFieldName("b:I"));
-        assertEquals(2, childChildStaticKlass.getIndexByFieldName("c:I"));
-        assertThrows(NullPointerException.class, () -> childChildStaticKlass.getIndexByFieldName("d:I"));
+        assertEquals(0, childChildStaticKlass.getIndexByStaticFieldName("a:I"));
+        assertEquals(1, childChildStaticKlass.getIndexByStaticFieldName("b:I"));
+        assertEquals(2, childChildStaticKlass.getIndexByStaticFieldName("c:I"));
+        assertThrows(NullPointerException.class, () -> childChildStaticKlass.getIndexByStaticFieldName("d:I"));
     }
 
     @Test
