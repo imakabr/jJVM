@@ -4,11 +4,9 @@ import jvm.JVMType;
 import jvm.Utils;
 import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceObject;
-import jvm.lang.NullPointerExceptionJVM;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Map;
 
 public abstract class AbstractInstanceObject implements InstanceObject {
 
@@ -56,20 +54,10 @@ public abstract class AbstractInstanceObject implements InstanceObject {
             return;
         }
         if (first != second) {
-            throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(firstValue)] + " is not equal " + JVMType.values()[getValueType(secondValue)]);
+            throw new RuntimeException("Wrong types: " + JVMType.values()[getValueType(firstValue)]
+                    + " is not equal " + JVMType.values()[getValueType(secondValue)]);
         }
     }
-
-    public int getIndexByFieldName(@Nonnull String name) throws NullPointerExceptionJVM {
-        Integer result = getIndexFieldNameMap().get(name);
-        if (result == null) {
-            throw new NullPointerExceptionJVM();
-        }
-        return result;
-    }
-
-    @Nonnull
-    public abstract Map<String, Integer> getIndexFieldNameMap();
 
     public int getKlassIndex() {
         return klassIndex;
@@ -87,15 +75,15 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         } else {
             type = klassIndex == -1 ? "Static | Fields : " : heap.getInstanceKlass(klassIndex).getName() + " | Fields : ";
         }
-        return type + Utils.toString(getFieldValues(), getFieldValuesSize());
+        return type + Utils.toString(getFieldValues(), getFieldCount());
     }
 
     private boolean isCharType() {
-        return getFieldValuesSize() > 0 && getValueType(getFieldValue(0)) == JVMType.C.ordinal();
+        return getFieldCount() > 0 && getValueType(getFieldValue(0)) == JVMType.C.ordinal();
     }
 
     private long[] getFieldValues() {
-        long[] result = new long[getFieldValuesSize()];
+        long[] result = new long[getFieldCount()];
         for (int i = 0; i < result.length; i++) {
             result[i] = getFieldValue(i);
         }

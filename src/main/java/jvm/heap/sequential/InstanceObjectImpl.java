@@ -14,7 +14,7 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
     @Nonnull
     private final long[] fieldValues;
     @Nonnull
-    private final Map<String, Integer> indexByFieldName;
+    private final Map<String, Integer> fieldNameToIndexMap;
 
     public InstanceObjectImpl(@Nullable InstanceObject objectFromStaticContent,
                               @Nullable String staticContentKlassName,
@@ -24,27 +24,27 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
         super(staticContentKlassName, heap, klassIndex);
         if (staticContentKlassName == null) {
             this.fieldValues = new long[fields.size()];
-            this.indexByFieldName = new HashMap<>();
+            this.fieldNameToIndexMap = new HashMap<>();
             for (int fieldIndex = 0; fieldIndex < fieldValues.length; fieldIndex++) {
                 String field = fields.get(fieldIndex);
                 setDefaultValue(fieldIndex, getValueType(field));
-                indexByFieldName.put(field, fieldIndex);
+                fieldNameToIndexMap.put(field, fieldIndex);
             }
         } else {
             // a chain of inherited classes for storing data in static fields contains a single InstanceObject
-            this.indexByFieldName = new HashMap<>(objectFromStaticContent != null ?
+            this.fieldNameToIndexMap = new HashMap<>(objectFromStaticContent != null ?
                     getFieldNameIndexMap(objectFromStaticContent) : Collections.emptyMap());
             int count = fields.size();
             this.fieldValues = new long[objectFromStaticContent != null ?
-                    objectFromStaticContent.getFieldValuesSize() + count : fields.size()];
+                    objectFromStaticContent.getFieldCount() + count : fields.size()];
             if (objectFromStaticContent != null) {
-                for (int i = 0; i < objectFromStaticContent.getFieldValuesSize(); i++) {
+                for (int i = 0; i < objectFromStaticContent.getFieldCount(); i++) {
                     this.fieldValues[i] = objectFromStaticContent.getFieldValue(i);
                 }
             }
             for (String newField : fields) {
                 int index = fieldValues.length - count;
-                indexByFieldName.put(staticContentKlassName + "." + newField, index);
+                fieldNameToIndexMap.put(staticContentKlassName + "." + newField, index);
                 setDefaultValue(index, getValueType(newField));
                 count--;
             }
@@ -62,7 +62,7 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
     public InstanceObjectImpl(@Nonnull Heap heap, @Nonnull JVMType valueType, int size, int klassIndex) {
         super(heap, klassIndex);
         this.fieldValues = new long[size];
-        this.indexByFieldName = new HashMap<>();
+        this.fieldNameToIndexMap = new HashMap<>();
         for (int index = 0; index < size; index++) {
             setDefaultValue(index, valueType);
         }
@@ -74,10 +74,10 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
 
     @Nonnull
     public Set<String> getFieldNames() {
-        return Collections.unmodifiableSet(indexByFieldName.keySet());
+        return Collections.unmodifiableSet(fieldNameToIndexMap.keySet());
     }
 
-    public int getFieldValuesSize() {
+    public int getFieldCount() {
         return fieldValues.length;
     }
 
@@ -90,9 +90,9 @@ public class InstanceObjectImpl extends AbstractInstanceObject {
         return fieldValues[fieldIndex];
     }
 
-    @Nonnull
-    public Map<String, Integer> getIndexFieldNameMap() {
-        return Collections.unmodifiableMap(indexByFieldName);
+    @Override
+    public int getIndexByFieldName(@Nonnull String fieldName) {
+        return fieldNameToIndexMap.get(fieldName);
     }
 
     private void setDefaultValue(int index, @Nonnull JVMType type) {

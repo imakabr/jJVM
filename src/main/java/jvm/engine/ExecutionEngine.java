@@ -411,7 +411,7 @@ public final class ExecutionEngine {
                         newMultiArray(true);
                         break;
                     case ARRAYLENGTH:
-                        pushIntValueOntoStack(checkArrayObject(getInstanceObjectByValue(stack.pop())).getFieldValuesSize());
+                        pushIntValueOntoStack(checkArrayObject(getInstanceObjectByValue(stack.pop())).getFieldCount());
                         break;
                     case AALOAD:
                         pushOntoStackFromArray(val -> checkValueType(val, JVMType.A));
@@ -698,7 +698,7 @@ public final class ExecutionEngine {
         InstanceObject stringObject = getInstanceObjectByRef(objectRef);
         InstanceObject charArrayObject = getInstanceObjectByValue(
                 stringObject.getFieldValue(stringObject.getIndexByFieldName("value:[C")));
-        char[] buf = new char[charArrayObject.getFieldValuesSize()];
+        char[] buf = new char[charArrayObject.getFieldCount()];
         for (int i = 0; i < buf.length; i++) {
             buf[i] = (char) charArrayObject.getFieldValue(i);
         }
@@ -707,7 +707,7 @@ public final class ExecutionEngine {
 
     private void createMultiArray(int indexDim, int[] dimensions, InstanceObject object, String type) {
         String arrayType = type.substring(type.indexOf('[') + 1);
-        for (int i = 0; i < object.getFieldValuesSize(); i++) {
+        for (int i = 0; i < object.getFieldCount(); i++) {
             if (indexDim == dimensions.length - 1) {
                 boolean refType = (arrayType.startsWith("[") && arrayType.endsWith(";"));
                 int arrayKlassIndex = getArrayKlassIndex(arrayType, refType);
