@@ -9,7 +9,7 @@ import java.util.Set;
 public interface InstanceKlass {
 
     @Nonnull
-    Map<String, Integer> getVirtualMethods();
+    Set<String> getVirtualMethodNames();
 
     @Nonnull
     Set<String> getStaticFieldNames();

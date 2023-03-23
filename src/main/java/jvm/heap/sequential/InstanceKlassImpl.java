@@ -40,50 +40,56 @@ public class InstanceKlassImpl implements InstanceKlass {
     }
 
     @Nonnull
-    public Map<String, Integer> getVirtualMethods() {
-        Map<String, Integer> result = new HashMap<>();
-        for (Map.Entry<String, Integer> entry : virtualMethodNameToIndexMap.entrySet()) {
-            result.put(entry.getKey(), virtualMethodTable[entry.getValue()]);
-        }
-        return result;
+    @Override
+    public Set<String> getVirtualMethodNames() {
+        return Collections.unmodifiableSet(virtualMethodNameToIndexMap.keySet());
     }
 
     @Nonnull
+    @Override
     public Set<String> getStaticFieldNames() {
         return Collections.unmodifiableSet(staticFieldNameToIndexMap.keySet());
     }
 
     @Nonnull
+    @Override
     public Set<String> getStaticMethodNames() {
         return Collections.unmodifiableSet(staticMethodNameToIndexMap.keySet());
     }
 
     @Nonnull
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public int getIndexByStaticMethodName(@Nonnull String methodName) {
         return staticMethodNameToIndexMap.get(methodName);
     }
 
+    @Override
     public int getObjectRef() {
         return objectReference;
     }
 
     @Nonnull
+    @Override
     public Klass getCpKlass() {
         return cpKlass;
     }
 
+    @Override
     public int getIndexByStaticFieldName(@Nonnull String name) {
         return staticFieldNameToIndexMap.get(name);
     }
 
+    @Override
     public int getMethodIndex(int virtualMethodIndex) {
         return virtualMethodTable[virtualMethodIndex];
     }
 
+    @Override
     public int getIndexByVirtualMethodName(@Nonnull String methodName) {
         return virtualMethodNameToIndexMap.get(methodName);
     }

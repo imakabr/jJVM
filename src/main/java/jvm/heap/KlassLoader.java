@@ -155,7 +155,9 @@ public class KlassLoader {
                 getNameToIndexMap(parentKlass::getStaticMethodNames, parentKlass::getIndexByStaticMethodName) : Collections.emptyMap());
 
         //find clinit and virtual methods
-        Map<String, Integer> virtualMethods = new TreeMap<>(parentKlass != null ? parentKlass.getVirtualMethods() : Collections.emptyMap());
+        Map<String, Integer> virtualMethods = new TreeMap<>(parentKlass != null ?
+                getNameToIndexMap(parentKlass::getVirtualMethodNames,
+                        methodName -> parentKlass.getMethodIndex(parentKlass.getIndexByVirtualMethodName(methodName))) : Collections.emptyMap());
         Collection<Method> methods = constantPoolKlass.getMethods();
         Method clInit = null;
         for (Method method : methods) {
