@@ -83,7 +83,7 @@ public class Utils {
         return String.valueOf(chars);
     }
 
-    private static int getType(@Nonnull String type) {
+    public static int getType(@Nonnull String type) {
         return JVMType.valueOf(type).ordinal();
     }
 

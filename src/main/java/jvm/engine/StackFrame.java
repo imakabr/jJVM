@@ -2,6 +2,8 @@ package jvm.engine;
 
 import jvm.Utils;
 
+import static jvm.Utils.*;
+
 public class StackFrame {
     long[] stack;
     int localVariable;
@@ -46,8 +48,10 @@ public class StackFrame {
     public final void destroyCurrentMethodStack(int varSize, int operandSize, boolean returnValue) {
         int addressPC = localVariable + this.varSize;
         programCounter = (int) stack[addressPC];
+        stack[addressPC] = 0;
         int oldLocalVariable = localVariable;
         localVariable = (int) stack[addressPC + 1];
+        stack[addressPC + 1] = 0;
         restoreReturnValueAndSP(oldLocalVariable, returnValue);
         this.varSize = varSize;
         this.operandSize = operandSize;
@@ -113,7 +117,44 @@ public class StackFrame {
 
     @Override
     public String toString() {
-        return Utils.toString(stack, getSize());
-    }
+//        return Utils.toString(stack, getSize());
+        int size = getSize();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < size; i++) {
+            if (localVariable == i) {
+                builder.append("LV->| "); // the beginning of Local Variables
+            }
+            if (localVariable + varSize == i) {
+                builder.append("| Saved_Data->| "); // the beginning of Saved Data
+            }
+            if (localVariable + varSize + (invokeCount > 0 ? 2 : 0) == i) {
+                builder.append("| OS->| "); // the beginning of Operand Stack
+            }
+            if (stackPointer == i) {
+                builder.append("SP->"); // Stack Pointer
+            }
 
+            int type = getValueType(stack[i]);
+            int value = getPureValue(stack[i]);
+            if (type == getType("Z")) {
+                builder.append("Bool:");
+            } else if (type == getType("C")) {
+                builder.append("Char:");
+            } else if (type == getType("I")) {
+                builder.append("Int:");
+            } else if (type == getType("A")) {
+                builder.append("Ref:");
+                if (value == 0) {
+                    builder.append("null ");
+                    continue;
+                }
+            }
+            builder.append(value)
+                    .append(" ");
+            if (localVariable + varSize + (invokeCount > 0 ? 2 : 0) + operandSize - 1 == i) {
+                builder.append("|<-OS"); // the ending of Operand Stack
+            }
+        }
+        return builder.length() == 0 ? "absence" : builder.toString();
+    }
 }
