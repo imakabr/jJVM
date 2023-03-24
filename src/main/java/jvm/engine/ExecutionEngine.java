@@ -65,6 +65,8 @@ public final class ExecutionEngine {
 
     private boolean symbolicRefResolution = true;
 
+    StringBuilder instructions = new StringBuilder();
+
 
     public ExecutionEngine(@Nonnull Heap heap, @Nonnull StackFrame stackFrame) {
         this.heap = heap;
@@ -83,6 +85,7 @@ public final class ExecutionEngine {
         this.stack.init(method.getVarSize(), method.getOperandSize());
         this.programCounter = 0;
         this.currentOpcode = NOP;
+        logInitialization(method);
     }
 
     public long invoke(@Nonnull Method method) {
@@ -99,6 +102,9 @@ public final class ExecutionEngine {
                         + "\n"
                         + "\n"
                         + getStackTrace(true));
+            }
+            if (exceptionDebugMode) {
+                instructions.append(currentOpcode.name()).append(" ");
             }
             try {
                 switch (currentOpcode) {
@@ -738,6 +744,17 @@ public final class ExecutionEngine {
         }
     }
 
+                        /*  Array Type	atype
+                        T_BOOLEAN	4
+                        T_CHAR	    5
+                        T_FLOAT	    6
+                        T_DOUBLE	7
+                        T_BYTE	    8
+                        T_SHORT	    9
+                        T_INT	    10
+                        T_LONG	    11
+                        */
+
     private long checkValueType(long value, @Nonnull JVMType type) {
         if (type.equals(JVMType.I) || type.equals(JVMType.Z)) {
             if (getValueType(value) == JVMType.I.ordinal() || getValueType(value) == JVMType.Z.ordinal()) {
@@ -1232,6 +1249,18 @@ public final class ExecutionEngine {
         stack.programCounter = programCounter;
         programCounter = 0;
         stack.initNewMethodStack(method.getArgSize() + (staticMethod ? 0 : 1), method.getVarSize(), method.getOperandSize());
+        logInitialization(method);
+
+    }
+
+    private void logInitialization(@Nonnull Method method) {
+        if (exceptionDebugMode) {
+            instructions.append("\nINIT - ")
+                    .append(method.getClassName())
+                    .append("#")
+                    .append(method.getNameAndType())
+                    .append("\n");
+        }
     }
 
     private void destroyCurrentMethod(boolean returnValue) {
@@ -1241,6 +1270,13 @@ public final class ExecutionEngine {
         klassName = method.getClassName();
         stack.destroyCurrentMethodStack(method.getVarSize(), method.getOperandSize(), returnValue);
         programCounter = stack.programCounter;
+        if (exceptionDebugMode) {
+            instructions.append("\nCONTINUE - ")
+                    .append(method.getClassName())
+                    .append("#")
+                    .append(method.getNameAndType())
+                    .append("\n");
+        }
     }
 
     private void checkCast(boolean quick) {
