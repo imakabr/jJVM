@@ -61,7 +61,7 @@ public final class ExecutionEngine {
     private static final Map<Integer, Object> nativeObjects = new HashMap<>();
 
     // VM Options
-    private boolean exceptionDebugMode;
+    private boolean exceptionDebugMode = true;
 
     private boolean symbolicRefResolution = true;
 
@@ -727,7 +727,7 @@ public final class ExecutionEngine {
         }
         String aType = arrayType.substring(1);
         switch (aType) {
-            case "B":
+            case "Z":
                 return 0;
             case "C":
                 return 1;
