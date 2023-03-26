@@ -1,18 +1,16 @@
 package jvm.engine;
 
-import jvm.Utils;
-
 import static jvm.Utils.*;
 
 public class StackFrame {
-    long[] stack;
-    int localVariable;
+    private final long[] stack;
+    private int localVariable;
     public int programCounter;
-    int stackPointer;
+    private int stackPointer;
 
-    int varSize;
-    int operandSize;
-    int invokeCount;
+    private int varSize;
+    private int operandSize;
+    public int invokeCount;
 
     public StackFrame(int varSize, int operandSize) {
         init(varSize, operandSize);
@@ -117,7 +115,6 @@ public class StackFrame {
 
     @Override
     public String toString() {
-//        return Utils.toString(stack, getSize());
         int size = getSize();
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < size; i++) {
@@ -133,24 +130,7 @@ public class StackFrame {
             if (stackPointer == i) {
                 builder.append("SP->"); // Stack Pointer
             }
-
-            int type = getValueType(stack[i]);
-            int value = getPureValue(stack[i]);
-            if (type == getType("Z")) {
-                builder.append("Bool:");
-            } else if (type == getType("C")) {
-                builder.append("Char:");
-            } else if (type == getType("I")) {
-                builder.append("Int:");
-            } else if (type == getType("A")) {
-                builder.append("Ref:");
-                if (value == 0) {
-                    builder.append("null ");
-                    continue;
-                }
-            }
-            builder.append(value)
-                    .append(" ");
+            addValue(builder, stack[i]);
             if (localVariable + varSize + (invokeCount > 0 ? 2 : 0) + operandSize - 1 == i) {
                 builder.append("|<-OS"); // the ending of Operand Stack
             }

@@ -68,7 +68,7 @@ public abstract class AbstractInstanceObject implements InstanceObject {
         String type;
         if (array) {
             if (isCharType()) {
-                return "Array | String : " + Utils.toStringFromCharArray(getFieldValues());
+                return "Array " + heap.getInstanceKlass(klassIndex).getName() + " | String : " + Utils.toStringFromCharArray(getFieldValues());
             } else {
                 type = "Array " + heap.getInstanceKlass(klassIndex).getName() + " | Values : ";
             }

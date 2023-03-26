@@ -53,25 +53,29 @@ public class Utils {
     public static String toString(long[] array, int size) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < size; i++) {
-            int type = getValueType(array[i]);
-            int value = getPureValue(array[i]);
-            if (type == getType("Z")) {
-                builder.append("Bool:");
-            } else if (type == getType("C")) {
-                builder.append("Char:");
-            } else if (type == getType("I")) {
-                builder.append("Int:");
-            } else if (type == getType("A")) {
-                builder.append("Ref:");
-                if (value == 0) {
-                    builder.append("null ");
-                    continue;
-                }
-            }
-            builder.append(value)
-                    .append(" ");
+            addValue(builder, array[i]);
         }
         return builder.length() == 0 ? "absence" : builder.toString();
+    }
+
+
+    public static void addValue(@Nonnull StringBuilder builder, long fullValue) {
+        int type = getValueType(fullValue);
+        int value = getPureValue(fullValue);
+        if (type == getType("Z")) {
+            builder.append("Bool:");
+        } else if (type == getType("C")) {
+            builder.append("Char:");
+        } else if (type == getType("I")) {
+            builder.append("Int:");
+        } else if (type == getType("A")) {
+            builder.append("Ref:");
+            if (value == 0) {
+                builder.append("null ");
+                return;
+            }
+        }
+        builder.append(value).append(" ");
     }
 
     @Nonnull
