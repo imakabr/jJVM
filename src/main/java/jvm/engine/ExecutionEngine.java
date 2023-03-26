@@ -681,6 +681,7 @@ public final class ExecutionEngine {
             }
             case RANDOM_NEXT_INT:
                 int bound = getIntValue(stack.pop());
+                getRefValue(stack.pop()); // pop ref value from stack
                 pushIntValueOntoStack(new Random().nextInt(bound));
                 break;
             case STRING_INTERN:
