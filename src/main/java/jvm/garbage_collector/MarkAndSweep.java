@@ -63,7 +63,7 @@ public class MarkAndSweep implements GarbageCollector {
                         InstanceKlass klass = heap.getInstanceKlass(klassIndex);
                         Method method = heap.getMethodRepo().getMethod(
                                 klass.getMethodIndex(
-                                        klass.getIndexByVirtualMethodName("finalize:()V")));
+                                        klass.getVirtualIndexByMethodName("finalize:()V")));
                         StackFrame stackFrame = new StackFrame(method.getVarSize(), method.getOperandSize());
                         stackFrame.setLocalVar(0, setRefValueType(objRef));
                         new ExecutionEngine(heap, stackFrame).invoke(method);

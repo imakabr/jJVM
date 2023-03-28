@@ -21,9 +21,6 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     private final AtomicIntegerArray virtualMethodTable; //virtual method table
     @Nonnull
     private final Map<String, Integer> virtualMethodNameToIndexMap;
-
-    @Nonnull
-    private final Klass cpKlass;
     @Nonnull
     private final String name;
 
@@ -34,7 +31,6 @@ public class InstanceKlassVolImpl implements InstanceKlass {
                                 int objectReference, @Nonnull Klass cpKlass) {
         this.name = cpKlass.getKlassName();
         this.objectReference = objectReference;
-        this.cpKlass = cpKlass;
         this.virtualMethodNameToIndexMap = new ConcurrentHashMap<>(virtualMethodNameToIndexMap);
         this.staticFieldNameToIndexMap = new ConcurrentHashMap<>(staticFieldNameToIndexMap);
         this.staticMethodNameToIndexMap = new ConcurrentHashMap<>(staticMethodNameToIndexMap);
@@ -75,12 +71,6 @@ public class InstanceKlassVolImpl implements InstanceKlass {
         return objectReference;
     }
 
-    @Nonnull
-    @Override
-    public Klass getCpKlass() {
-        return cpKlass;
-    }
-
     @Override
     public int getIndexByStaticFieldName(@Nonnull String name) {
         return staticFieldNameToIndexMap.get(name);
@@ -92,7 +82,7 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     }
 
     @Override
-    public int getIndexByVirtualMethodName(@Nonnull String methodName) {
+    public int getVirtualIndexByMethodName(@Nonnull String methodName) {
         return virtualMethodNameToIndexMap.get(methodName);
     }
 

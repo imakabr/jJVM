@@ -915,7 +915,7 @@ public final class ExecutionEngine {
 
     private int getVirtualMethodIndex(int cpIndex, int klassIndex) {
         InstanceKlass instanceKlass = getInstanceKlassByIndex(klassIndex);
-        return instanceKlass.getIndexByVirtualMethodName(getMethodName(getKlassMethodName(cpIndex)));
+        return instanceKlass.getVirtualIndexByMethodName(getMethodName(getKlassMethodName(cpIndex)));
     }
 
     @Nonnull
@@ -935,20 +935,9 @@ public final class ExecutionEngine {
 
     private int getArgSize(int cpIndex) {
         String klassMethodName = getKlassMethodName(cpIndex);
-        Klass cpKlass = getInstanceKlassByName(getKlassName(klassMethodName)).getCpKlass();
-        Method method = null;
-        String parentName;
-        while (method == null) {
-            method = cpKlass.getMethodByName(getMethodName(klassMethodName));
-            parentName = cpKlass.getParent();
-            if (ABSENCE.equals(parentName)) {
-                break;
-            }
-            cpKlass = getInstanceKlassByName(cpKlass.getParent()).getCpKlass();
-        }
-        if (method == null) {
-            throw new VirtualMachineErrorJVM("method " + getMethodName(klassMethodName) + " is not found");
-        }
+        InstanceKlass klass = getInstanceKlassByName(getKlassName(klassMethodName));
+        Method method = heap.getMethodRepo().getMethod(
+                    klass.getMethodIndex(klass.getVirtualIndexByMethodName(getMethodName(klassMethodName))));
         return method.getArgSize();
     }
 
