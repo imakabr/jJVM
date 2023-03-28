@@ -62,10 +62,12 @@ public final class ExecutionEngine {
 
     // VM Options
     private boolean exceptionDebugMode = true;
+    private boolean instructionLogMode = false;
 
     private boolean symbolicRefResolution = true;
 
-    StringBuilder instructions = new StringBuilder();
+    @Nonnull
+    private final StringBuilder instructions = new StringBuilder();
 
 
     public ExecutionEngine(@Nonnull Heap heap, @Nonnull StackFrame stackFrame) {
@@ -103,7 +105,7 @@ public final class ExecutionEngine {
                         + "\n"
                         + getStackTrace(true));
             }
-            if (exceptionDebugMode) {
+            if (instructionLogMode) {
                 instructions.append(currentOpcode.name()).append(" ");
             }
             try {
@@ -745,17 +747,6 @@ public final class ExecutionEngine {
         }
     }
 
-                        /*  Array Type	atype
-                        T_BOOLEAN	4
-                        T_CHAR	    5
-                        T_FLOAT	    6
-                        T_DOUBLE	7
-                        T_BYTE	    8
-                        T_SHORT	    9
-                        T_INT	    10
-                        T_LONG	    11
-                        */
-
     private long checkValueType(long value, @Nonnull JVMType type) {
         if (type.equals(JVMType.I) || type.equals(JVMType.Z)) {
             if (getValueType(value) == JVMType.I.ordinal() || getValueType(value) == JVMType.Z.ordinal()) {
@@ -1255,8 +1246,8 @@ public final class ExecutionEngine {
     }
 
     private void logInitialization(@Nonnull Method method) {
-        if (exceptionDebugMode) {
-            instructions.append("\nINIT - ")
+        if (instructionLogMode) {
+            instructions.append("\nBEGIN - ")
                     .append(method.getClassName())
                     .append("#")
                     .append(method.getNameAndType())
@@ -1271,7 +1262,7 @@ public final class ExecutionEngine {
         klassName = method.getClassName();
         stack.destroyCurrentMethodStack(method.getVarSize(), method.getOperandSize(), returnValue);
         programCounter = stack.programCounter;
-        if (exceptionDebugMode) {
+        if (instructionLogMode) {
             instructions.append("\nCONTINUE - ")
                     .append(method.getClassName())
                     .append("#")
