@@ -1,12 +1,12 @@
 package jvm.heap.concurrent;
 
+import jvm.JVMType;
+import jvm.Utils;
 import jvm.heap.api.InstanceKlass;
 import jvm.parser.Klass;
 
 import javax.annotation.Nonnull;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
@@ -14,7 +14,11 @@ public class InstanceKlassVolImpl implements InstanceKlass {
 
     private final int objectReference;
     @Nonnull
-    private final Map<String, Integer> staticFieldNameToIndexMap; //fields
+    private final Map<String, Integer> staticFieldNameToIndexMap; // static fields
+    @Nonnull
+    private final Map<String, Integer> fieldNameToIndexMap; // non-static fields
+    @Nonnull
+    private final JVMType[] fieldTypes; // non-static field types
     @Nonnull
     private final Map<String, Integer> staticMethodNameToIndexMap; //methods
     @Nonnull
@@ -25,6 +29,7 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     private final String name;
 
     public InstanceKlassVolImpl(@Nonnull Map<String, Integer> staticFieldNameToIndexMap,
+                                @Nonnull Map<String, Integer> fieldNameToIndexMap,
                                 @Nonnull Map<String, Integer> staticMethodNameToIndexMap,
                                 @Nonnull Map<String, Integer> virtualMethodNameToIndexMap,
                                 @Nonnull int[] virtualMethodTable,
@@ -33,6 +38,8 @@ public class InstanceKlassVolImpl implements InstanceKlass {
         this.objectReference = objectReference;
         this.virtualMethodNameToIndexMap = new ConcurrentHashMap<>(virtualMethodNameToIndexMap);
         this.staticFieldNameToIndexMap = new ConcurrentHashMap<>(staticFieldNameToIndexMap);
+        this.fieldNameToIndexMap = new ConcurrentHashMap<>(fieldNameToIndexMap);
+        this.fieldTypes = new TreeSet<>(fieldNameToIndexMap.keySet()).stream().map(Utils::getValueType).toArray(JVMType[]::new);
         this.staticMethodNameToIndexMap = new ConcurrentHashMap<>(staticMethodNameToIndexMap);
         this.virtualMethodTable = new AtomicIntegerArray(virtualMethodTable);
     }
@@ -47,6 +54,18 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     @Override
     public Set<String> getStaticFieldNames() {
         return Collections.unmodifiableSet(staticFieldNameToIndexMap.keySet());
+    }
+
+    @Nonnull
+    @Override
+    public Set<String> getFieldNames() {
+        return fieldNameToIndexMap.keySet();
+    }
+
+    @Nonnull
+    @Override
+    public JVMType[] getFieldTypes() {
+        return fieldTypes;
     }
 
     @Nonnull
@@ -74,6 +93,11 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     @Override
     public int getIndexByStaticFieldName(@Nonnull String name) {
         return staticFieldNameToIndexMap.get(name);
+    }
+
+    @Override
+    public int getIndexByFieldName(@Nonnull String fieldName) {
+        return fieldNameToIndexMap.get(fieldName);
     }
 
     @Override

@@ -17,6 +17,10 @@ class ChildObject extends ParentObject {
         a = 2;
         this.c = 3;
     }
+
+    public static int getB() {
+        return new ChildObject().b;
+    }
 }
 
 class ChildChildObject extends ChildObject {
@@ -34,9 +38,8 @@ class ChildChildObject extends ChildObject {
     }
 
     public static void main(String[] args) {
-        ParentObject object = new ChildChildObject();
-        ChildObject parentObject = (ChildObject) object;
-        System.out.println(object.a);
+
+        System.out.println(new ChildObject().getB());
     }
 }
 

@@ -1,20 +1,24 @@
 package jvm.heap.sequential;
 
+import jvm.JVMType;
+import jvm.Utils;
 import jvm.heap.api.InstanceKlass;
 import jvm.parser.Klass;
 
 import javax.annotation.Nonnull;
 import java.util.*;
 
-import static java.util.Objects.requireNonNull;
-
 public class InstanceKlassImpl implements InstanceKlass {
 
     private final int objectReference;
     @Nonnull
-    private final Map<String, Integer> staticFieldNameToIndexMap; //fields
+    private final Map<String, Integer> staticFieldNameToIndexMap; // static fields
     @Nonnull
-    private final Map<String, Integer> staticMethodNameToIndexMap; //methods
+    private final Map<String, Integer> fieldNameToIndexMap; // non-static fields
+    @Nonnull
+    private final JVMType[] fieldTypes; // non-static field types
+    @Nonnull
+    private final Map<String, Integer> staticMethodNameToIndexMap; // static methods
     @Nonnull
     private final int[] virtualMethodTable; //virtual method table
     @Nonnull
@@ -23,6 +27,7 @@ public class InstanceKlassImpl implements InstanceKlass {
     private final String name;
 
     public InstanceKlassImpl(@Nonnull Map<String, Integer> staticFieldNameToIndexMap,
+                             @Nonnull Map<String, Integer> fieldNameToIndexMap,
                              @Nonnull Map<String, Integer> staticMethodNameToIndexMap,
                              @Nonnull Map<String, Integer> virtualMethodNameToIndexMap,
                              @Nonnull int[] virtualMethodTable,
@@ -31,6 +36,8 @@ public class InstanceKlassImpl implements InstanceKlass {
         this.objectReference = objectReference;
         this.virtualMethodNameToIndexMap = new HashMap<>(virtualMethodNameToIndexMap);
         this.staticFieldNameToIndexMap = new HashMap<>(staticFieldNameToIndexMap);
+        this.fieldNameToIndexMap = new HashMap<>(fieldNameToIndexMap);
+        this.fieldTypes = new TreeSet<>(fieldNameToIndexMap.keySet()).stream().map(Utils::getValueType).toArray(JVMType[]::new);
         this.staticMethodNameToIndexMap = new HashMap<>(staticMethodNameToIndexMap);
         this.virtualMethodTable = virtualMethodTable;
     }
@@ -45,6 +52,18 @@ public class InstanceKlassImpl implements InstanceKlass {
     @Override
     public Set<String> getStaticFieldNames() {
         return Collections.unmodifiableSet(staticFieldNameToIndexMap.keySet());
+    }
+
+    @Nonnull
+    @Override
+    public Set<String> getFieldNames() {
+        return fieldNameToIndexMap.keySet();
+    }
+
+    @Nonnull
+    @Override
+    public JVMType[] getFieldTypes() {
+        return fieldTypes;
     }
 
     @Nonnull
@@ -72,6 +91,11 @@ public class InstanceKlassImpl implements InstanceKlass {
     @Override
     public int getIndexByStaticFieldName(@Nonnull String name) {
         return staticFieldNameToIndexMap.get(name);
+    }
+
+    @Override
+    public int getIndexByFieldName(@Nonnull String fieldName) {
+        return fieldNameToIndexMap.get(fieldName);
     }
 
     @Override

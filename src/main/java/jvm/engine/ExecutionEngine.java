@@ -705,8 +705,8 @@ public final class ExecutionEngine {
     @Nonnull
     private String getString(int objectRef) {
         InstanceObject stringObject = getInstanceObjectByRef(objectRef);
-        InstanceObject charArrayObject = getInstanceObjectByValue(
-                stringObject.getFieldValue(stringObject.getIndexByFieldName("value:[C")));
+        int indexByFieldName = getInstanceKlassByIndex(stringObject.getKlassIndex()).getIndexByFieldName("value:[C");
+        InstanceObject charArrayObject = getInstanceObjectByValue(stringObject.getFieldValue(indexByFieldName));
         char[] buf = new char[charArrayObject.getFieldCount()];
         for (int i = 0; i < buf.length; i++) {
             buf[i] = (char) charArrayObject.getFieldValue(i);
@@ -937,7 +937,7 @@ public final class ExecutionEngine {
         String klassMethodName = getKlassMethodName(cpIndex);
         InstanceKlass klass = getInstanceKlassByName(getKlassName(klassMethodName));
         Method method = heap.getMethodRepo().getMethod(
-                    klass.getMethodIndex(klass.getVirtualIndexByMethodName(getMethodName(klassMethodName))));
+                klass.getMethodIndex(klass.getVirtualIndexByMethodName(getMethodName(klassMethodName))));
         return method.getArgSize();
     }
 
@@ -962,7 +962,8 @@ public final class ExecutionEngine {
         for (int i = 0; i < str.length(); i++) {
             charArrayObj.setFieldValue(i, setCharValueType(str.charAt(i)));
         }
-        stringObj.setFieldValue(stringObj.getIndexByFieldName("value:[C"), setRefValueType(charArrayRef));
+        int indexByFieldName = getInstanceKlassByIndex(stringObj.getKlassIndex()).getIndexByFieldName("value:[C");
+        stringObj.setFieldValue(indexByFieldName, setRefValueType(charArrayRef));
 
         if (heap.isEnabledCacheString() && toPoolOfStrings) {
             heap.putStringRefToPool(str, objRef, charArrayRef);
@@ -995,20 +996,8 @@ public final class ExecutionEngine {
 
     @Nonnull
     private InstanceObject allocateInstanceObject(@Nonnull String klassName) {
-        Klass destKlass = getKlass(klassName);
-        List<Klass> klasses = new ArrayList<>();
-        Klass current = destKlass;
-        klasses.add(current);
-        while (!ABSENCE.equals(current.getParent())) {
-            current = getKlass(current.getParent());
-            klasses.add(current);
-        }
-        List<String> fields = new ArrayList<>();
-        for (int i = klasses.size() - 1; i >= 0; i--) {
-            fields.addAll(klasses.get(i).getObjectFieldNames());
-        }
-
-        return getInstanceObject(heap, fields, getInstanceKlassIndexByKlassName(klassName));
+        InstanceKlass instanceKlassByName = getInstanceKlassByName(klassName);
+        return getInstanceObject(heap, instanceKlassByName.getFieldTypes(), getInstanceKlassIndexByKlassName(klassName));
     }
 
 
@@ -1139,7 +1128,8 @@ public final class ExecutionEngine {
         if (quick) {
             fieldValueIndex = index;
         } else {
-            fieldValueIndex = object.getIndexByFieldName(getFieldName(getKlassFieldName(index)));
+            InstanceKlass instanceKlass = getInstanceKlassByIndex(object.getKlassIndex());
+            fieldValueIndex = instanceKlass.getIndexByFieldName(getFieldName(getKlassFieldName(index)));
             preserveIndexIfNeeded(fieldValueIndex, opcode);
         }
         consumer.accept(object, fieldValueIndex);

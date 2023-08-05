@@ -125,7 +125,7 @@ public final class Klass {
     }
 
     public List<String> getObjectFieldNames() {
-        return objectFields.stream().map(Field::getName).collect(Collectors.toList()); //todo optimization
+        return objectFields.stream().map(Field::getName).collect(Collectors.toList());
     }
 
 }

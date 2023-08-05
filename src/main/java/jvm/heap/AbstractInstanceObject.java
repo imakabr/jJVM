@@ -6,7 +6,8 @@ import jvm.heap.api.Heap;
 import jvm.heap.api.InstanceObject;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+
+import static jvm.Utils.getValueType;
 
 public abstract class AbstractInstanceObject implements InstanceObject {
 
@@ -15,35 +16,18 @@ public abstract class AbstractInstanceObject implements InstanceObject {
     @Nonnull
     private final Heap heap;
 
-    public AbstractInstanceObject(@Nullable String staticContentKlassName, @Nonnull Heap heap, int klassIndex) {
-        this.heap = heap;
-        this.array = false;
-        this.klassIndex = staticContentKlassName == null ? klassIndex : -1;
-    }
-
-    public AbstractInstanceObject(@Nonnull Heap heap, int klassIndex) {
+    public AbstractInstanceObject(@Nonnull Heap heap, int klassIndex, boolean array) {
         this.heap = heap;
         this.klassIndex = klassIndex;
-        this.array = true;
+        this.array = array;
     }
 
     public boolean isArray() {
         return array;
     }
 
-    @Nonnull
-    public JVMType getValueType(@Nonnull String field) {
-        String t = field.substring(field.indexOf(':') + 1);
-        return t.startsWith("L") || t.startsWith("[") ? JVMType.valueOf("A") : JVMType.valueOf(t);
-    }
-
     public long setValueType(int type) {
         return ((long) type << 32);
-    }
-
-    private int getValueType(long value) {
-        int type = (int) (value >> 32);
-        return type >>> 31 == 1 ? ~type : type; // if 'type >>> 31 == 1' (negative sign) type was inverted
     }
 
     public void checkType(long firstValue, long secondValue) {

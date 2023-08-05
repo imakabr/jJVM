@@ -1,5 +1,6 @@
 package jvm.heap;
 
+import jvm.JVMType;
 import jvm.engine.ExecutionEngine;
 import jvm.Utils;
 import jvm.engine.StackFrame;
@@ -143,13 +144,28 @@ public class KlassLoader {
     private Method prepareKlass(@Nonnull Klass constantPoolKlass) {
         Integer parentKlassIndex = getInstanceKlassIndexByName(constantPoolKlass.getParent(), false);
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
-        InstanceObject object = getInstanceObject(parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) ?
-                        heap.getInstanceObject(parentKlass.getObjectRef()) : null,
-                constantPoolKlass.getKlassName(), heap, constantPoolKlass.getStaticFieldNames(), -1);
-
+        InstanceObject oldStaticFieldHolder = parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName())
+                ? heap.getInstanceObject(parentKlass.getObjectRef()) : null;
+        JVMType[] values = JVMType.values();
+        ArrayList<JVMType> jvmTypes = new ArrayList<>();
+        if (oldStaticFieldHolder != null) {
+            for (int i = 0; i < oldStaticFieldHolder.getFieldCount(); i++) {
+                JVMType value = values[Utils.getValueType(oldStaticFieldHolder.getFieldValue(i))];
+                jvmTypes.add(value);
+            }
+        }
+        for (String fieldName : constantPoolKlass.getStaticFieldNames()) {
+            jvmTypes.add(Utils.getValueType(fieldName));
+        }
+        InstanceObject newStaticFieldHolder = getInstanceObject(heap, jvmTypes.toArray(new JVMType[0]), -1);
+        if (oldStaticFieldHolder != null) {
+            for (int i = 0; i < oldStaticFieldHolder.getFieldCount(); i++) {
+                newStaticFieldHolder.setFieldValue(i, oldStaticFieldHolder.getFieldValue(i));
+            }
+        }
         int objectRef = heap.changeObject(parentKlass != null
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
-                ? parentKlass.getObjectRef() : -1, object);
+                ? parentKlass.getObjectRef() : -1, newStaticFieldHolder);
 
         Map<String, Integer> allStaticMethods = new HashMap<>(parentKlass != null ?
                 getNameToIndexMap(parentKlass::getStaticMethodNames, parentKlass::getIndexByStaticMethodName) : Collections.emptyMap());
@@ -184,21 +200,48 @@ public class KlassLoader {
             virtualMethodNameToIndexMap.put(methodName, index);
         }
 
-        InstanceKlass instanceKlass = getInstanceKlass(getStaticFieldNameToIndexMapFromStaticContext(object, constantPoolKlass.getKlassName(), parentKlass),
-                allStaticMethods, virtualMethodNameToIndexMap, virtualMethodTable, objectRef, constantPoolKlass);
+        InstanceKlass instanceKlass = getInstanceKlass(getStaticFieldNames(parentKlass, constantPoolKlass),
+                getFieldNames(constantPoolKlass, parentKlass),
+                allStaticMethods,
+                virtualMethodNameToIndexMap,
+                virtualMethodTable,
+                objectRef,
+                constantPoolKlass);
         setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 
         return clInit;
     }
 
-    public Map<String, Integer> getStaticFieldNameToIndexMapFromStaticContext(@Nonnull InstanceObject object,
-                                                                              @Nonnull String klassName,
-                                                                              @Nullable InstanceKlass parentKlass) {
-        Map<String, Integer> result = new HashMap<>(parentKlass != null
-                ? getNameToIndexMap(parentKlass::getStaticFieldNames, parentKlass::getIndexByStaticFieldName) : Collections.emptyMap());
-        result.putAll(object.getFieldNames().stream()
-                .filter(klassNameField -> klassNameField.contains(klassName))
-                .collect(Collectors.toMap(field -> field.substring(field.indexOf('.') + 1), object::getIndexByFieldName)));
+    private Map<String, Integer> getFieldNames(@Nonnull Klass constantPoolKlass, @Nullable InstanceKlass parentKlass) {
+        Set<String> fields = new TreeSet<>(parentKlass != null ? parentKlass.getFieldNames() : Collections.emptySet());
+        fields.addAll(constantPoolKlass.getObjectFieldNames().stream()
+                .map(field -> field.substring(field.indexOf('.') + 1))
+                .collect(Collectors.toList()));
+        Map<String, Integer> result = new HashMap<>();
+        int index = 0;
+        for (String field : fields) {
+            result.put(field, index);
+            index++;
+        }
+        return result;
+    }
+
+    @Nonnull
+    private Map<String, Integer> getStaticFieldNames(@Nullable InstanceKlass parentKlass,
+                                                     @Nonnull Klass constantPoolKlass) {
+        InstanceObject objectFromStaticContent = parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName())
+                ? heap.getInstanceObject(parentKlass.getObjectRef()) : null;
+        int fieldCount = 0;
+        List<String> staticFieldNames = constantPoolKlass.getStaticFieldNames();
+        if (objectFromStaticContent != null) {
+            fieldCount = objectFromStaticContent.getFieldCount() - staticFieldNames.size(); // new field names have already been added to objectFromStaticContent, so we have to take this into account to calculate counter
+        }
+        Map<String, Integer> result = new HashMap<>(parentKlass != null ?
+                getNameToIndexMap(parentKlass::getStaticFieldNames, parentKlass::getIndexByStaticFieldName) : Collections.emptyMap());
+        for (String fieldName : staticFieldNames) {
+            result.put(fieldName, fieldCount);
+            fieldCount++;
+        }
         return result;
     }
 

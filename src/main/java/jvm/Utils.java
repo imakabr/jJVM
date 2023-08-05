@@ -99,4 +99,10 @@ public class Utils {
         int type = (int) (value >> 32);
         return type >>> 31 == 1 ? ~type : type; // if 'type >>> 31 == 1' (negative sign) type was inverted
     }
+
+    @Nonnull
+    public static JVMType getValueType(@Nonnull String field) {
+        String t = field.substring(field.indexOf(':') + 1);
+        return t.startsWith("L") || t.startsWith("[") ? JVMType.valueOf("A") : JVMType.valueOf(t);
+    }
 }

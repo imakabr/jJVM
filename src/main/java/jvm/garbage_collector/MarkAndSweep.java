@@ -13,6 +13,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
+import static jvm.Utils.getValueType;
 import static jvm.engine.ExecutionEngine.NULL;
 
 public class MarkAndSweep implements GarbageCollector {
@@ -131,11 +132,6 @@ public class MarkAndSweep implements GarbageCollector {
                 }
             }
         }
-    }
-
-    private int getValueType(long value) {
-        int type = (int) (value >> 32);
-        return type >>> 31 == 1 ? ~type : type; // if 'type >>> 31 == 1' (negative sign) type was inverted
     }
 
     private int getPureValue(long value) {

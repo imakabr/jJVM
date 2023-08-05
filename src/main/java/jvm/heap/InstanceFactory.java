@@ -11,8 +11,6 @@ import jvm.heap.sequential.InstanceObjectImpl;
 import jvm.parser.Klass;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.List;
 import java.util.Map;
 
 public class InstanceFactory {
@@ -21,16 +19,6 @@ public class InstanceFactory {
 
     public static void setHeapMonitor(boolean heapMonitor) {
         InstanceFactory.heapMonitor = heapMonitor;
-    }
-
-    @Nonnull
-    public static InstanceObject getInstanceObject(@Nullable InstanceObject objectFromStaticContent,
-                                                   @Nullable String staticContentKlassName,
-                                                   @Nonnull Heap heap,
-                                                   @Nonnull List<String> fields,
-                                                   int klassIndex) {
-        return heapMonitor ? new InstanceObjectVolImpl(objectFromStaticContent, staticContentKlassName, heap, fields, klassIndex)
-                : new InstanceObjectImpl(objectFromStaticContent, staticContentKlassName, heap, fields, klassIndex);
     }
 
     @Nonnull
@@ -43,21 +31,22 @@ public class InstanceFactory {
     }
 
     @Nonnull
-    public static InstanceObject getInstanceObject(@Nonnull Heap heap, @Nonnull List<String> fields, int klassIndex) {
-        return heapMonitor ? new InstanceObjectVolImpl(heap, fields, klassIndex)
-                : new InstanceObjectImpl(heap, fields, klassIndex);
+    public static InstanceObject getInstanceObject(@Nonnull Heap heap, @Nonnull JVMType[] types, int klassIndex) {
+        return heapMonitor ? new InstanceObjectVolImpl(heap, types, klassIndex)
+                : new InstanceObjectImpl(heap, types, klassIndex);
     }
 
     @Nonnull
     public static InstanceKlass getInstanceKlass(@Nonnull Map<String, Integer> staticFieldNameToIndexMap,
+                                                 @Nonnull Map<String, Integer> fieldNameToIndexMap,
                                                  @Nonnull Map<String, Integer> staticMethodNameToIndexMap,
                                                  @Nonnull Map<String, Integer> virtualMethodNameToIndexMap,
                                                  @Nonnull int[] virtualMethodTable,
                                                  int objectReference, @Nonnull Klass cpKlass) {
-        return heapMonitor ? new InstanceKlassVolImpl(staticFieldNameToIndexMap, staticMethodNameToIndexMap, virtualMethodNameToIndexMap,
-                virtualMethodTable, objectReference, cpKlass)
-                : new InstanceKlassImpl(staticFieldNameToIndexMap, staticMethodNameToIndexMap, virtualMethodNameToIndexMap,
-                virtualMethodTable, objectReference, cpKlass);
+        return heapMonitor ? new InstanceKlassVolImpl(staticFieldNameToIndexMap, fieldNameToIndexMap,
+                staticMethodNameToIndexMap, virtualMethodNameToIndexMap, virtualMethodTable, objectReference, cpKlass)
+                : new InstanceKlassImpl(staticFieldNameToIndexMap, fieldNameToIndexMap,
+                staticMethodNameToIndexMap, virtualMethodNameToIndexMap, virtualMethodTable, objectReference, cpKlass);
 
     }
 }

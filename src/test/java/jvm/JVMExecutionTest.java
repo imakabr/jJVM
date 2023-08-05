@@ -103,16 +103,17 @@ public class JVMExecutionTest {
         virtualMachine.getEngine().invoke(method);
 
         InstanceObject simpleClassObject = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
+        InstanceKlass instanceKlass = heap.getInstanceKlass(simpleClassObject.getKlassIndex());
 
-        int fieldValueIndex = simpleClassObject.getIndexByFieldName("a:I");
+        int fieldValueIndex = instanceKlass.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
         assertEquals(1, getIntValue(simpleClassObject.getFieldValue(fieldValueIndex)));
 
-        fieldValueIndex = simpleClassObject.getIndexByFieldName("b:I");
+        fieldValueIndex = instanceKlass.getIndexByFieldName("b:I");
         assertEquals(1, fieldValueIndex);
         assertEquals(2, getIntValue(simpleClassObject.getFieldValue(fieldValueIndex)));
 
-        fieldValueIndex = simpleClassObject.getIndexByFieldName("c:I");
+        fieldValueIndex = instanceKlass.getIndexByFieldName("c:I");
         assertEquals(2, fieldValueIndex);
         assertEquals(3, getIntValue(simpleClassObject.getFieldValue(fieldValueIndex)));
     }
@@ -176,10 +177,34 @@ public class JVMExecutionTest {
         virtualMachine.getEngine().invoke(method);
 
         InstanceObject object = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
+        InstanceKlass instanceKlass = heap.getInstanceKlass(object.getKlassIndex());
 
-        int fieldValueIndex = object.getIndexByFieldName("a:I");
+        int fieldValueIndex = instanceKlass.getIndexByFieldName("a:I");
         assertEquals(0, fieldValueIndex);
         assertEquals(11, getIntValue(object.getFieldValue(fieldValueIndex)));
+
+    }
+
+    @Test
+    public void complexObjectFieldInheritanceTest2() {
+        String fName = "jvm/examples/ChildObject";
+
+        VirtualMachine virtualMachine = new VirtualMachine(500, 50, 10000, false);
+        Heap heap = virtualMachine.getHeap();
+        virtualMachine.getKlassLoader().loadKlass(fName);
+
+        int methodIndex = heap.getMethodRepo().getIndexByName("jvm/examples/ChildObject.getB:()I");
+        Method method = heap.getMethodRepo().getMethod(methodIndex);
+        long b = virtualMachine.getEngine().invoke(method);
+
+        assertEquals(2, b);
+
+        InstanceObject object = heap.getInstanceObject(FIRST_NOT_SYSTEM_INSTANCE);
+        InstanceKlass instanceKlass = heap.getInstanceKlass(object.getKlassIndex());
+
+        int fieldValueIndex = instanceKlass.getIndexByFieldName("a:I");
+        assertEquals(0, fieldValueIndex);
+        assertEquals(2, getIntValue(object.getFieldValue(fieldValueIndex)));
 
     }
 
