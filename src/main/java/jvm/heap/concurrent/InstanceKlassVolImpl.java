@@ -27,6 +27,8 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     private final Map<String, Integer> virtualMethodNameToIndexMap;
     @Nonnull
     private final String name;
+    @Nonnull
+    private final Klass cpKlass;
 
     public InstanceKlassVolImpl(@Nonnull Map<String, Integer> staticFieldNameToIndexMap,
                                 @Nonnull Map<String, Integer> fieldNameToIndexMap,
@@ -34,6 +36,7 @@ public class InstanceKlassVolImpl implements InstanceKlass {
                                 @Nonnull Map<String, Integer> virtualMethodNameToIndexMap,
                                 @Nonnull int[] virtualMethodTable,
                                 int objectReference, @Nonnull Klass cpKlass) {
+        this.cpKlass = cpKlass;
         this.name = cpKlass.getKlassName();
         this.objectReference = objectReference;
         this.virtualMethodNameToIndexMap = new ConcurrentHashMap<>(virtualMethodNameToIndexMap);
@@ -108,6 +111,12 @@ public class InstanceKlassVolImpl implements InstanceKlass {
     @Override
     public int getVirtualIndexByMethodName(@Nonnull String methodName) {
         return virtualMethodNameToIndexMap.get(methodName);
+    }
+
+    @Nonnull
+    @Override
+    public Klass getConstantPoolKlass() {
+        return cpKlass;
     }
 
     @Override

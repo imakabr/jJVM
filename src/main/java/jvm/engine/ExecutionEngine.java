@@ -7,7 +7,6 @@ import jvm.heap.api.InstanceKlass;
 import jvm.heap.api.InstanceObject;
 import jvm.lang.*;
 import jvm.parser.Method;
-import jvm.parser.Klass;
 import jvm.parser.ConstantPoolEntry;
 
 import javax.annotation.Nonnull;
@@ -497,7 +496,7 @@ public final class ExecutionEngine {
                         stack.push(secondVal);
                         break;
                     case LDC:
-                        ConstantPoolEntry entry = getSourceKlass().getCPItem(readByte() - 1);
+                        ConstantPoolEntry entry = getInstanceKlassByName(klassName).getConstantPoolKlass().getCPItem(readByte() - 1);
                         switch (entry.getType()) {
                             case INTEGER:
                                 pushIntValueOntoStack((Integer) entry.getNum());
@@ -561,13 +560,12 @@ public final class ExecutionEngine {
         return stackTrace.toString().replace("/", ".");
     }
 
-    private boolean checkCast(@Nonnull Klass klass, @Nonnull String castKlassName) {
-        String klassName = klass.getKlassName();
+    private boolean checkCast(@Nonnull String klassName, @Nonnull String castKlassName) {
         if (JAVA_LANG_OBJECT.equals(klassName)) {
             return castKlassName.equals(klassName);
         }
-        Klass parentKlass = getKlass(klass.getParent());
-        return castKlassName.equals(klassName) || checkCast(parentKlass, castKlassName);
+        InstanceKlass instanceKlass = getInstanceKlassByName(klassName);
+        return castKlassName.equals(klassName) || checkCast(instanceKlass.getConstantPoolKlass().getParent(), castKlassName);
     }
 
     private void invokeNativeMethod(@Nonnull Method method) {
@@ -786,7 +784,7 @@ public final class ExecutionEngine {
 
     @Nonnull
     private String getKlassName(int cpIndex) {
-        return getSourceKlass().getKlassNameByCPIndex((short) cpIndex);
+        return getInstanceKlassByName(klassName).getConstantPoolKlass().getKlassNameByCPIndex((short) cpIndex);
     }
 
     private long setIntValueType(int value) {
@@ -900,7 +898,7 @@ public final class ExecutionEngine {
 
     @Nonnull
     private String getKlassFieldName(int cpLookup) {
-        return getSourceKlass().getFieldByCPIndex((short) cpLookup);
+        return getInstanceKlassByName(klassName).getConstantPoolKlass().getFieldByCPIndex((short) cpLookup);
     }
 
     private int getMethodIndex(int cpIndex) {
@@ -920,17 +918,7 @@ public final class ExecutionEngine {
 
     @Nonnull
     private String getKlassMethodName(int cpIndex) {
-        return getSourceKlass().getMethodNameByCPIndex((short) cpIndex);
-    }
-
-    @Nonnull
-    private Klass getSourceKlass() {
-        return getKlass(klassName);
-    }
-
-    @Nonnull
-    private Klass getKlass(@Nonnull String klassName) {
-        return heap.getKlassLoader().getLoadedKlassByName(klassName);
+        return getInstanceKlassByName(klassName).getConstantPoolKlass().getMethodNameByCPIndex((short) cpIndex);
     }
 
     private int getArgSize(int cpIndex) {
@@ -1277,12 +1265,12 @@ public final class ExecutionEngine {
                                     + castKlassName.replace("/", "."));
                 }
             } else {
-                Klass klass = getKlass(getNameFromInstanceKlassByIndex(object.getKlassIndex()));
-                if (checkCast(klass, castKlassName)) {
+                String klassName = getNameFromInstanceKlassByIndex(object.getKlassIndex());
+                if (checkCast(klassName, castKlassName)) {
                     pushRefValueOntoStack(objectRef);
                 } else {
                     throw new ClassCastExceptionJVM(
-                            klass.getKlassName().replace("/", ".")
+                            klassName.replace("/", ".")
                                     + " cannot be cast to "
                                     + castKlassName.replace("/", "."));
                 }
@@ -1302,8 +1290,8 @@ public final class ExecutionEngine {
         if (object.isArray()) {
             instanceOf = className.equals(getNameFromInstanceKlassByIndex(object.getKlassIndex()));
         } else {
-            Klass currentKlass = getKlass(getNameFromInstanceKlassByIndex(object.getKlassIndex()));
-            instanceOf = checkCast(currentKlass, className);
+            String currentKlassName = getNameFromInstanceKlassByIndex(object.getKlassIndex());
+            instanceOf = checkCast(currentKlassName, className);
         }
         pushIntValueOntoStack(instanceOf ? 1 : 0);
     }

@@ -1,6 +1,7 @@
 package jvm.heap.api;
 
 import jvm.JVMType;
+import jvm.parser.Klass;
 
 import javax.annotation.Nonnull;
 import java.util.Set;
@@ -36,4 +37,7 @@ public interface InstanceKlass {
 
     @Nonnull
     String getName();
+
+    @Nonnull
+    Klass getConstantPoolKlass();
 }

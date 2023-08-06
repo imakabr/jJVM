@@ -73,7 +73,7 @@ public class KlassLoader {
         initKlass(new Klass(name, ABSENCE));
     }
 
-    public void setIndexByName(@Nonnull String name, int index) {
+    private void setIndexByName(@Nonnull String name, int index) {
         this.indexByName.put(name, index);
     }
 
@@ -89,11 +89,12 @@ public class KlassLoader {
         return null;
     }
 
-    public void setConstantPoolKlassByName(String name, Klass cpKlass) {
+    private void setConstantPoolKlassByName(@Nonnull String name, @Nonnull Klass cpKlass) {
         this.loadedKlasses.put(name, cpKlass);
     }
 
-    public Klass getLoadedKlassByName(String name) {
+    @Nonnull
+    private Klass getLoadedKlassByName(@Nonnull String name) {
         Klass klass = loadedKlasses.get(name);
         if (klass == null) {
             loadKlass(changeSystemKlassNameToJVMKlassName(name));
@@ -121,7 +122,8 @@ public class KlassLoader {
         loadCurrentKlass(changeSystemKlassNameToJVMKlassName(constantPoolKlass.getParent()));
     }
 
-    private List<Method> prepareCurrentAndInheritedKlasses(Klass constantPoolKlass) {
+    @Nonnull
+    private List<Method> prepareCurrentAndInheritedKlasses(@Nonnull Klass constantPoolKlass) {
         List<Klass> klasses = new ArrayList<>();
         Klass current = constantPoolKlass;
         while (!JAVA_LANG_OBJECT.equals(current.getParent()) && !preparedKlasses.contains(current.getParent())) {
@@ -218,6 +220,7 @@ public class KlassLoader {
         return newStaticFieldHolder;
     }
 
+    @Nonnull
     private Map<String, Integer> getFieldNames(@Nonnull Klass constantPoolKlass, @Nullable InstanceKlass parentKlass) {
         Set<String> fields = new TreeSet<>(parentKlass != null ? parentKlass.getFieldNames() : Collections.emptySet());
         fields.addAll(constantPoolKlass.getObjectFieldNames().stream()
@@ -251,6 +254,7 @@ public class KlassLoader {
         return result;
     }
 
+    @Nonnull
     private Map<String, Integer> getNameToIndexMap(@Nonnull Supplier<Set<String>> names,
                                                    @Nonnull Function<String, Integer> function) {
         Map<String, Integer> result = new HashMap<>();

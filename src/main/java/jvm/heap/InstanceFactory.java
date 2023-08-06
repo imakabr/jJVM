@@ -42,7 +42,8 @@ public class InstanceFactory {
                                                  @Nonnull Map<String, Integer> staticMethodNameToIndexMap,
                                                  @Nonnull Map<String, Integer> virtualMethodNameToIndexMap,
                                                  @Nonnull int[] virtualMethodTable,
-                                                 int objectReference, @Nonnull Klass cpKlass) {
+                                                 int objectReference,
+                                                 @Nonnull Klass cpKlass) {
         return heapMonitor ? new InstanceKlassVolImpl(staticFieldNameToIndexMap, fieldNameToIndexMap,
                 staticMethodNameToIndexMap, virtualMethodNameToIndexMap, virtualMethodTable, objectReference, cpKlass)
                 : new InstanceKlassImpl(staticFieldNameToIndexMap, fieldNameToIndexMap,

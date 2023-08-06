@@ -77,6 +77,7 @@ public final class KlassParser {
         parseMethods();
     }
 
+    @Nonnull
     public Klass getKlass() {
         return klass;
     }

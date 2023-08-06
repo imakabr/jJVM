@@ -25,14 +25,18 @@ public class InstanceKlassImpl implements InstanceKlass {
     private final Map<String, Integer> virtualMethodNameToIndexMap;
     @Nonnull
     private final String name;
+    @Nonnull
+    private final Klass cpKlass;
 
     public InstanceKlassImpl(@Nonnull Map<String, Integer> staticFieldNameToIndexMap,
                              @Nonnull Map<String, Integer> fieldNameToIndexMap,
                              @Nonnull Map<String, Integer> staticMethodNameToIndexMap,
                              @Nonnull Map<String, Integer> virtualMethodNameToIndexMap,
                              @Nonnull int[] virtualMethodTable,
-                             int objectReference, @Nonnull Klass cpKlass) {
+                             int objectReference,
+                             @Nonnull Klass cpKlass) {
         this.name = cpKlass.getKlassName();
+        this.cpKlass = cpKlass;
         this.objectReference = objectReference;
         this.virtualMethodNameToIndexMap = new HashMap<>(virtualMethodNameToIndexMap);
         this.staticFieldNameToIndexMap = new HashMap<>(staticFieldNameToIndexMap);
@@ -108,8 +112,15 @@ public class InstanceKlassImpl implements InstanceKlass {
         return virtualMethodNameToIndexMap.get(methodName);
     }
 
+    @Nonnull
     @Override
     public String toString() {
         return name;
+    }
+
+    @Nonnull
+    @Override
+    public Klass getConstantPoolKlass() {
+        return cpKlass;
     }
 }
