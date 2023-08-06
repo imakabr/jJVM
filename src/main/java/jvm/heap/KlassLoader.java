@@ -144,28 +144,10 @@ public class KlassLoader {
     private Method prepareKlass(@Nonnull Klass constantPoolKlass) {
         Integer parentKlassIndex = getInstanceKlassIndexByName(constantPoolKlass.getParent(), false);
         InstanceKlass parentKlass = parentKlassIndex != null ? heap.getInstanceKlass(parentKlassIndex) : null;
-        InstanceObject oldStaticFieldHolder = parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName())
-                ? heap.getInstanceObject(parentKlass.getObjectRef()) : null;
-        JVMType[] values = JVMType.values();
-        ArrayList<JVMType> jvmTypes = new ArrayList<>();
-        if (oldStaticFieldHolder != null) {
-            for (int i = 0; i < oldStaticFieldHolder.getFieldCount(); i++) {
-                JVMType value = values[Utils.getValueType(oldStaticFieldHolder.getFieldValue(i))];
-                jvmTypes.add(value);
-            }
-        }
-        for (String fieldName : constantPoolKlass.getStaticFieldNames()) {
-            jvmTypes.add(Utils.getValueType(fieldName));
-        }
-        InstanceObject newStaticFieldHolder = getInstanceObject(heap, jvmTypes.toArray(new JVMType[0]), -1);
-        if (oldStaticFieldHolder != null) {
-            for (int i = 0; i < oldStaticFieldHolder.getFieldCount(); i++) {
-                newStaticFieldHolder.setFieldValue(i, oldStaticFieldHolder.getFieldValue(i));
-            }
-        }
+
         int objectRef = heap.changeObject(parentKlass != null
                 && !JAVA_LANG_OBJECT.equals(parentKlass.getName()) // we don't want to change InstanceObject inside Object
-                ? parentKlass.getObjectRef() : -1, newStaticFieldHolder);
+                ? parentKlass.getObjectRef() : -1, getNewStaticFieldHolder(constantPoolKlass, parentKlass));
 
         Map<String, Integer> allStaticMethods = new HashMap<>(parentKlass != null ?
                 getNameToIndexMap(parentKlass::getStaticMethodNames, parentKlass::getIndexByStaticMethodName) : Collections.emptyMap());
@@ -210,6 +192,30 @@ public class KlassLoader {
         setIndexByName(constantPoolKlass.getKlassName(), heap.setInstanceKlass(instanceKlass));
 
         return clInit;
+    }
+
+    @Nonnull
+    private InstanceObject getNewStaticFieldHolder(@Nonnull Klass constantPoolKlass, @Nullable InstanceKlass parentKlass) {
+        InstanceObject oldStaticFieldHolder = parentKlass != null && !JAVA_LANG_OBJECT.equals(parentKlass.getName())
+                ? heap.getInstanceObject(parentKlass.getObjectRef()) : null;
+        JVMType[] values = JVMType.values();
+        ArrayList<JVMType> jvmTypes = new ArrayList<>();
+        if (oldStaticFieldHolder != null) {
+            for (int i = 0; i < oldStaticFieldHolder.getFieldCount(); i++) {
+                JVMType value = values[Utils.getValueType(oldStaticFieldHolder.getFieldValue(i))];
+                jvmTypes.add(value);
+            }
+        }
+        for (String fieldName : constantPoolKlass.getStaticFieldNames()) {
+            jvmTypes.add(Utils.getValueType(fieldName));
+        }
+        InstanceObject newStaticFieldHolder = getInstanceObject(heap, jvmTypes.toArray(new JVMType[0]), -1);
+        if (oldStaticFieldHolder != null) {
+            for (int i = 0; i < oldStaticFieldHolder.getFieldCount(); i++) {
+                newStaticFieldHolder.setFieldValue(i, oldStaticFieldHolder.getFieldValue(i));
+            }
+        }
+        return newStaticFieldHolder;
     }
 
     private Map<String, Integer> getFieldNames(@Nonnull Klass constantPoolKlass, @Nullable InstanceKlass parentKlass) {
