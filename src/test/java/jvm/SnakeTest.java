@@ -25,14 +25,24 @@ public class SnakeTest {
         virtualMachine.getKlassLoader().loadKlass(klass);
         Heap heap = virtualMachine.getHeap();
         virtualMachine.runHeapMonitor(new HashSet<>(Arrays.asList("java/lang/String",
-                "java/lang/StringBuilder",
-                "jvm/examples/snake_test/Node",
+                "Snake/Node { " +
+                        "jvm/examples/snake_test/Node, " +
+                        "[Ljvm/examples/snake_test/Node;" +
+                        "}",
+                "Arrays { " +
+                        "boolean[], " +
+                        "char[], " +
+                        "int[], " +
+                        "[Ljava/lang/String;, " +
+                        "[Ljava/lang/Object;, " +
+                        "[Ljvm/util/HashMapNode; " +
+                        "}",
                 "Collections { " +
                         "java/util/HashMap, " +
                         "jvm/util/HashMapNode, " +
                         "java/util/HashSet, " +
                         "java/util/ArrayList, " +
-                        "java/util/ArrayDeque, " +
+                        "java/util/ArrayDeque " +
                         "}")));
 
         int methodIndex = heap.getMethodRepo().getIndexByName(klass + "." + methodName);

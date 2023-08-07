@@ -23,7 +23,7 @@ public class ShapesTest {
     }
 
     private void checkMethod(@Nonnull String methodName, long expected) {
-        VirtualMachine virtualMachine = new VirtualMachine(10000, 50, 10000);
+        VirtualMachine virtualMachine = new VirtualMachine(10000, 50, 10000, true);
         virtualMachine.getKlassLoader().loadKlass(klass);
         Heap heap = virtualMachine.getHeap();
         virtualMachine.runHeapMonitor(new HashSet<>(Arrays.asList("java/lang/String", "java/lang/StringBuilder",
@@ -33,7 +33,14 @@ public class ShapesTest {
                         "jvm/examples/heap_test/Pentagon, " +
                         "jvm/examples/heap_test/Square, " +
                         "jvm/examples/heap_test/Star, " +
-                        "jvm/examples/heap_test/Triangle }")));
+                        "jvm/examples/heap_test/Triangle }",
+                "Arrays { " +
+                        "boolean[], " +
+                        "char[], " +
+                        "int[], " +
+                        "[Ljava/lang/String;, " +
+                        "[Ljava/lang/Object; " +
+                        "}")));
 
         int methodIndex = heap.getMethodRepo().getIndexByName(klass + "." + methodName);
         Method method = heap.getMethodRepo().getMethod(methodIndex);
